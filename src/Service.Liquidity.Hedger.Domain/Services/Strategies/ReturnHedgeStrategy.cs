@@ -10,10 +10,10 @@ namespace Service.Liquidity.Hedger.Domain.Strategies
     {
         public HedgeStrategyType Type { get; set; } = HedgeStrategyType.Return;
 
-        public HedgeParams CalculateHedgeParams(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
+        public HedgeInstruction CalculateHedgeParams(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
             HedgeStrategyParams strategyParams)
         {
-            return new HedgeParams();
+            return new HedgeInstruction();
         }
     }
 }

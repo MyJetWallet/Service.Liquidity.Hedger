@@ -8,14 +8,12 @@ using MyJetWallet.Domain.ExternalMarketApi.Dto;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
 using MyJetWallet.Sdk.ServiceBus;
+using Service.Liquidity.Hedger.Domain.Extensions;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
 using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
-using HedgeParams = Service.Liquidity.Monitoring.Domain.Models.Hedging.Common.HedgeParams;
-using HedgeStamp = Service.Liquidity.Monitoring.Domain.Models.Hedging.HedgeStamp;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {
@@ -23,17 +21,18 @@ namespace Service.Liquidity.Hedger.Domain.Services
     {
         private readonly ILogger<HedgeService> _logger;
         private readonly IExternalMarket _externalMarket;
-        private readonly IServiceBusPublisher<HedgeTrade> _publisher;
+        private readonly IServiceBusPublisher<HedgeOperation> _publisher;
         private readonly IHedgeStampStorage _hedgeStampStorage;
         private readonly ICurrentPricesCache _currentPricesCache;
         private readonly IHedgeStrategiesFactory _hedgeStrategiesFactory;
         private const string ExchangeName = "FTX";
-        private static HedgeStamp _lastHedgeStamp;
+        private const decimal BalancePercentToTrade = 0.9m;
+        private static HedgeOperationId _lastOperationId;
 
         public HedgeService(
             ILogger<HedgeService> logger,
             IExternalMarket externalMarket,
-            IServiceBusPublisher<HedgeTrade> publisher,
+            IServiceBusPublisher<HedgeOperation> publisher,
             IHedgeStampStorage hedgeStampStorage,
             ICurrentPricesCache currentPricesCache,
             IHedgeStrategiesFactory hedgeStrategiesFactory
@@ -47,55 +46,104 @@ namespace Service.Liquidity.Hedger.Domain.Services
             _hedgeStrategiesFactory = hedgeStrategiesFactory;
         }
 
-        public async Task HedgeAsync(PortfolioMonitoringMessage message)
+        public async Task HedgeAsync(ICollection<MonitoringRuleSet> ruleSets, ICollection<PortfolioCheck> checks,
+            Portfolio portfolio)
         {
-            _lastHedgeStamp ??= await _hedgeStampStorage.GetAsync();
+            _lastOperationId ??= await _hedgeStampStorage.GetAsync();
 
-            if (_lastHedgeStamp == null)
+            if (_lastOperationId == null)
             {
-                _lastHedgeStamp ??= new HedgeStamp();
-                await _hedgeStampStorage.AddOrUpdateAsync(_lastHedgeStamp);
+                _lastOperationId ??= new HedgeOperationId();
+                await _hedgeStampStorage.AddOrUpdateAsync(_lastOperationId);
             }
 
-            if (message.Portfolio.HedgeStamp != null && message.Portfolio.HedgeStamp < _lastHedgeStamp.Value)
+            if (portfolio.HedgeStamp != null && portfolio.HedgeStamp < _lastOperationId.Value)
             {
                 _logger.LogWarning("Hedge is skipped. Portfolio hedge stamp less than last hedge stamp");
                 return;
             }
 
-            var hightestPriorityRule = message.RuleSets
-                .Where(rs => rs.NeedsHedging())
-                .SelectMany(rs => rs.Rules)
-                .Where(rule => rule.CurrentState.HedgeParams.Validate(out _))
-                .MaxBy(r => r.CurrentState.HedgeParams.BuyVolume);
+            var hedgeParams = GetHedgeTarget(ruleSets, checks, portfolio);
 
-            if (hightestPriorityRule == null)
+            if (hedgeParams == null)
             {
                 _logger.LogWarning("No rule for hedging");
                 return;
             }
 
-            if (!hightestPriorityRule.CurrentState.HedgeParams.Validate(out var errors))
+            await HedgeAsync(hedgeParams);
+        }
+
+        private async Task HedgeAsync(HedgeInstruction hedgeInstruction)
+        {
+            var possibleMarkets = await FindPossibleMarketsAsync(hedgeInstruction);
+
+            if (!possibleMarkets.Any())
             {
-                _logger.LogWarning(
-                    $"Hedging is skipped. Found Rule {hightestPriorityRule.Name} with invalid HedgeParams {string.Join(", ", errors)}");
+                _logger.LogWarning("Can't hedge. Possible markets not found");
                 return;
             }
 
-            await TradeAsync(hightestPriorityRule.CurrentState.HedgeParams);
-        }
-        
-        private async Task RefreshStateAsync(MonitoringRuleSet ruleSet, PortfolioCheck[] checks,
-            Portfolio portfolio)
-        {
-            foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
+            decimal tradedVolume = 0;
+            var operationId = new HedgeOperationId();
+            var trades = new List<HedgeTrade>(possibleMarkets.Count);
+
+            foreach (var market in possibleMarkets)
             {
-                var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
-                //var hedgeParams = strategy.CalculateHedgeParams(portfolio, checks, rule.HedgeStrategyParams);
+                var trade = await TradeAsync(operationId, market);
+                trades.Add(trade);
+                tradedVolume += Convert.ToDecimal(trade.BaseVolume);
+
+                if (tradedVolume >= hedgeInstruction.BuyVolume)
+                {
+                    _logger.LogInformation(
+                        $"Hedge ended. TradedVolume={tradedVolume} TargetVolume={hedgeInstruction.BuyVolume}");
+                    return;
+                }
             }
+            
+            await _publisher.PublishAsync(new HedgeOperation
+            {
+                Id = _lastOperationId.Value,
+                TargetVolume = hedgeInstruction.BuyVolume,
+                Trades = trades
+            });
+            _lastOperationId = operationId;
+            await _hedgeStampStorage.AddOrUpdateAsync(_lastOperationId);
         }
 
-        private async Task TradeAsync(HedgeParams hedgeParams)
+        private async Task<HedgeTrade> TradeAsync(HedgeOperationId operationId, HedgeExchangeMarket market)
+        {
+            var currentPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
+            var possibleVolume = market.ExchangeBalance.Free * currentPrice.Price * BalancePercentToTrade;
+            var tradeRequest = new MarketTradeRequest
+            {
+                Side = OrderSide.Buy,
+                Market = market.ExchangeMarketInfo.Market,
+                Volume = Convert.ToDouble(possibleVolume),
+                ExchangeName = market.ExchangeName,
+                OppositeVolume = 0,
+                ReferenceId = Guid.NewGuid().ToString(),
+            };
+
+            var tradeResp = new ExchangeTrade(); //await _externalMarket.MarketTrade(tradeRequest);
+
+            var hedgeTrade = new HedgeTrade
+            {
+                BaseAsset = market.ExchangeMarketInfo.BaseAsset,
+                BaseVolume = Convert.ToDecimal(tradeResp.Volume),
+                ExchangeName = tradeRequest.ExchangeName,
+                OperationId = operationId.Value,
+                QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
+                QuoteVolume = Convert.ToDecimal(tradeResp.Price * tradeResp.Volume),
+                Price = Convert.ToDecimal(tradeResp.Price),
+                Id = tradeResp.ReferenceId
+            };
+
+            return hedgeTrade;
+        }
+
+        private async Task<List<HedgeExchangeMarket>> FindPossibleMarketsAsync(HedgeInstruction hedgeInstruction)
         {
             var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
             {
@@ -105,12 +153,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 ExchangeName = ExchangeName
             });
-            var hedgeTradeParamsList = new List<HedgeTradeParams>();
+            var hedgeTradeParamsList = new List<HedgeExchangeMarket>();
 
-            foreach (var sellAsset in hedgeParams.SellAssets)
+            foreach (var sellAsset in hedgeInstruction.SellAssets)
             {
                 var marketInfo = marketInfosResp.Infos
-                    .FirstOrDefault(m => m.BaseAsset == hedgeParams.BuyAssetSymbol && m.QuoteAsset == sellAsset.Symbol);
+                    .FirstOrDefault(m => m.BaseAsset == hedgeInstruction.BuyAssetSymbol && m.QuoteAsset == sellAsset.Symbol);
                 var exchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
 
                 if (marketInfo == null || exchangeBalance == null)
@@ -120,69 +168,39 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     continue;
                 }
 
-                hedgeTradeParamsList.Add(new HedgeTradeParams
+                hedgeTradeParamsList.Add(new HedgeExchangeMarket
                 {
+                    ExchangeName = ExchangeName,
                     Weight = sellAsset.Weight,
                     ExchangeBalance = exchangeBalance,
                     ExchangeMarketInfo = marketInfo
                 });
             }
 
-            if (!hedgeTradeParamsList.Any())
+            return hedgeTradeParamsList;
+        }
+
+        private HedgeInstruction GetHedgeTarget(ICollection<MonitoringRuleSet> ruleSets,
+            ICollection<PortfolioCheck> checks,
+            Portfolio portfolio)
+        {
+            var paramsList = new List<HedgeInstruction>();
+
+            foreach (var ruleSte in ruleSets?.Where(rs => rs.NeedsHedging()) ?? Array.Empty<MonitoringRuleSet>())
             {
-                _logger.LogWarning($"Can't make hedge trade. Possible sell assets not found");
-                return;
-            }
-
-            decimal tradedVolume = 0;
-            var useBalancePercent = 0.9m;
-
-            foreach (var hedgeTradeParams in hedgeTradeParamsList)
-            {
-                var currentPrice = _currentPricesCache.Get(ExchangeName, hedgeTradeParams.ExchangeMarketInfo.Market);
-                var possibleVolume = hedgeTradeParams.ExchangeBalance.Free * currentPrice.Price * useBalancePercent;
-                var tradeRequest = new MarketTradeRequest
+                foreach (var rule in ruleSte.Rules?.Where(r => r.NeedsHedging()) ?? Array.Empty<MonitoringRule>())
                 {
-                    Side = OrderSide.Buy,
-                    Market = hedgeTradeParams.ExchangeMarketInfo.Market,
-                    Volume = Convert.ToDouble(possibleVolume),
-                    ExchangeName = ExchangeName,
-                    OppositeVolume = 0,
-                    ReferenceId = null,
-                };
-
-                var tradeResp = new ExchangeTrade(); //await _externalMarket.MarketTrade(tradeRequest);
-
-                _lastHedgeStamp.Increase();
-                await _publisher.PublishAsync(new HedgeTrade
-                {
-                    BaseAsset = hedgeTradeParams.ExchangeMarketInfo.BaseAsset,
-                    BaseVolume = Convert.ToDecimal(tradeResp.Volume),
-                    ExchangeName = tradeRequest.ExchangeName,
-                    HedgeStamp = _lastHedgeStamp.Value,
-                    QuoteAsset = hedgeTradeParams.ExchangeMarketInfo.QuoteAsset,
-                    QuoteVolume = Convert.ToDecimal(tradeResp.Price * tradeResp.Volume),
-                    Price = Convert.ToDecimal(tradeResp.Price),
-                    Id = tradeResp.ReferenceId
-                });
-                await _hedgeStampStorage.AddOrUpdateAsync(_lastHedgeStamp);
-
-                tradedVolume += Convert.ToDecimal(tradeResp.Volume);
-
-                if (tradedVolume >= hedgeParams.BuyVolume)
-                {
-                    _logger.LogInformation(
-                        $"Hedge ended. TradedVolume={tradedVolume} TargetVolume={hedgeParams.BuyVolume}");
-                    return;
+                    var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
+                    var hedgeParams = strategy.CalculateHedgeParams(portfolio, checks, rule.HedgeStrategyParams);
+                    paramsList.Add(hedgeParams);
                 }
             }
-        }
-    }
 
-    public class HedgeTradeParams
-    {
-        public decimal Weight { get; set; }
-        public ExchangeMarketInfo ExchangeMarketInfo { get; set; }
-        public ExchangeBalance ExchangeBalance { get; set; }
+            var highestPriorityParams = paramsList
+                .Where(hedgeParams => hedgeParams.Validate(out _))
+                .MaxBy(hedgeParams => hedgeParams.BuyVolume);
+
+            return highestPriorityParams;
+        }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
+using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Monitoring.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Subscribers
@@ -11,14 +13,17 @@ namespace Service.Liquidity.Hedger.Subscribers
     {
         private readonly ILogger<PortfolioMonitoringMessageSubscriber> _logger;
         private readonly ISubscriber<PortfolioMonitoringMessage> _subscriber;
+        private readonly IHedgeService _hedgeService;
 
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
-            ISubscriber<PortfolioMonitoringMessage> subscriber
+            ISubscriber<PortfolioMonitoringMessage> subscriber,
+            IHedgeService hedgeService
         )
         {
             _logger = logger;
             _subscriber = subscriber;
+            _hedgeService = hedgeService;
         }
 
         public void Start()
@@ -30,6 +35,25 @@ namespace Service.Liquidity.Hedger.Subscribers
         {
             try
             {
+                if (message.Portfolio == null)
+                {
+                    _logger.LogWarning("Received PortfolioMonitoringMessage without Portfolio");
+                    return;
+                }
+
+                if (message.Checks == null || !message.Checks.Any())
+                {
+                    _logger.LogWarning("Received PortfolioMonitoringMessage without Checks");
+                    return;
+                }
+
+                if (message.RuleSets == null || !message.RuleSets.Any())
+                {
+                    _logger.LogWarning("Received PortfolioMonitoringMessage without RuleSets");
+                    return;
+                }
+
+                await _hedgeService.HedgeAsync(message.RuleSets, message.Checks, message.Portfolio);
             }
             catch (Exception ex)
             {

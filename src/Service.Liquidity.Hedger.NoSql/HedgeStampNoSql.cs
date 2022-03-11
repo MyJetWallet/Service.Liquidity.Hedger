@@ -1,5 +1,5 @@
 using MyNoSqlServer.Abstractions;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging;
+using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.NoSql
 {
@@ -9,9 +9,9 @@ namespace Service.Liquidity.Hedger.NoSql
         public static string GeneratePartitionKey() => "*";
         public static string GenerateRowKey() => "*";
 
-        public HedgeStamp Value { get; set; }
+        public HedgeOperationId Value { get; set; }
 
-        public static HedgeStampNoSql Create(HedgeStamp src)
+        public static HedgeStampNoSql Create(HedgeOperationId src)
         {
             return new()
             {

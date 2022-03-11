@@ -7,7 +7,7 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
     {
         public static bool NeedsHedging(this MonitoringRule rule)
         {
-            //if (rule.HedgeStrategyType == HedgeStrategyType.None)
+            if (rule.HedgeStrategyType == HedgeStrategyType.None)
             {
                 return false;
             }

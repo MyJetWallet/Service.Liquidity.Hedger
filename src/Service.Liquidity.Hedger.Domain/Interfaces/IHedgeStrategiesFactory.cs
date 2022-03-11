@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging.Common;
+using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Interfaces
 {

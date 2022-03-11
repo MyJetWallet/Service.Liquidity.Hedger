@@ -5,9 +5,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
     [DataContract]
     public class HedgeTrade
     {
-        public const string TopicName = "jetwallet-liquidity-hedge-trade";
-
-        [DataMember(Order = 1)] public long HedgeStamp { get; set; }
+        [DataMember(Order = 1)] public long OperationId { get; set; }
         [DataMember(Order = 2)] public string BaseAsset { get; set; }
         [DataMember(Order = 3)] public decimal BaseVolume { get; set; }
         [DataMember(Order = 4)] public string QuoteAsset { get; set; }

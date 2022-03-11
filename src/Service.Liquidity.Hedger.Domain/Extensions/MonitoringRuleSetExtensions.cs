@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 
 namespace Service.Liquidity.Hedger.Domain.Extensions
@@ -19,7 +20,7 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
                 return false;
             }
 
-            //if (activeRules.Any(rule => rule.HedgeStrategyType == HedgeStrategyType.Return))
+            if (activeRules.Any(rule => rule.HedgeStrategyType == HedgeStrategyType.Return))
             {
                 return false;
             }

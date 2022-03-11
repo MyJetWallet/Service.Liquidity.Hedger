@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging;
+using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface IHedgeStampStorage
     {
-        Task AddOrUpdateAsync(HedgeStamp model);
-        Task<HedgeStamp> GetAsync();
+        Task AddOrUpdateAsync(HedgeOperationId model);
+        Task<HedgeOperationId> GetAsync();
     }
 }

@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using MyNoSqlServer.Abstractions;
 using Service.Liquidity.Hedger.Domain.Interfaces;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging;
+using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.NoSql
 {
@@ -16,13 +16,13 @@ namespace Service.Liquidity.Hedger.NoSql
             _myNoSqlServerDataWriter = myNoSqlServerDataWriter;
         }
 
-        public async Task AddOrUpdateAsync(HedgeStamp model)
+        public async Task AddOrUpdateAsync(HedgeOperationId model)
         {
             var nosqlModel = HedgeStampNoSql.Create(model);
             await _myNoSqlServerDataWriter.InsertOrReplaceAsync(nosqlModel);
         }
 
-        public async Task<HedgeStamp> GetAsync()
+        public async Task<HedgeOperationId> GetAsync()
         {
             var model = await _myNoSqlServerDataWriter.GetAsync(HedgeStampNoSql.GeneratePartitionKey(),
                 HedgeStampNoSql.GenerateRowKey());

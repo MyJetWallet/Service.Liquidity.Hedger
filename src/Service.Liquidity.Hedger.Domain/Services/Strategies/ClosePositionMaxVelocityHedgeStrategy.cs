@@ -12,7 +12,7 @@ namespace Service.Liquidity.Hedger.Domain.Strategies
     {
         public HedgeStrategyType Type { get; set; } = HedgeStrategyType.ClosePositionMaxVelocity;
 
-        public HedgeParams CalculateHedgeParams(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
+        public HedgeInstruction CalculateHedgeParams(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
             HedgeStrategyParams strategyParams)
         {
             var selectedAssets = checks.SelectMany(ch => ch.AssetSymbols).ToHashSet();
@@ -22,14 +22,14 @@ namespace Service.Liquidity.Hedger.Domain.Strategies
                 .OrderBy(a => a.DailyVelocityRiskInUsd)
                 .ToList();
 
-            var hedgeParams = new HedgeParams
+            var hedgeParams = new HedgeInstruction
             {
                 BuyAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
                 SellAssets = portfolio.Assets
                     .Select(a => a.Value)
                     .Where(a => a.GetPositiveNetInUsd() != 0 && !selectedAssets.Contains(a.Symbol))
                     .OrderBy(a => a.DailyVelocityRiskInUsd)
-                    .Select(a => new HedgeAsset
+                    .Select(a => new HedgeSellAssets
                     {
                         Weight = a.DailyVelocityRiskInUsd,
                         Symbol = a.Symbol,
