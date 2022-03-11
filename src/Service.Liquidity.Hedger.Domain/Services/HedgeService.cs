@@ -57,7 +57,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 await _hedgeStampStorage.AddOrUpdateAsync(_lastOperationId);
             }
 
-            if (portfolio.HedgeStamp != null && portfolio.HedgeStamp < _lastOperationId.Value)
+            if (portfolio.HedgeOperationId != null && portfolio.HedgeOperationId < _lastOperationId.Value)
             {
                 _logger.LogWarning("Hedge is skipped. Portfolio hedge stamp less than last hedge stamp");
                 return;
