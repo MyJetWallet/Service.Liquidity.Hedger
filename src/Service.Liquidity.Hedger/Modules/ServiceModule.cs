@@ -18,6 +18,8 @@ namespace Service.Liquidity.Hedger.Modules
                 .AutoActivate().SingleInstance();
             builder.RegisterType<CurrentPricesNoSqlCache>().As<ICurrentPricesCache>().As<IStartable>()
                 .AutoActivate().SingleInstance();
+            builder.RegisterType<HedgeStrategiesFactory>().As<IHedgeStrategiesFactory>()
+                .AutoActivate().SingleInstance();
         }
     }
 }
