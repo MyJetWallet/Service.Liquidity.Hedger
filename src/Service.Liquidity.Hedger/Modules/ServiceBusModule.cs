@@ -1,8 +1,8 @@
 ﻿using Autofac;
 using MyJetWallet.Sdk.ServiceBus;
 using MyServiceBus.Abstractions;
+using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging;
 
 namespace Service.Liquidity.Hedger.Modules
 {
@@ -14,8 +14,8 @@ namespace Service.Liquidity.Hedger.Modules
                 Program.ReloadedSettings(e => e.SpotServiceBusHostPort),
                 Program.LogFactory);
 
-            builder.RegisterMyServiceBusPublisher<HedgeTradeMessage>(serviceBusClient,
-                HedgeTradeMessage.SbTopicName, true);
+            builder.RegisterMyServiceBusPublisher<HedgeTrade>(serviceBusClient,
+                HedgeTrade.TopicName, true);
 
             var queueName = "Liquidity-Hedger";
             builder.RegisterMyServiceBusSubscriberSingle<PortfolioMonitoringMessage>(serviceBusClient,

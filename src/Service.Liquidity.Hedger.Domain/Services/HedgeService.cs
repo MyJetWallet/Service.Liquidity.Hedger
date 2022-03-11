@@ -9,12 +9,14 @@ using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
 using MyJetWallet.Sdk.ServiceBus;
 using Service.Liquidity.Hedger.Domain.Interfaces;
+using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
 using Service.Liquidity.Monitoring.Domain.Models.Hedging;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging.Common;
 using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
+using HedgeParams = Service.Liquidity.Monitoring.Domain.Models.Hedging.Common.HedgeParams;
+using HedgeStamp = Service.Liquidity.Monitoring.Domain.Models.Hedging.HedgeStamp;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {
@@ -22,7 +24,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
     {
         private readonly ILogger<HedgeService> _logger;
         private readonly IExternalMarket _externalMarket;
-        private readonly IServiceBusPublisher<HedgeTradeMessage> _publisher;
+        private readonly IServiceBusPublisher<HedgeTrade> _publisher;
         private readonly IHedgeStampStorage _hedgeStampStorage;
         private readonly ICurrentPricesCache _currentPricesCache;
         private readonly IHedgeStrategiesFactory _hedgeStrategiesFactory;
@@ -32,7 +34,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
         public HedgeService(
             ILogger<HedgeService> logger,
             IExternalMarket externalMarket,
-            IServiceBusPublisher<HedgeTradeMessage> publisher,
+            IServiceBusPublisher<HedgeTrade> publisher,
             IHedgeStampStorage hedgeStampStorage,
             ICurrentPricesCache currentPricesCache,
             IHedgeStrategiesFactory hedgeStrategiesFactory
@@ -153,7 +155,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 var tradeResp = new ExchangeTrade(); //await _externalMarket.MarketTrade(tradeRequest);
 
                 _lastHedgeStamp.Increase();
-                await _publisher.PublishAsync(new HedgeTradeMessage
+                await _publisher.PublishAsync(new HedgeTrade
                 {
                     BaseAsset = hedgeTradeParams.ExchangeMarketInfo.BaseAsset,
                     BaseVolume = Convert.ToDecimal(tradeResp.Volume),
