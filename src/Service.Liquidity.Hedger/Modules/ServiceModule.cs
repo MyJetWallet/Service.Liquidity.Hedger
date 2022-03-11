@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using MyJetWallet.Domain.ExternalMarketApi;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Services;
 using Service.Liquidity.Hedger.NoSql;
@@ -10,6 +11,8 @@ namespace Service.Liquidity.Hedger.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterExternalMarketClient(Program.Settings.ExternalApiGrpcUrl);
+
             builder.RegisterType<PortfolioMonitoringMessageSubscriber>().As<IStartable>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeService>().As<IHedgeService>()

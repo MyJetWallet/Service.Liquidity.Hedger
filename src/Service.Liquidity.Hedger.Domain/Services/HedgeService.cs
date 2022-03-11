@@ -12,7 +12,6 @@ using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
-using Service.Liquidity.Monitoring.Domain.Models.Hedging;
 using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 using HedgeParams = Service.Liquidity.Monitoring.Domain.Models.Hedging.Common.HedgeParams;
