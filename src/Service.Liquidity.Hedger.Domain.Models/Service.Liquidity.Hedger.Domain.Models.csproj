@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>8.0</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MyJetWallet.Service.Liquidity.Monitoring.Client" Version="2.0.23" />
+      <PackageReference Include="MyJetWallet.Service.Liquidity.TradingPortfolio.Client" Version="1.8.3" />
+    </ItemGroup>
+
+</Project>

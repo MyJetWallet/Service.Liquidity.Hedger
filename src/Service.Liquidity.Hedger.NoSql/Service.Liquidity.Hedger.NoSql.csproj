@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Service.Liquidity.Hedger.Domain.Models\Service.Liquidity.Hedger.Domain.Models.csproj" />
+      <ProjectReference Include="..\Service.Liquidity.Hedger.Domain\Service.Liquidity.Hedger.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
