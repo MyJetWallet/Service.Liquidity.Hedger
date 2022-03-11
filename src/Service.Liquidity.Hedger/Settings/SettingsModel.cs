@@ -5,25 +5,25 @@ namespace Service.Liquidity.Hedger.Settings
 {
     public class SettingsModel
     {
-        [YamlProperty("Liquidity.Hedger.SeqServiceUrl")]
+        [YamlProperty("LiquidityHedger.SeqServiceUrl")]
         public string SeqServiceUrl { get; set; }
 
-        [YamlProperty("Liquidity.Hedger.ZipkinUrl")]
+        [YamlProperty("LiquidityHedger.ZipkinUrl")]
         public string ZipkinUrl { get; set; }
 
-        [YamlProperty("Liquidity.Hedger.ElkLogs")]
+        [YamlProperty("LiquidityHedger.ElkLogs")]
         public LogElkSettings ElkLogs { get; set; }
 
-        [YamlProperty("LiquidityMonitoring.MyNoSqlWriterUrl")]
+        [YamlProperty("LiquidityHedger.MyNoSqlWriterUrl")]
         public string MyNoSqlWriterUrl { get; set; }
 
-        [YamlProperty("LiquidityMonitoring.MyNoSqlReaderHostPort")]
+        [YamlProperty("LiquidityHedger.MyNoSqlReaderHostPort")]
         public string MyNoSqlReaderHostPort { get; set; }
 
-        [YamlProperty("LiquidityMonitoring.SpotServiceBusHostPort")]
+        [YamlProperty("LiquidityHedger.SpotServiceBusHostPort")]
         public string SpotServiceBusHostPort { get; set; }
 
-        [YamlProperty("LiquidityMonitoring.ExternalApiGrpcUrl")]
+        [YamlProperty("LiquidityHedger.ExternalApiGrpcUrl")]
         public string ExternalApiGrpcUrl { get; set; }
     }
 }
