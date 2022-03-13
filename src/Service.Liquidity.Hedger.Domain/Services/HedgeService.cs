@@ -61,7 +61,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var market in possibleMarkets)
             {
-                var trade = await TradeAsync(hedgeOperation.Id, market);
+                var trade = await TradeAsync(hedgeInstruction.BuyVolume - tradedVolume, market, hedgeOperation.Id);
                 hedgeOperation.Trades.Add(trade);
                 tradedVolume += Convert.ToDecimal(trade.BaseVolume);
 
@@ -78,7 +78,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeOperation;
         }
 
-        private async Task<HedgeTrade> TradeAsync(long operationId, HedgeExchangeMarket market)
+        private async Task<HedgeTrade> TradeAsync(decimal volume, HedgeExchangeMarket market, long operationId)
         {
             var currentPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
             var possibleVolume = market.ExchangeBalance.Free * currentPrice.Price * BalancePercentToTrade;
@@ -86,7 +86,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 Side = OrderSide.Buy,
                 Market = market.ExchangeMarketInfo.Market,
-                Volume = Convert.ToDouble(possibleVolume),
+                Volume = Convert.ToDouble(possibleVolume < volume ? possibleVolume : volume),
                 ExchangeName = market.ExchangeName,
                 OppositeVolume = 0,
                 ReferenceId = Guid.NewGuid().ToString(),
@@ -103,7 +103,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
                 QuoteVolume = Convert.ToDecimal(tradeResp.Price * tradeResp.Volume),
                 Price = Convert.ToDecimal(tradeResp.Price),
-                Id = tradeResp.ReferenceId
+                Id = tradeResp.ReferenceId,
             };
 
             return hedgeTrade;
