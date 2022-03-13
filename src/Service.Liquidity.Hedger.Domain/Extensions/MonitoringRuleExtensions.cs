@@ -8,6 +8,12 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
         public static bool NeedsHedging(this MonitoringRule rule, out string message)
         {
             message = "";
+
+            if (!rule.CurrentState.IsActive)
+            {
+                message += "Is not active";
+                return false;
+            }
             
             if (rule.HedgeStrategyType == HedgeStrategyType.None)
             {
