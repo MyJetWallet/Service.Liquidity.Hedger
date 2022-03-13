@@ -15,7 +15,9 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
         public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
             HedgeStrategyParams strategyParams)
         {
-            var selectedAssets = checks.SelectMany(ch => ch.AssetSymbols).ToHashSet();
+            var selectedAssets = checks
+                .Where(ch => ch.CurrentState.IsActive)
+                .SelectMany(ch => ch.AssetSymbols).ToHashSet();
             var selectedPositionAssets = portfolio.Assets
                 .Select(a => a.Value)
                 .Where(a => a.GetNegativeNetInUsd() != 0 && selectedAssets.Contains(a.Symbol))
