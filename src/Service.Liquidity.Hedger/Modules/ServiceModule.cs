@@ -17,13 +17,15 @@ namespace Service.Liquidity.Hedger.Modules
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeService>().As<IHedgeService>()
                 .AutoActivate().SingleInstance();
-            builder.RegisterType<HedgeStampNoSqlStorage>().As<IHedgeStampStorage>()
+            builder.RegisterType<HedgeOperationsNoSqlStorage>().As<IHedgeOperationsStorage>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<CurrentPricesNoSqlCache>().As<ICurrentPricesCache>().As<IStartable>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeStrategiesFactory>().As<IHedgeStrategiesFactory>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<MarketsAnalyzer>().As<IMarketsAnalyzer>()
+                .AutoActivate().SingleInstance();
+            builder.RegisterType<PortfolioAnalyzer>().As<IPortfolioAnalyzer>()
                 .AutoActivate().SingleInstance();
         }
     }

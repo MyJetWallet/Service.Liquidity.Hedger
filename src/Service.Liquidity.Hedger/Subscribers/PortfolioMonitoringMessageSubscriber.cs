@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using Autofac;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.ServiceBus;
 using Service.Liquidity.Hedger.Domain.Interfaces;
+using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Subscribers
@@ -14,16 +16,22 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly ILogger<PortfolioMonitoringMessageSubscriber> _logger;
         private readonly ISubscriber<PortfolioMonitoringMessage> _subscriber;
         private readonly IHedgeService _hedgeService;
+        private readonly IPortfolioAnalyzer _portfolioAnalyzer;
+        private readonly IServiceBusPublisher<HedgeOperation> _publisher;
 
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
             ISubscriber<PortfolioMonitoringMessage> subscriber,
-            IHedgeService hedgeService
+            IHedgeService hedgeService,
+            IPortfolioAnalyzer portfolioAnalyzer,
+            IServiceBusPublisher<HedgeOperation> publisher
         )
         {
             _logger = logger;
             _subscriber = subscriber;
             _hedgeService = hedgeService;
+            _portfolioAnalyzer = portfolioAnalyzer;
+            _publisher = publisher;
         }
 
         public void Start()
@@ -53,7 +61,23 @@ namespace Service.Liquidity.Hedger.Subscribers
                     return;
                 }
 
-                await _hedgeService.HedgeAsync(message.RuleSets, message.Checks, message.Portfolio);
+                var hedgeInstruction = await _portfolioAnalyzer.CalculateHedgeInstructionAsync(message.Portfolio,
+                    message.RuleSets, message.Checks);
+                
+                if (hedgeInstruction == null)
+                {
+                    _logger.LogWarning("Hedge is skipped. HedgeOperationId in Portfolio is less than last HedgeOperationId");
+                    return;
+                }
+                
+                var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
+
+                if (hedgeOperation == null)
+                {
+                    return;
+                }
+
+                await _publisher.PublishAsync(hedgeOperation);
             }
             catch (Exception ex)
             {

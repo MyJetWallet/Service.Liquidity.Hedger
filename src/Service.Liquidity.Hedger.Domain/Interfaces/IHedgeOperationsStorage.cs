@@ -3,9 +3,9 @@ using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
-    public interface IHedgeStampStorage
+    public interface IHedgeOperationsStorage
     {
-        Task AddOrUpdateAsync(HedgeOperationId model);
-        Task<HedgeOperationId> GetAsync();
+        Task AddOrUpdateLastAsync(HedgeOperation model);
+        Task<HedgeOperation> GetLastAsync();
     }
 }

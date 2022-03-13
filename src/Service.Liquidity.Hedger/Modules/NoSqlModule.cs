@@ -11,8 +11,8 @@ namespace Service.Liquidity.Hedger.Modules
         {
             var noSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
 
-            builder.RegisterMyNoSqlWriter<HedgeStampNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
-                HedgeStampNoSql.TableName);
+            builder.RegisterMyNoSqlWriter<HedgeOperationNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
+                HedgeOperationNoSql.TableName);
             builder.RegisterMyNoSqlReader<CurrentPricesNoSql>(noSqlClient, CurrentPricesNoSql.TableName);
         }
     }
