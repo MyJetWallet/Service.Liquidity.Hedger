@@ -25,7 +25,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly IHedgeStampStorage _hedgeStampStorage;
         private readonly ICurrentPricesCache _currentPricesCache;
         private readonly IHedgeStrategiesFactory _hedgeStrategiesFactory;
-        private const string ExchangeName = "FTX";
+        private readonly IMarketsAnalyzer _marketsAnalyzer;
         private const decimal BalancePercentToTrade = 0.9m;
         private static HedgeOperationId _lastOperationId;
 
@@ -35,7 +35,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
             IServiceBusPublisher<HedgeOperation> publisher,
             IHedgeStampStorage hedgeStampStorage,
             ICurrentPricesCache currentPricesCache,
-            IHedgeStrategiesFactory hedgeStrategiesFactory
+            IHedgeStrategiesFactory hedgeStrategiesFactory,
+            IMarketsAnalyzer marketsAnalyzer
         )
         {
             _logger = logger;
@@ -44,6 +45,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             _hedgeStampStorage = hedgeStampStorage;
             _currentPricesCache = currentPricesCache;
             _hedgeStrategiesFactory = hedgeStrategiesFactory;
+            _marketsAnalyzer = marketsAnalyzer;
         }
 
         public async Task HedgeAsync(ICollection<MonitoringRuleSet> ruleSets, ICollection<PortfolioCheck> checks,
@@ -63,20 +65,20 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 return;
             }
 
-            var hedgeParams = GetHedgeTarget(ruleSets, checks, portfolio);
+            var hedgeInstruction = CalculateHedgeInstruction(ruleSets, checks, portfolio);
 
-            if (hedgeParams == null)
+            if (hedgeInstruction == null)
             {
                 _logger.LogWarning("No rule for hedging");
                 return;
             }
 
-            await HedgeAsync(hedgeParams);
+            await HedgeAsync(hedgeInstruction);
         }
 
         private async Task HedgeAsync(HedgeInstruction hedgeInstruction)
         {
-            var possibleMarkets = await FindPossibleMarketsAsync(hedgeInstruction);
+            var possibleMarkets = await _marketsAnalyzer.FindPossibleAsync(hedgeInstruction);
 
             if (!possibleMarkets.Any())
             {
@@ -143,64 +145,28 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeTrade;
         }
 
-        private async Task<List<HedgeExchangeMarket>> FindPossibleMarketsAsync(HedgeInstruction hedgeInstruction)
-        {
-            var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
-            {
-                ExchangeName = ExchangeName
-            });
-            var marketInfosResp = await _externalMarket.GetMarketInfoListAsync(new GetMarketInfoListRequest
-            {
-                ExchangeName = ExchangeName
-            });
-            var hedgeTradeParamsList = new List<HedgeExchangeMarket>();
-
-            foreach (var sellAsset in hedgeInstruction.SellAssets)
-            {
-                var marketInfo = marketInfosResp.Infos
-                    .FirstOrDefault(m => m.BaseAsset == hedgeInstruction.BuyAssetSymbol && m.QuoteAsset == sellAsset.Symbol);
-                var exchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
-
-                if (marketInfo == null || exchangeBalance == null)
-                {
-                    _logger.LogWarning("SellAsset {@sellAsset} is skipped. {@marketInfo} {@exchangeBalance}",
-                        sellAsset, marketInfo, exchangeBalance);
-                    continue;
-                }
-
-                hedgeTradeParamsList.Add(new HedgeExchangeMarket
-                {
-                    ExchangeName = ExchangeName,
-                    Weight = sellAsset.Weight,
-                    ExchangeBalance = exchangeBalance,
-                    ExchangeMarketInfo = marketInfo
-                });
-            }
-
-            return hedgeTradeParamsList;
-        }
-
-        private HedgeInstruction GetHedgeTarget(ICollection<MonitoringRuleSet> ruleSets,
+        private HedgeInstruction CalculateHedgeInstruction(ICollection<MonitoringRuleSet> ruleSets,
             ICollection<PortfolioCheck> checks,
             Portfolio portfolio)
         {
-            var paramsList = new List<HedgeInstruction>();
+            var hedgeInstructions = new List<HedgeInstruction>();
 
             foreach (var ruleSte in ruleSets?.Where(rs => rs.NeedsHedging()) ?? Array.Empty<MonitoringRuleSet>())
             {
                 foreach (var rule in ruleSte.Rules?.Where(r => r.NeedsHedging()) ?? Array.Empty<MonitoringRule>())
                 {
+                    var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
                     var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
-                    var hedgeParams = strategy.CalculateHedgeParams(portfolio, checks, rule.HedgeStrategyParams);
-                    paramsList.Add(hedgeParams);
+                    var instruction = strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
+                    hedgeInstructions.Add(instruction);
                 }
             }
 
-            var highestPriorityParams = paramsList
-                .Where(hedgeParams => hedgeParams.Validate(out _))
-                .MaxBy(hedgeParams => hedgeParams.BuyVolume);
+            var highestPriorityInstruction = hedgeInstructions
+                .Where(instruction => instruction.Validate(out _))
+                .MaxBy(instruction => instruction.BuyVolume);
 
-            return highestPriorityParams;
+            return highestPriorityInstruction;
         }
     }
 }

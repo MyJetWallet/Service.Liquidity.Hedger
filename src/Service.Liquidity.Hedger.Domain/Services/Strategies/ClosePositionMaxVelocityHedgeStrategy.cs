@@ -6,13 +6,13 @@ using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
-namespace Service.Liquidity.Hedger.Domain.Strategies
+namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 {
     public class ClosePositionMaxVelocityHedgeStrategy : IHedgeStrategy
     {
         public HedgeStrategyType Type { get; set; } = HedgeStrategyType.ClosePositionMaxVelocity;
 
-        public HedgeInstruction CalculateHedgeParams(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
+        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
             HedgeStrategyParams strategyParams)
         {
             var selectedAssets = checks.SelectMany(ch => ch.AssetSymbols).ToHashSet();

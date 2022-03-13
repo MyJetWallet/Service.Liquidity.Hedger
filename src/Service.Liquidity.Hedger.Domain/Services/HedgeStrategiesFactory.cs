@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Hedger.Domain.Strategies;
+using Service.Liquidity.Hedger.Domain.Services.Strategies;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {

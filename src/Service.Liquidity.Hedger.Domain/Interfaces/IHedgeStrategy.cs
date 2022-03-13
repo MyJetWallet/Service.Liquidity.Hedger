@@ -9,7 +9,7 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
     {
         public HedgeStrategyType Type { get; set; }
 
-        public HedgeInstruction CalculateHedgeParams(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
+        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
             HedgeStrategyParams strategyParams);
     }
 }
