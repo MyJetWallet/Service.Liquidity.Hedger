@@ -6,24 +6,45 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
 {
     public static class MonitoringRuleSetExtensions
     {
-        public static bool NeedsHedging(this MonitoringRuleSet ruleSet)
+        public static bool NeedsHedging(this MonitoringRuleSet ruleSet, out string message)
         {
+            message = $"RuleSet {ruleSet.Name}:";
+
             if (ruleSet.Rules == null || !ruleSet.Rules.Any())
             {
+                message += "No rules;";
                 return false;
             }
 
-            var activeRules = ruleSet.Rules.Where(rule => rule.CurrentState.IsActive && rule.NeedsHedging()).ToList();
+            message += "Has rules;";
+
+            var activeRules = ruleSet.Rules.Where(rule => rule.CurrentState.IsActive).ToArray();
 
             if (!activeRules.Any())
             {
+                message += "No active rules;";
                 return false;
             }
 
-            if (activeRules.Any(rule => rule.HedgeStrategyType == HedgeStrategyType.Return))
+            message += "Has active rules;";
+
+            var hedgingRules = activeRules.Where(rule => rule.NeedsHedging(out _)).ToArray();
+
+            if (!hedgingRules.Any())
             {
+                message += "No hedging rules;";
                 return false;
             }
+
+            message += "Has hedging rules";
+
+            if (hedgingRules.Any(rule => rule.HedgeStrategyType == HedgeStrategyType.Return))
+            {
+                message += "Contains Return rule;";
+                return false;
+            }
+
+            message += "Don't has return rule;";
 
             return true;
         }

@@ -22,7 +22,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 .OrderBy(a => a.DailyVelocityRiskInUsd)
                 .ToList();
 
-            var hedgeParams = new HedgeInstruction
+            var hedgeInstruction = new HedgeInstruction
             {
                 BuyAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
                 SellAssets = portfolio.Assets
@@ -40,7 +40,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                             (strategyParams.AmountPercent / 100)
             };
 
-            return hedgeParams;
+            return hedgeInstruction;
         }
     }
 }

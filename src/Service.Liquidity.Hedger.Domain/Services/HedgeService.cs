@@ -146,25 +146,43 @@ namespace Service.Liquidity.Hedger.Domain.Services
         }
 
         private HedgeInstruction CalculateHedgeInstruction(ICollection<MonitoringRuleSet> ruleSets,
-            ICollection<PortfolioCheck> checks,
-            Portfolio portfolio)
+            ICollection<PortfolioCheck> checks, Portfolio portfolio)
         {
             var hedgeInstructions = new List<HedgeInstruction>();
 
-            foreach (var ruleSte in ruleSets?.Where(rs => rs.NeedsHedging()) ?? Array.Empty<MonitoringRuleSet>())
+            foreach (var ruleSet in ruleSets ?? Array.Empty<MonitoringRuleSet>())
             {
-                foreach (var rule in ruleSte.Rules?.Where(r => r.NeedsHedging()) ?? Array.Empty<MonitoringRule>())
+                var isHedgeRuleSet = ruleSet.NeedsHedging(out var ruleSetMessage);
+
+                _logger.LogInformation("RuleSet {@ruleSet} analyze message: {@message}", ruleSet, ruleSetMessage);
+
+                if (!isHedgeRuleSet)
                 {
-                    var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
-                    var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
-                    var instruction = strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
-                    hedgeInstructions.Add(instruction);
+                    foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
+                    {
+                        var isHedgeRule = rule.NeedsHedging(out var ruleMessage);
+
+                        _logger.LogInformation("Rule {@ruleSet} analyze message: {@message}", ruleSet, ruleMessage);
+
+                        if (isHedgeRule)
+                        {
+                            var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
+                            var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
+                            var instruction = strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
+
+                            if (instruction.Validate(out _))
+                            {
+                                _logger.LogInformation("Calculated hedge instruction {@instruction} for rule {@rule}", instruction, rule);
+                                hedgeInstructions.Add(instruction);
+                            }
+                        }
+                    }
                 }
             }
 
-            var highestPriorityInstruction = hedgeInstructions
-                .Where(instruction => instruction.Validate(out _))
-                .MaxBy(instruction => instruction.BuyVolume);
+            var highestPriorityInstruction = hedgeInstructions.MaxBy(instruction => instruction.BuyVolume);
+            
+            _logger.LogInformation("Highest priority hedge instruction: {@instruction}", highestPriorityInstruction);
 
             return highestPriorityInstruction;
         }
