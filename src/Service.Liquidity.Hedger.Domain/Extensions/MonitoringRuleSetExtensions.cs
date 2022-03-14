@@ -8,7 +8,7 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
     {
         public static bool NeedsHedging(this MonitoringRuleSet ruleSet, out string message)
         {
-            message = $"RuleSet {ruleSet.Name}:";
+            message = "";
 
             if (ruleSet.Rules == null || !ruleSet.Rules.Any())
             {

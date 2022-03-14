@@ -38,6 +38,8 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             portfolio.HedgeOperationId != null &&
             portfolio.HedgeOperationId < lastOperation.Id)
         {
+            _logger.LogWarning(
+                "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio is less than last HedgeOperationId");
             return null;
         }
 
@@ -61,7 +63,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         {
             var isHedgeRuleSet = ruleSet.NeedsHedging(out var ruleSetMessage);
 
-            _logger.LogInformation("RuleSet {@ruleSet} analyze message: {@message}", ruleSet, ruleSetMessage);
+            _logger.LogInformation("Is RuleSet {@ruleSet} NeedsHedging: {@message}", ruleSet, ruleSetMessage);
 
             if (!isHedgeRuleSet)
             {
@@ -69,7 +71,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 {
                     var isHedgeRule = rule.NeedsHedging(out var ruleMessage);
 
-                    _logger.LogInformation("Rule {@ruleSet} analyze message: {@message}", ruleSet, ruleMessage);
+                    _logger.LogInformation("Is Rule {@rule} NeedsHedging: {@message}", rule, ruleMessage);
 
                     if (isHedgeRule)
                     {
@@ -87,6 +89,12 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                     }
                 }
             }
+        }
+
+        if (!hedgeInstructions.Any())
+        {
+            _logger.LogInformation("Can't CalculateHedgeInstruction. No rules for hedging");
+            return null;
         }
 
         var highestPriorityInstruction = hedgeInstructions.MaxBy(instruction => instruction.BuyVolume);

@@ -66,7 +66,6 @@ namespace Service.Liquidity.Hedger.Subscribers
                 
                 if (hedgeInstruction == null)
                 {
-                    _logger.LogWarning("Hedge is skipped. HedgeOperationId in Portfolio is less than last HedgeOperationId");
                     return;
                 }
                 
