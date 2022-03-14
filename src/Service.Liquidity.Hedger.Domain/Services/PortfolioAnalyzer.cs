@@ -45,12 +45,6 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
         var hedgeInstruction = CalculateHedgeInstruction(portfolio, ruleSets, checks);
 
-        if (hedgeInstruction == null)
-        {
-            _logger.LogWarning("No rule for hedging");
-            return null;
-        }
-
         return hedgeInstruction;
     }
 
@@ -68,7 +62,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 continue;
             }
             
-            _logger.LogInformation("RuleSet {@ruleSet} NeedsHedging: {@message}", ruleSet, ruleSetMessage);
+            _logger.LogInformation("Found hedging RuleSet {@ruleSet}: {@message}", ruleSet, ruleSetMessage);
 
             foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
             {
@@ -79,7 +73,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                     continue;
                 }
                 
-                _logger.LogInformation("Rule {@rule} NeedsHedging: {@message}", rule, ruleMessage);
+                _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule, ruleMessage);
 
                 var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
                 var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
@@ -97,7 +91,6 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
         if (!hedgeInstructions.Any())
         {
-            _logger.LogInformation("Can't CalculateHedgeInstruction. No rules for hedging");
             return null;
         }
 

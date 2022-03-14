@@ -36,7 +36,7 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
                 return false;
             }
 
-            message += "Has hedging rules";
+            message += "Has hedging rules;";
 
             if (hedgingRules.Any(rule => rule.HedgeStrategyType == HedgeStrategyType.Return))
             {

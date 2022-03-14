@@ -18,6 +18,7 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly IHedgeService _hedgeService;
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IServiceBusPublisher<HedgeOperation> _publisher;
+        private static bool _isHedging;
 
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
@@ -43,6 +44,11 @@ namespace Service.Liquidity.Hedger.Subscribers
         {
             try
             {
+                if (_isHedging)
+                {
+                    return;
+                }
+                
                 if (message.Portfolio == null)
                 {
                     _logger.LogWarning("Received PortfolioMonitoringMessage without Portfolio");
@@ -60,15 +66,17 @@ namespace Service.Liquidity.Hedger.Subscribers
                     _logger.LogWarning("Received PortfolioMonitoringMessage without RuleSets");
                     return;
                 }
+                
+                _isHedging = true;
 
                 var hedgeInstruction = await _portfolioAnalyzer.CalculateHedgeInstructionAsync(message.Portfolio,
                     message.RuleSets, message.Checks);
-                
+
                 if (hedgeInstruction == null)
                 {
                     return;
                 }
-                
+
                 var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
 
                 if (hedgeOperation == null)
@@ -81,6 +89,10 @@ namespace Service.Liquidity.Hedger.Subscribers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to handle {@message}", message);
+            }
+            finally
+            {
+                _isHedging = false;
             }
         }
     }

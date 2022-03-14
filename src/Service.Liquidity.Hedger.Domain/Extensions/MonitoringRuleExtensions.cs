@@ -11,15 +11,27 @@ namespace Service.Liquidity.Hedger.Domain.Extensions
 
             if (!rule.CurrentState.IsActive)
             {
-                message += "Is not active";
+                message += "Is not active;";
                 return false;
             }
+
+            message += "Is active;";
             
             if (rule.HedgeStrategyType == HedgeStrategyType.None)
             {
-                message += "Has none strategy";
+                message += "Has none strategy;";
                 return false;
             }
+
+            message += $"Has {rule.HedgeStrategyType.ToString()} strategy;";
+            
+            if (rule.HedgeStrategyParams == null || rule.HedgeStrategyParams.AmountPercent < 0)
+            {
+                message += "Doesn't Has hedge percent amount;";
+                return false;
+            }
+
+            message += "Has hedge percent amount;";
 
             return true;
         }
