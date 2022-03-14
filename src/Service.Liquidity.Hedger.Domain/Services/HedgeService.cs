@@ -107,7 +107,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
                 QuoteVolume = Convert.ToDecimal(tradeResp.Price * tradeResp.Volume),
                 Price = Convert.ToDecimal(tradeResp.Price),
-                Id = tradeResp.ReferenceId,
+                Id = tradeResp.ReferenceId ?? tradeRequest.ReferenceId,
             };
 
             return hedgeTrade;

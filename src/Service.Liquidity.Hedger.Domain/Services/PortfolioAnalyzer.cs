@@ -34,6 +34,12 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
     {
         var lastOperation = await _hedgeOperationsStorage.GetLastAsync();
 
+        if (lastOperation != null && portfolio.HedgeOperationId == null)
+        {
+            _logger.LogWarning("Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio is empty");
+            return null;
+        }
+
         if (lastOperation != null &&
             portfolio.HedgeOperationId != null &&
             portfolio.HedgeOperationId < lastOperation.Id)
