@@ -63,30 +63,34 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         {
             var isHedgeRuleSet = ruleSet.NeedsHedging(out var ruleSetMessage);
 
-            _logger.LogInformation("Is RuleSet {@ruleSet} NeedsHedging: {@message}", ruleSet, ruleSetMessage);
-
-            if (isHedgeRuleSet)
+            if (!isHedgeRuleSet)
             {
-                foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
+                continue;
+            }
+            
+            _logger.LogInformation("RuleSet {@ruleSet} NeedsHedging: {@message}", ruleSet, ruleSetMessage);
+
+            foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
+            {
+                var isHedgeRule = rule.NeedsHedging(out var ruleMessage);
+
+                if (!isHedgeRule)
                 {
-                    var isHedgeRule = rule.NeedsHedging(out var ruleMessage);
+                    continue;
+                }
+                
+                _logger.LogInformation("Rule {@rule} NeedsHedging: {@message}", rule, ruleMessage);
 
-                    _logger.LogInformation("Is Rule {@rule} NeedsHedging: {@message}", rule, ruleMessage);
+                var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
+                var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
+                var instruction =
+                    strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
 
-                    if (isHedgeRule)
-                    {
-                        var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
-                        var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
-                        var instruction =
-                            strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
-
-                        if (instruction.Validate(out _))
-                        {
-                            _logger.LogInformation("Calculated hedge instruction {@instruction} for rule {@rule}",
-                                instruction, rule);
-                            hedgeInstructions.Add(instruction);
-                        }
-                    }
+                if (instruction.Validate(out _))
+                {
+                    _logger.LogInformation("Calculated hedge instruction {@instruction} for rule {@rule}",
+                        instruction, rule);
+                    hedgeInstructions.Add(instruction);
                 }
             }
         }
