@@ -102,7 +102,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     $"Can't make trade. Trade Volume {targetVolume} less than market min volume {market.ExchangeMarketInfo.MinVolume}");
             }
 
-            var tradeResp = new ExchangeTrade(); //await _externalMarket.MarketTrade(tradeRequest);
+            var tradeResp = await _externalMarket.MarketTrade(tradeRequest);
 
             var hedgeTrade = new HedgeTrade
             {
