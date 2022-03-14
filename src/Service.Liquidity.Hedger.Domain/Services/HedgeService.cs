@@ -84,17 +84,23 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeOperation;
         }
 
-        private async Task<HedgeTrade> TradeAsync(decimal volume, HedgeExchangeMarket market, long operationId)
+        private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, long operationId)
         {
             var tradeRequest = new MarketTradeRequest
             {
                 Side = OrderSide.Buy,
                 Market = market.ExchangeMarketInfo.Market,
-                Volume = Convert.ToDouble(volume),
+                Volume = Convert.ToDouble(targetVolume),
                 ExchangeName = market.ExchangeName,
                 OppositeVolume = 0,
                 ReferenceId = Guid.NewGuid().ToString(),
             };
+
+            if (tradeRequest.Volume < market.ExchangeMarketInfo.MinVolume)
+            {
+                throw new Exception(
+                    $"Can't make trade. Trade Volume {targetVolume} less than market min volume {market.ExchangeMarketInfo.MinVolume}");
+            }
 
             var tradeResp = new ExchangeTrade(); //await _externalMarket.MarketTrade(tradeRequest);
 
