@@ -54,7 +54,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             decimal tradedVolume = 0;
             var hedgeOperation = new HedgeOperation
             {
-                Id = DateTime.UtcNow.Ticks,
+                Id = await _hedgeOperationsStorage.GetNextIdAsync(),
                 TargetVolume = hedgeInstruction.TargetVolume,
                 Trades = new List<HedgeTrade>(possibleMarkets.Count)
             };
