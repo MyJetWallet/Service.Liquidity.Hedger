@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using DotNetCoreDecorators;
@@ -18,8 +19,8 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly IHedgeService _hedgeService;
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IServiceBusPublisher<HedgeOperation> _publisher;
-        private static bool _isHedging;
-
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
             ISubscriber<PortfolioMonitoringMessage> subscriber,
@@ -42,13 +43,17 @@ namespace Service.Liquidity.Hedger.Subscribers
 
         private async ValueTask Handle(PortfolioMonitoringMessage message)
         {
+            var isHandleStarted = false;
             try
             {
-                if (_isHedging)
+                if (_semaphore.CurrentCount == 0)
                 {
                     return;
                 }
-                
+
+                await _semaphore.WaitAsync();
+                isHandleStarted = true;
+
                 if (message.Portfolio == null)
                 {
                     _logger.LogWarning("Received PortfolioMonitoringMessage without Portfolio");
@@ -66,8 +71,6 @@ namespace Service.Liquidity.Hedger.Subscribers
                     _logger.LogWarning("Received PortfolioMonitoringMessage without RuleSets");
                     return;
                 }
-                
-                _isHedging = true;
 
                 var hedgeInstruction = await _portfolioAnalyzer.CalculateHedgeInstructionAsync(message.Portfolio,
                     message.RuleSets, message.Checks);
@@ -92,7 +95,10 @@ namespace Service.Liquidity.Hedger.Subscribers
             }
             finally
             {
-                _isHedging = false;
+                if (isHandleStarted)
+                {
+                    _semaphore.Release();
+                }
             }
         }
     }
