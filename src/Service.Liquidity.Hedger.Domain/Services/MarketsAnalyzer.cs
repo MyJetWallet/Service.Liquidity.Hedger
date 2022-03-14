@@ -36,24 +36,24 @@ public class MarketsAnalyzer : IMarketsAnalyzer
         });
         var markets = new List<HedgeExchangeMarket>();
 
-        foreach (var sellAsset in hedgeInstruction.QuoteAssets)
+        foreach (var quoteAsset in hedgeInstruction.QuoteAssets)
         {
             var exchangeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
                 m.BaseAsset == hedgeInstruction.BaseAssetSymbol &&
-                m.QuoteAsset == sellAsset.Symbol);
-            var exchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
+                m.QuoteAsset == quoteAsset.Symbol);
+            var exchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == quoteAsset.Symbol);
 
             if (exchangeMarketInfo == null || exchangeBalance == null)
             {
                 _logger.LogInformation("SellAsset {@sellAsset} is skipped. {@marketInfo} {@exchangeBalance}",
-                    sellAsset, exchangeMarketInfo, exchangeBalance);
+                    quoteAsset, exchangeMarketInfo, exchangeBalance);
                 continue;
             }
 
             markets.Add(new HedgeExchangeMarket
             {
                 ExchangeName = ExchangeName,
-                Weight = sellAsset.Weight,
+                Weight = quoteAsset.Weight,
                 QuoteAssetExchangeBalance = exchangeBalance,
                 ExchangeMarketInfo = exchangeMarketInfo
             });

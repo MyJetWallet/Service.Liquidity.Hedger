@@ -8,7 +8,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
     public class HedgeInstruction
     {
         [DataMember(Order = 1)] public string BaseAssetSymbol { get; set; }
-        [DataMember(Order = 2)] public List<HedgeSellAssets> QuoteAssets { get; set; } = new();
+        [DataMember(Order = 2)] public List<HedgeQuoteAssets> QuoteAssets { get; set; } = new();
         [DataMember(Order = 3)] public decimal TargetVolume { get; set; }
 
         public bool Validate(out ICollection<string> errors)
