@@ -61,7 +61,14 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var market in possibleMarkets)
             {
-                var trade = await TradeAsync(hedgeInstruction.BuyVolume - tradedVolume, market, hedgeOperation.Id);
+                var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
+                var possibleVolumeToSell = market.ExchangeBalance.Free * marketPrice.Price * BalancePercentToTrade;
+                var remainingVolumeToBuy = hedgeInstruction.BuyVolume - tradedVolume;
+                var volumeToBuy = possibleVolumeToSell < remainingVolumeToBuy
+                    ? possibleVolumeToSell 
+                    : remainingVolumeToBuy;
+                
+                var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
                 hedgeOperation.Trades.Add(trade);
                 tradedVolume += Convert.ToDecimal(trade.BaseVolume);
 
@@ -71,8 +78,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
             }
 
-            _logger.LogInformation(
-                $"Hedge ended. TradedVolume={tradedVolume} TargetVolume={hedgeInstruction.BuyVolume}");
+            _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
             await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
 
             return hedgeOperation;
@@ -80,13 +86,11 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
         private async Task<HedgeTrade> TradeAsync(decimal volume, HedgeExchangeMarket market, long operationId)
         {
-            var currentPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
-            var possibleVolume = market.ExchangeBalance.Free * currentPrice.Price * BalancePercentToTrade;
             var tradeRequest = new MarketTradeRequest
             {
                 Side = OrderSide.Buy,
                 Market = market.ExchangeMarketInfo.Market,
-                Volume = Convert.ToDouble(possibleVolume < volume ? possibleVolume : volume),
+                Volume = Convert.ToDouble(volume),
                 ExchangeName = market.ExchangeName,
                 OppositeVolume = 0,
                 ReferenceId = Guid.NewGuid().ToString(),
