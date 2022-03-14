@@ -65,7 +65,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
             _logger.LogInformation("Is RuleSet {@ruleSet} NeedsHedging: {@message}", ruleSet, ruleSetMessage);
 
-            if (!isHedgeRuleSet)
+            if (isHedgeRuleSet)
             {
                 foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
                 {
