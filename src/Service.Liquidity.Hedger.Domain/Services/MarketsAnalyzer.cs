@@ -36,10 +36,10 @@ public class MarketsAnalyzer : IMarketsAnalyzer
         });
         var markets = new List<HedgeExchangeMarket>();
 
-        foreach (var sellAsset in hedgeInstruction.SellAssets)
+        foreach (var sellAsset in hedgeInstruction.QuoteAssets)
         {
             var exchangeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
-                m.BaseAsset == hedgeInstruction.BuyAssetSymbol &&
+                m.BaseAsset == hedgeInstruction.BaseAssetSymbol &&
                 m.QuoteAsset == sellAsset.Symbol);
             var exchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
 
@@ -54,7 +54,7 @@ public class MarketsAnalyzer : IMarketsAnalyzer
             {
                 ExchangeName = ExchangeName,
                 Weight = sellAsset.Weight,
-                ExchangeBalance = exchangeBalance,
+                QuoteAssetExchangeBalance = exchangeBalance,
                 ExchangeMarketInfo = exchangeMarketInfo
             });
         }

@@ -100,7 +100,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             return null;
         }
 
-        var highestPriorityInstruction = hedgeInstructions.MaxBy(instruction => instruction.BuyVolume);
+        var highestPriorityInstruction = hedgeInstructions.MaxBy(instruction => instruction.TargetVolume);
 
         _logger.LogInformation("Highest priority hedge instruction: {@instruction}", highestPriorityInstruction);
 

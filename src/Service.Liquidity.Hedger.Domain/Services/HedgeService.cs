@@ -55,15 +55,15 @@ namespace Service.Liquidity.Hedger.Domain.Services
             var hedgeOperation = new HedgeOperation
             {
                 Id = DateTime.UtcNow.Ticks,
-                TargetVolume = hedgeInstruction.BuyVolume,
+                TargetVolume = hedgeInstruction.TargetVolume,
                 Trades = new List<HedgeTrade>(possibleMarkets.Count)
             };
 
             foreach (var market in possibleMarkets)
             {
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
-                var possibleVolumeToSell = market.ExchangeBalance.Free * marketPrice.Price * BalancePercentToTrade;
-                var remainingVolumeToBuy = hedgeInstruction.BuyVolume - tradedVolume;
+                var possibleVolumeToSell = market.QuoteAssetExchangeBalance.Free * marketPrice.Price * BalancePercentToTrade;
+                var remainingVolumeToBuy = hedgeInstruction.TargetVolume - tradedVolume;
                 var volumeToBuy = possibleVolumeToSell < remainingVolumeToBuy
                     ? possibleVolumeToSell 
                     : remainingVolumeToBuy;
@@ -72,7 +72,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 hedgeOperation.Trades.Add(trade);
                 tradedVolume += Convert.ToDecimal(trade.BaseVolume);
 
-                if (tradedVolume >= hedgeInstruction.BuyVolume)
+                if (tradedVolume >= hedgeInstruction.TargetVolume)
                 {
                     break;
                 }
