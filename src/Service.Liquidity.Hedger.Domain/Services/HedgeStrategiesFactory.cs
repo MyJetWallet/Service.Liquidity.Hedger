@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
+using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {

@@ -2,6 +2,7 @@
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
+using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Services.Strategies
