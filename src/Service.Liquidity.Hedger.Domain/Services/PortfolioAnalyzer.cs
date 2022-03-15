@@ -45,7 +45,8 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             portfolio.HedgeOperationId == lastOperation.Id)
         {
             _logger.LogWarning(
-                "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio is less than last HedgeOperationId");
+                "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio doesn't equals. Portfolio.OperationId={@port} != OperationId={@operation}",
+                portfolio.HedgeOperationId, lastOperation.Id);
             return null;
         }
 
@@ -67,7 +68,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             {
                 continue;
             }
-            
+
             _logger.LogInformation("Found hedging RuleSet {@ruleSet}: {@message}", ruleSet, ruleSetMessage);
 
             foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
@@ -78,7 +79,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 {
                     continue;
                 }
-                
+
                 _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule, ruleMessage);
 
                 var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
