@@ -47,7 +47,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             portfolio.HedgeOperationId == lastOperation.Id)
         {
             _logger.LogWarning(
-                "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio doesn't equals. Portfolio.OperationId={@port} != OperationId={@operation}",
+                "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio doesn't equals. Portfolio.OperationId={@portfolioOperationId} != OperationId={@lastOperationId}",
                 portfolio.HedgeOperationId, lastOperation.Id);
             return null;
         }

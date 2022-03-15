@@ -14,14 +14,17 @@ public class MarketsAnalyzer : IMarketsAnalyzer
     private readonly ILogger<MarketsAnalyzer> _logger;
     private readonly IExternalMarket _externalMarket;
     private const string ExchangeName = "FTX";
+    private readonly ICurrentPricesCache _currentPricesCache;
 
     public MarketsAnalyzer(
         ILogger<MarketsAnalyzer> logger,
-        IExternalMarket externalMarket
+        IExternalMarket externalMarket,
+        ICurrentPricesCache currentPricesCache
     )
     {
         _logger = logger;
         _externalMarket = externalMarket;
+        _currentPricesCache = currentPricesCache;
     }
 
     public async Task<ICollection<HedgeExchangeMarket>> FindPossibleAsync(HedgeInstruction hedgeInstruction)
@@ -45,8 +48,26 @@ public class MarketsAnalyzer : IMarketsAnalyzer
 
             if (exchangeMarketInfo == null || exchangeBalance == null)
             {
-                _logger.LogInformation("QuoteAsset {@sellAsset} is skipped. MarketInfo={@marketInfo} ExchangeBalance={@exchangeBalance}",
-                    quoteAsset, exchangeMarketInfo, exchangeBalance);
+                _logger.LogWarning(
+                    "QuoteAsset {@quoteAsset} is skipped. Market {@marketInfo}; ExchangeBalance={@exchangeBalance}",
+                    quoteAsset.Symbol, exchangeMarketInfo?.Market, exchangeBalance);
+                continue;
+            }
+
+            if (exchangeBalance.Free <= 0)
+            {
+                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. Free balance on exchange is 0", quoteAsset.Symbol);
+                continue;
+            }
+
+            var marketPrice = _currentPricesCache.Get(ExchangeName, exchangeMarketInfo.Market);
+            var possibleVolumeToSell = exchangeBalance.Free * marketPrice.Price;
+
+            if (possibleVolumeToSell < hedgeInstruction.TargetVolume)
+            {
+                _logger.LogWarning(
+                    "QuoteAsset {@quoteAsset} is skipped. Not enough free balance: {@price} {@possibleVolume} {@targetVolume}",
+                    quoteAsset.Symbol, marketPrice, possibleVolumeToSell, hedgeInstruction.TargetVolume);
                 continue;
             }
 
