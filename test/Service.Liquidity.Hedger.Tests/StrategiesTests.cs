@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using NUnit.Framework;
+using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
@@ -99,7 +102,7 @@ public class StrategiesTests
         {
             AmountPercent = 30m,
         };
-        var strategy = new ClosePositionMaxVelocityHedgeStrategy();
+        var strategy = new ClosePositionMaxVelocityHedgeStrategy(Substitute.For<ILogger<IHedgeStrategy>>());
         
         var instruction = strategy.CalculateHedgeInstruction(portfolio, checks, strParams);
         

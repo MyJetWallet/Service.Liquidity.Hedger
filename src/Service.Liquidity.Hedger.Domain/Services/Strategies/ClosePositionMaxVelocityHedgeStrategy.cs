@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
@@ -10,7 +11,14 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 {
     public class ClosePositionMaxVelocityHedgeStrategy : IHedgeStrategy
     {
+        private readonly ILogger<IHedgeStrategy> _logger;
         public HedgeStrategyType Type { get; set; } = HedgeStrategyType.ClosePositionMaxVelocity;
+
+        public ClosePositionMaxVelocityHedgeStrategy(
+            ILogger<IHedgeStrategy> logger)
+        {
+            _logger = logger;
+        }
 
         public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
             HedgeStrategyParams strategyParams)
@@ -35,15 +43,19 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 })
                 .ToList();
 
-            var hedgeInstruction = new HedgeInstruction
+            var instruction = new HedgeInstruction
             {
                 BaseAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
                 QuoteAssets = collateralAssets,
                 TargetVolume = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalance)) *
-                            (strategyParams.AmountPercent / 100)
+                               (strategyParams.AmountPercent / 100)
             };
 
-            return hedgeInstruction;
+            _logger.LogInformation(
+                "CalculateHedgeInstruction: {@instruction} {@selectedPositionAssets} {@collateralAssets}", instruction,
+                selectedPositionAssets, collateralAssets);
+
+            return instruction;
         }
     }
 }

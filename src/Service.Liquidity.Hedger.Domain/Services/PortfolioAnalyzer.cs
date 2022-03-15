@@ -91,27 +91,25 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
                 if (instruction.Validate(out var message))
                 {
-                    _logger.LogInformation("Calculated hedge instruction {@instruction} for rule {@rule}",
-                        instruction, rule);
                     hedgeInstructions.Add(instruction);
                 }
                 else
                 {
-                    _logger.LogWarning("Invalid hedge instruction {@instruction} for rule {@rule} {@message}",
-                        instruction, rule, message);
+                    _logger.LogWarning("HedgeInstruction is skipped: {@instruction} {@message}",
+                        instruction, message);
                 }
             }
         }
 
         if (!hedgeInstructions.Any())
         {
-            _logger.LogWarning("No valid hedge instructions");
+            _logger.LogWarning("No valid HedgeInstructions");
             return null;
         }
 
         var highestPriorityInstruction = hedgeInstructions.MaxBy(instruction => instruction.TargetVolume);
 
-        _logger.LogInformation("Highest priority hedge instruction: {@instruction}", highestPriorityInstruction);
+        _logger.LogInformation("Selected HedgeInstruction: {@instruction}", highestPriorityInstruction);
 
         return highestPriorityInstruction;
     }
