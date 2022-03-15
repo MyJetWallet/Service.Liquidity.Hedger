@@ -62,42 +62,41 @@ namespace Service.Liquidity.Hedger.Domain.Services
             foreach (var market in possibleMarkets)
             {
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
-                var possibleVolumeToSell = market.QuoteAssetExchangeBalance.Free * marketPrice.Price * BalancePercentToTrade;
+                var possibleVolumeToSell =
+                    market.QuoteAssetExchangeBalance.Free * marketPrice.Price * BalancePercentToTrade;
                 var remainingVolumeToBuy = hedgeInstruction.TargetVolume - tradedVolume;
                 var volumeToBuy = possibleVolumeToSell < remainingVolumeToBuy
-                    ? possibleVolumeToSell 
+                    ? possibleVolumeToSell
                     : remainingVolumeToBuy;
-                
+
                 if (Convert.ToDouble(volumeToBuy) < market.ExchangeMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        $"Can't Trade on  market{market.ExchangeMarketInfo.Market}. Target Volume {volumeToBuy} less than MarketMinVolume {market.ExchangeMarketInfo.MinVolume}");
+                        "Can't Trade on  market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
+                        market.ExchangeMarketInfo.Market, volumeToBuy, market.ExchangeMarketInfo.MinVolume);
                     continue;
                 }
-                
-                var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
-                
-                if (trade != null)
-                {
-                    hedgeOperation.Trades.Add(trade);
-                    tradedVolume += Convert.ToDecimal(trade.BaseVolume);
 
-                    if (tradedVolume >= hedgeInstruction.TargetVolume)
-                    {
-                        break;
-                    }
+                var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
+
+                hedgeOperation.Trades.Add(trade);
+                tradedVolume += Convert.ToDecimal(trade.BaseVolume);
+
+                if (tradedVolume >= hedgeInstruction.TargetVolume)
+                {
+                    break;
                 }
             }
 
             _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
-            await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
 
-            if (!hedgeOperation.Trades.Any())
+            if (hedgeOperation.Trades.Any())
             {
-                return null;
+                await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
+                return hedgeOperation;
             }
 
-            return hedgeOperation;
+            return null;
         }
 
         private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, string operationId)

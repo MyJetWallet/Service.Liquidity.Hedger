@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -14,17 +15,14 @@ public class MarketsAnalyzer : IMarketsAnalyzer
     private readonly ILogger<MarketsAnalyzer> _logger;
     private readonly IExternalMarket _externalMarket;
     private const string ExchangeName = "FTX";
-    private readonly ICurrentPricesCache _currentPricesCache;
 
     public MarketsAnalyzer(
         ILogger<MarketsAnalyzer> logger,
-        IExternalMarket externalMarket,
-        ICurrentPricesCache currentPricesCache
+        IExternalMarket externalMarket
     )
     {
         _logger = logger;
         _externalMarket = externalMarket;
-        _currentPricesCache = currentPricesCache;
     }
 
     public async Task<ICollection<HedgeExchangeMarket>> FindPossibleAsync(HedgeInstruction hedgeInstruction)
@@ -61,18 +59,15 @@ public class MarketsAnalyzer : IMarketsAnalyzer
 
             if (exchangeBalance.Free <= 0)
             {
-                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. Free balance on exchange is 0", quoteAsset.Symbol);
+                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0", quoteAsset.Symbol);
                 continue;
             }
-
-            var marketPrice = _currentPricesCache.Get(ExchangeName, exchangeMarketInfo.Market);
-            var possibleVolumeToSell = exchangeBalance.Free * marketPrice.Price;
-
-            if (possibleVolumeToSell < hedgeInstruction.TargetVolume)
+            
+            if (Convert.ToDouble(hedgeInstruction.TargetVolume) < exchangeMarketInfo.MinVolume)
             {
                 _logger.LogWarning(
-                    "QuoteAsset {@quoteAsset} is skipped. Not enough free balance: {@price} {@possibleVolume} {@targetVolume}",
-                    quoteAsset.Symbol, marketPrice, possibleVolumeToSell, hedgeInstruction.TargetVolume);
+                    "QuoteAsset {@quoteAsset} is skipped. TargetVolume {@volumeToBuy} < MarketMinVolume {@marketMinVolume}",
+                    quoteAsset.Symbol, hedgeInstruction.TargetVolume, exchangeMarketInfo.MinVolume);
                 continue;
             }
 
@@ -85,7 +80,7 @@ public class MarketsAnalyzer : IMarketsAnalyzer
             });
         }
 
-        _logger.LogInformation("FindPossible markets ended. Found possible markets {@markets} for HedgeInstruction {@hedgeInstruction}",
+        _logger.LogInformation("FindPossible markets ended. Found markets: {@markets} for HedgeInstruction {@hedgeInstruction}",
             markets, hedgeInstruction);
 
         return markets;
