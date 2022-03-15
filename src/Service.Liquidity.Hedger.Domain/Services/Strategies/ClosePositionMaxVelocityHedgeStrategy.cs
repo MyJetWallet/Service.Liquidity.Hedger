@@ -52,7 +52,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
             };
 
             _logger.LogInformation(
-                "CalculateHedgeInstruction: {@instruction} {@selectedPositionAssets} {@collateralAssets}", instruction,
+                "HedgeInstruction: {@instruction} {@selectedPositionAssets} {@collateralAssets}", instruction,
                 selectedPositionAssets, collateralAssets);
 
             return instruction;

@@ -29,7 +29,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         _hedgeOperationsStorage = hedgeOperationsStorage;
     }
 
-    public async Task<bool> NeedsHedging(Portfolio portfolio)
+    public async Task<bool> TimeToHedge(Portfolio portfolio)
     {
         var lastOperation = await _hedgeOperationsStorage.GetLastAsync();
 
@@ -54,10 +54,9 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         return true;
     }
 
-    public HedgeInstruction GetHedgeInstruction(Portfolio portfolio, ICollection<MonitoringRuleSet> ruleSets,
-        ICollection<PortfolioCheck> checks)
+    public ICollection<MonitoringRule> SelectHedgeRules(ICollection<MonitoringRuleSet> ruleSets)
     {
-        var hedgeInstructions = new List<HedgeInstruction>();
+        var rules = new List<MonitoringRule>();
 
         foreach (var ruleSet in ruleSets ?? Array.Empty<MonitoringRuleSet>())
         {
@@ -68,7 +67,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 continue;
             }
 
-            _logger.LogInformation("Found hedging RuleSet {@ruleSet}: {@message}", ruleSet, ruleSetMessage);
+            _logger.LogInformation("Found hedging RuleSet {@ruleSet}: {@message}", ruleSet.Name, ruleSetMessage);
 
             foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
             {
@@ -79,35 +78,45 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                     continue;
                 }
 
-                _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule, ruleMessage);
-
-                var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
-                var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
-                var instruction =
-                    strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
-
-                if (instruction.Validate(out var message))
-                {
-                    hedgeInstructions.Add(instruction);
-                }
-                else
-                {
-                    _logger.LogWarning("HedgeInstruction is skipped: {@instruction} {@message}",
-                        instruction, message);
-                }
+                _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule.Name, ruleMessage);
+                rules.Add(rule);
             }
         }
 
-        if (!hedgeInstructions.Any())
+        return rules;
+    }
+
+    public ICollection<HedgeInstruction> CalculateHedgeInstructions(Portfolio portfolio,
+        ICollection<MonitoringRule> rules, ICollection<PortfolioCheck> checks)
+    {
+        var hedgeInstructions = new List<HedgeInstruction>();
+
+        foreach (var rule in rules ?? Array.Empty<MonitoringRule>())
         {
-            _logger.LogWarning("No valid HedgeInstructions");
-            return null;
+            var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
+            var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
+            var instruction = strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
+
+            if (instruction.Validate(out var message))
+            {
+                hedgeInstructions.Add(instruction);
+            }
+            else
+            {
+                _logger.LogWarning("HedgeInstruction is skipped: {@instruction} {@message}",
+                    instruction, message);
+            }
         }
 
-        var highestPriorityInstruction = hedgeInstructions.MaxBy(instruction => instruction.TargetVolume);
+        return hedgeInstructions;
+    }
+    
+    public HedgeInstruction SelectPriorityInstruction(IEnumerable<HedgeInstruction> instructions)
+    {
+        var hedgeInstruction = instructions.MaxBy(instruction => instruction.TargetVolume);
 
-        _logger.LogInformation("Selected HedgeInstruction: {@instruction}", highestPriorityInstruction);
+        _logger.LogInformation("SelectPriorityInstruction: {@instruction}", hedgeInstruction);
 
-        return highestPriorityInstruction;
+        return hedgeInstruction;
     }
 }

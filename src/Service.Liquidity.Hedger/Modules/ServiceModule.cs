@@ -23,7 +23,7 @@ namespace Service.Liquidity.Hedger.Modules
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeStrategiesFactory>().As<IHedgeStrategiesFactory>()
                 .AutoActivate().SingleInstance();
-            builder.RegisterType<MarketsAnalyzer>().As<IMarketsAnalyzer>()
+            builder.RegisterType<ExchangesAnalyzer>().As<IExchangesAnalyzer>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<PortfolioAnalyzer>().As<IPortfolioAnalyzer>()
                 .AutoActivate().SingleInstance();

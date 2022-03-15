@@ -4,7 +4,7 @@ using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Interfaces;
 
-public interface IMarketsAnalyzer
+public interface IExchangesAnalyzer
 {
-    Task<ICollection<HedgeExchangeMarket>> FindPossibleAsync(HedgeInstruction hedgeInstruction);
+    Task<ICollection<HedgeExchangeMarket>> FindPossibleMarketsAsync(HedgeInstruction hedgeInstruction);
 }

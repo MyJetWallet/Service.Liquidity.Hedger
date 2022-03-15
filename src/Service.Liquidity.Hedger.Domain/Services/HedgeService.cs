@@ -23,7 +23,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly IExternalMarket _externalMarket;
         private readonly IHedgeOperationsStorage _hedgeOperationsStorage;
         private readonly ICurrentPricesCache _currentPricesCache;
-        private readonly IMarketsAnalyzer _marketsAnalyzer;
+        private readonly IExchangesAnalyzer _exchangesAnalyzer;
         private const decimal BalancePercentToTrade = 0.9m;
 
         public HedgeService(
@@ -31,33 +31,34 @@ namespace Service.Liquidity.Hedger.Domain.Services
             IExternalMarket externalMarket,
             IHedgeOperationsStorage hedgeOperationsStorage,
             ICurrentPricesCache currentPricesCache,
-            IMarketsAnalyzer marketsAnalyzer
+            IExchangesAnalyzer exchangesAnalyzer
         )
         {
             _logger = logger;
             _externalMarket = externalMarket;
             _hedgeOperationsStorage = hedgeOperationsStorage;
             _currentPricesCache = currentPricesCache;
-            _marketsAnalyzer = marketsAnalyzer;
+            _exchangesAnalyzer = exchangesAnalyzer;
         }
 
         public async Task<HedgeOperation> HedgeAsync(HedgeInstruction hedgeInstruction)
         {
-            var possibleMarkets = await _marketsAnalyzer.FindPossibleAsync(hedgeInstruction);
-
-            if (!possibleMarkets.Any())
-            {
-                _logger.LogWarning("Can't hedge. Possible markets not found");
-                return null;
-            }
-
-            decimal tradedVolume = 0;
             var hedgeOperation = new HedgeOperation
             {
                 Id = Guid.NewGuid().ToString(),
                 TargetVolume = hedgeInstruction.TargetVolume,
-                Trades = new List<HedgeTrade>(possibleMarkets.Count)
+                Trades = new List<HedgeTrade>()
             };
+
+            var possibleMarkets = await _exchangesAnalyzer.FindPossibleMarketsAsync(hedgeInstruction);
+
+            if (!possibleMarkets.Any())
+            {
+                _logger.LogWarning("Can't hedge. Possible markets not found");
+                return hedgeOperation;
+            }
+
+            decimal tradedVolume = 0;
 
             foreach (var market in possibleMarkets)
             {
@@ -93,10 +94,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
             if (hedgeOperation.Trades.Any())
             {
                 await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
-                return hedgeOperation;
             }
 
-            return null;
+            return hedgeOperation;
         }
 
         private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, string operationId)

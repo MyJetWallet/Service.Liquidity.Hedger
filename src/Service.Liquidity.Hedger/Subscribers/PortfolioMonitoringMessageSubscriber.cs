@@ -73,10 +73,12 @@ namespace Service.Liquidity.Hedger.Subscribers
                     return;
                 }
 
-                if (await _portfolioAnalyzer.NeedsHedging(message.Portfolio))
+                if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
-                    var hedgeInstruction = _portfolioAnalyzer.GetHedgeInstruction(message.Portfolio,
-                        message.RuleSets, message.Checks);
+                    var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.RuleSets);
+                    var instructions = _portfolioAnalyzer.CalculateHedgeInstructions(
+                        message.Portfolio, hedgeRules, message.Checks);
+                    var hedgeInstruction = _portfolioAnalyzer.SelectPriorityInstruction(instructions);
 
                     if (hedgeInstruction == null)
                     {
@@ -85,12 +87,10 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                     var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
 
-                    if (hedgeOperation == null)
+                    if (hedgeOperation.Trades.Any())
                     {
-                        return;
+                        await _publisher.PublishAsync(hedgeOperation);
                     }
-
-                    await _publisher.PublishAsync(hedgeOperation);
                 }
             }
             catch (Exception ex)

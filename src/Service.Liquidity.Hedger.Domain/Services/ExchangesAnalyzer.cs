@@ -10,14 +10,14 @@ using Service.Liquidity.Hedger.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Services;
 
-public class MarketsAnalyzer : IMarketsAnalyzer
+public class ExchangesAnalyzer : IExchangesAnalyzer
 {
-    private readonly ILogger<MarketsAnalyzer> _logger;
+    private readonly ILogger<ExchangesAnalyzer> _logger;
     private readonly IExternalMarket _externalMarket;
     private const string ExchangeName = "FTX";
 
-    public MarketsAnalyzer(
-        ILogger<MarketsAnalyzer> logger,
+    public ExchangesAnalyzer(
+        ILogger<ExchangesAnalyzer> logger,
         IExternalMarket externalMarket
     )
     {
@@ -25,7 +25,7 @@ public class MarketsAnalyzer : IMarketsAnalyzer
         _externalMarket = externalMarket;
     }
 
-    public async Task<ICollection<HedgeExchangeMarket>> FindPossibleAsync(HedgeInstruction hedgeInstruction)
+    public async Task<ICollection<HedgeExchangeMarket>> FindPossibleMarketsAsync(HedgeInstruction hedgeInstruction)
     {
         _logger.LogInformation("FindPossible markets started");
         

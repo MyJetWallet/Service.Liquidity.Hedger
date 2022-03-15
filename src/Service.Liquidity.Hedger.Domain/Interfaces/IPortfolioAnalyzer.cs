@@ -9,9 +9,12 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface IPortfolioAnalyzer
     {
-        HedgeInstruction GetHedgeInstruction(Portfolio portfolio,
-            ICollection<MonitoringRuleSet> ruleSets, ICollection<PortfolioCheck> checks);
+        Task<bool> TimeToHedge(Portfolio portfolio);
+        ICollection<MonitoringRule> SelectHedgeRules(ICollection<MonitoringRuleSet> ruleSets);
 
-        Task<bool> NeedsHedging(Portfolio portfolio);
+        ICollection<HedgeInstruction> CalculateHedgeInstructions(Portfolio portfolio,
+            ICollection<MonitoringRule> rules, ICollection<PortfolioCheck> checks);
+
+        HedgeInstruction SelectPriorityInstruction(IEnumerable<HedgeInstruction> instructions);
     }
 }
