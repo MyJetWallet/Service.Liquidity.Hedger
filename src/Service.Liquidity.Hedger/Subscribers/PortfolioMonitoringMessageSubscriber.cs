@@ -73,22 +73,25 @@ namespace Service.Liquidity.Hedger.Subscribers
                     return;
                 }
 
-                var hedgeInstruction = await _portfolioAnalyzer.CalculateHedgeInstructionAsync(message.Portfolio,
-                    message.RuleSets, message.Checks);
-
-                if (hedgeInstruction == null)
+                if (await _portfolioAnalyzer.NeedsHedging(message.Portfolio))
                 {
-                    return;
+                    var hedgeInstruction = _portfolioAnalyzer.GetHedgeInstruction(message.Portfolio,
+                        message.RuleSets, message.Checks);
+
+                    if (hedgeInstruction == null)
+                    {
+                        return;
+                    }
+
+                    var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
+
+                    if (hedgeOperation == null)
+                    {
+                        return;
+                    }
+
+                    await _publisher.PublishAsync(hedgeOperation);
                 }
-
-                var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
-
-                if (hedgeOperation == null)
-                {
-                    return;
-                }
-
-                await _publisher.PublishAsync(hedgeOperation);
             }
             catch (Exception ex)
             {

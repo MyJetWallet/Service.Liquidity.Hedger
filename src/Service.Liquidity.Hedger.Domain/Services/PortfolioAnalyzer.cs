@@ -29,8 +29,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         _hedgeOperationsStorage = hedgeOperationsStorage;
     }
 
-    public async Task<HedgeInstruction> CalculateHedgeInstructionAsync(Portfolio portfolio,
-        ICollection<MonitoringRuleSet> ruleSets, ICollection<PortfolioCheck> checks)
+    public async Task<bool> NeedsHedging(Portfolio portfolio)
     {
         var lastOperation = await _hedgeOperationsStorage.GetLastAsync();
 
@@ -39,7 +38,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             _logger.LogWarning(
                 "Can't CalculateHedgeInstruction. There is HedgeOperation but HedgeOperationId in Portfolio is empty {@hedgeOperation}",
                 lastOperation);
-            return null;
+            return false;
         }
 
         if (lastOperation != null &&
@@ -49,15 +48,13 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             _logger.LogWarning(
                 "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio doesn't equals. Portfolio.OperationId={@portfolioOperationId} != OperationId={@lastOperationId}",
                 portfolio.HedgeOperationId, lastOperation.Id);
-            return null;
+            return false;
         }
 
-        var hedgeInstruction = CalculateHedgeInstruction(portfolio, ruleSets, checks);
-
-        return hedgeInstruction;
+        return true;
     }
 
-    private HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, ICollection<MonitoringRuleSet> ruleSets,
+    public HedgeInstruction GetHedgeInstruction(Portfolio portfolio, ICollection<MonitoringRuleSet> ruleSets,
         ICollection<PortfolioCheck> checks)
     {
         var hedgeInstructions = new List<HedgeInstruction>();

@@ -9,7 +9,9 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface IPortfolioAnalyzer
     {
-        Task<HedgeInstruction> CalculateHedgeInstructionAsync(Portfolio portfolio,
+        HedgeInstruction GetHedgeInstruction(Portfolio portfolio,
             ICollection<MonitoringRuleSet> ruleSets, ICollection<PortfolioCheck> checks);
+
+        Task<bool> NeedsHedging(Portfolio portfolio);
     }
 }
