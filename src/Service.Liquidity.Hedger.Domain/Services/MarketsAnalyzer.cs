@@ -45,7 +45,7 @@ public class MarketsAnalyzer : IMarketsAnalyzer
 
             if (exchangeMarketInfo == null || exchangeBalance == null)
             {
-                _logger.LogInformation("SellAsset {@sellAsset} is skipped. {@marketInfo} {@exchangeBalance}",
+                _logger.LogInformation("QuoteAsset {@sellAsset} is skipped. MarketInfo={@marketInfo} ExchangeBalance={@exchangeBalance}",
                     quoteAsset, exchangeMarketInfo, exchangeBalance);
                 continue;
             }
