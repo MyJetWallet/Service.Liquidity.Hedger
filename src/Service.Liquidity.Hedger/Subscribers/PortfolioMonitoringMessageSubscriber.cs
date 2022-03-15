@@ -92,7 +92,7 @@ namespace Service.Liquidity.Hedger.Subscribers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to handle {@message}", message);
+                _logger.LogError(ex, "Failed to handle {@message}", nameof(PortfolioMonitoringMessage));
             }
             finally
             {
