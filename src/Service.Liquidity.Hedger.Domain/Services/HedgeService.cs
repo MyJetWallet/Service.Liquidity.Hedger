@@ -92,6 +92,11 @@ namespace Service.Liquidity.Hedger.Domain.Services
             _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
             await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
 
+            if (!hedgeOperation.Trades.Any())
+            {
+                return null;
+            }
+
             return hedgeOperation;
         }
 
