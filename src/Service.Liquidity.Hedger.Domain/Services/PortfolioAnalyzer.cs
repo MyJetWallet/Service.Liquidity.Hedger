@@ -36,7 +36,9 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
         if (lastOperation != null && portfolio.HedgeOperationId == null)
         {
-            _logger.LogWarning("Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio is empty");
+            _logger.LogWarning(
+                "Can't CalculateHedgeInstruction. There is HedgeOperation but HedgeOperationId in Portfolio is empty {@hedgeOperation}",
+                lastOperation);
             return null;
         }
 
