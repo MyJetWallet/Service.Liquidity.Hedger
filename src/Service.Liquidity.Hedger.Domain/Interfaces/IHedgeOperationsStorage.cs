@@ -7,6 +7,5 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
     {
         Task AddOrUpdateLastAsync(HedgeOperation model);
         Task<HedgeOperation> GetLastAsync();
-        Task<long> GetNextIdAsync();
     }
 }

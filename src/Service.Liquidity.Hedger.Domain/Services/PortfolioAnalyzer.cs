@@ -42,7 +42,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
         if (lastOperation != null &&
             portfolio.HedgeOperationId != null &&
-            portfolio.HedgeOperationId < lastOperation.Id)
+            portfolio.HedgeOperationId?.ToString() == lastOperation.Id)
         {
             _logger.LogWarning(
                 "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio is less than last HedgeOperationId");

@@ -54,7 +54,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             decimal tradedVolume = 0;
             var hedgeOperation = new HedgeOperation
             {
-                Id = await _hedgeOperationsStorage.GetNextIdAsync(),
+                Id = Guid.NewGuid().ToString(),
                 TargetVolume = hedgeInstruction.TargetVolume,
                 Trades = new List<HedgeTrade>(possibleMarkets.Count)
             };
@@ -84,7 +84,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeOperation;
         }
 
-        private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, long operationId)
+        private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, string operationId)
         {
             var tradeRequest = new MarketTradeRequest
             {

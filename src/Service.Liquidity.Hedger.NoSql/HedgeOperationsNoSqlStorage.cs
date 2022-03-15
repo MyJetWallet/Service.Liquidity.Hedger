@@ -17,21 +17,6 @@ namespace Service.Liquidity.Hedger.NoSql
             _myNoSqlServerDataWriter = myNoSqlServerDataWriter;
         }
 
-        public async Task<long> GetNextIdAsync()
-        {
-            if (_cachedLastOperation != null)
-            {
-                return _cachedLastOperation.Id += 1;
-            }
-
-            var model = await _myNoSqlServerDataWriter.GetAsync(
-                HedgeOperationNoSql.GeneratePartitionKey(),
-                HedgeOperationNoSql.LastRowKey);
-            _cachedLastOperation = model?.Value ?? new HedgeOperation();
-
-            return _cachedLastOperation.Id += 1;
-        }
-
         public async Task AddOrUpdateLastAsync(HedgeOperation model)
         {
             var nosqlModel = HedgeOperationNoSql.CreateLast(model);
