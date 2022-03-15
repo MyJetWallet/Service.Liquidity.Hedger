@@ -89,17 +89,23 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 var instruction =
                     strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
 
-                if (instruction.Validate(out _))
+                if (instruction.Validate(out var message))
                 {
                     _logger.LogInformation("Calculated hedge instruction {@instruction} for rule {@rule}",
                         instruction, rule);
                     hedgeInstructions.Add(instruction);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid hedge instruction {@instruction} for rule {@rule} {@message}",
+                        instruction, rule, message);
                 }
             }
         }
 
         if (!hedgeInstructions.Any())
         {
+            _logger.LogWarning("No valid hedge instructions");
             return null;
         }
 
