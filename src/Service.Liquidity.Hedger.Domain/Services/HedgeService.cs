@@ -68,13 +68,24 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     ? possibleVolumeToSell 
                     : remainingVolumeToBuy;
                 
-                var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
-                hedgeOperation.Trades.Add(trade);
-                tradedVolume += Convert.ToDecimal(trade.BaseVolume);
-
-                if (tradedVolume >= hedgeInstruction.TargetVolume)
+                if (Convert.ToDouble(volumeToBuy) < market.ExchangeMarketInfo.MinVolume)
                 {
-                    break;
+                    _logger.LogWarning(
+                        $"Can't Trade on  market{market.ExchangeMarketInfo.Market}. Target Volume {volumeToBuy} less than MarketMinVolume {market.ExchangeMarketInfo.MinVolume}");
+                    continue;
+                }
+                
+                var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
+                
+                if (trade != null)
+                {
+                    hedgeOperation.Trades.Add(trade);
+                    tradedVolume += Convert.ToDecimal(trade.BaseVolume);
+
+                    if (tradedVolume >= hedgeInstruction.TargetVolume)
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -95,12 +106,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 OppositeVolume = 0,
                 ReferenceId = Guid.NewGuid().ToString(),
             };
-
-            if (tradeRequest.Volume < market.ExchangeMarketInfo.MinVolume)
-            {
-                throw new Exception(
-                    $"Can't make trade. Trade Volume {targetVolume} less than market min volume {market.ExchangeMarketInfo.MinVolume}");
-            }
 
             var tradeResp = await _externalMarket.MarketTrade(tradeRequest);
 
