@@ -29,6 +29,8 @@ public class MarketsAnalyzer : IMarketsAnalyzer
 
     public async Task<ICollection<HedgeExchangeMarket>> FindPossibleAsync(HedgeInstruction hedgeInstruction)
     {
+        _logger.LogInformation("FindPossible markets started");
+        
         var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
         {
             ExchangeName = ExchangeName
@@ -38,13 +40,16 @@ public class MarketsAnalyzer : IMarketsAnalyzer
             ExchangeName = ExchangeName
         });
         var markets = new List<HedgeExchangeMarket>();
+        
+        _logger.LogInformation("Available Exchange {@exchangeName} markets: {@markets}", ExchangeName, marketInfosResp?.Infos);
+        _logger.LogInformation("Available Exchange {@exchangeName} balances: {@markets}", ExchangeName, balancesResp?.Balances);
 
         foreach (var quoteAsset in hedgeInstruction.QuoteAssets)
         {
-            var exchangeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
+            var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == hedgeInstruction.BaseAssetSymbol &&
                 m.QuoteAsset == quoteAsset.Symbol);
-            var exchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == quoteAsset.Symbol);
+            var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == quoteAsset.Symbol);
 
             if (exchangeMarketInfo == null || exchangeBalance == null)
             {
@@ -80,7 +85,7 @@ public class MarketsAnalyzer : IMarketsAnalyzer
             });
         }
 
-        _logger.LogInformation("Found possible markets {@markets} for HedgeInstruction {@hedgeInstruction}",
+        _logger.LogInformation("FindPossible markets ended. Found possible markets {@markets} for HedgeInstruction {@hedgeInstruction}",
             markets, hedgeInstruction);
 
         return markets;
