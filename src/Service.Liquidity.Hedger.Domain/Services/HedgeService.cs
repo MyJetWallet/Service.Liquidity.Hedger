@@ -64,7 +64,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
                 var possibleVolumeToSell =
-                    market.QuoteAssetExchangeBalance.Free * marketPrice.Price * BalancePercentToTrade;
+                    market.QuoteAssetExchangeBalance.Free / marketPrice.Price * BalancePercentToTrade;
                 var remainingVolumeToBuy = hedgeInstruction.TargetVolume - tradedVolume;
                 var volumeToBuy = possibleVolumeToSell < remainingVolumeToBuy
                     ? possibleVolumeToSell
