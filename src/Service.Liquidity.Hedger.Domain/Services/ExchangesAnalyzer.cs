@@ -38,9 +38,11 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             ExchangeName = ExchangeName
         });
         var markets = new List<HedgeExchangeMarket>();
-        
-        _logger.LogInformation("Available Exchange {@exchangeName} markets: {@markets}", ExchangeName, marketInfosResp?.Infos);
-        _logger.LogInformation("Available Exchange {@exchangeName} balances: {@markets}", ExchangeName, balancesResp?.Balances);
+
+        _logger.LogInformation("GetExchangeMarkets {@exchangeName}: {@markets}", ExchangeName,
+            marketInfosResp?.Infos.Select(i => i.Market));
+        _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", ExchangeName,
+            balancesResp?.Balances);
 
         foreach (var quoteAsset in hedgeInstruction.QuoteAssets)
         {
@@ -52,7 +54,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             if (exchangeMarketInfo == null || exchangeBalance == null)
             {
                 _logger.LogWarning(
-                    "QuoteAsset {@quoteAsset} is skipped. Market {@marketInfo}; ExchangeBalance={@exchangeBalance}",
+                    "QuoteAsset {@quoteAsset} is skipped. Market {@market}; ExchangeBalance={@exchangeBalance}",
                     quoteAsset.Symbol, exchangeMarketInfo?.Market, exchangeBalance);
                 continue;
             }
