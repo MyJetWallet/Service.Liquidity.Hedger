@@ -101,7 +101,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
         private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, string operationId)
         {
-            var tradeRequest = new MarketTradeRequest
+            var request = new MarketTradeRequest
             {
                 Side = OrderSide.Buy,
                 Market = market.ExchangeMarketInfo.Market,
@@ -111,19 +111,21 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 ReferenceId = Guid.NewGuid().ToString(),
             };
 
-            var tradeResp = await _externalMarket.MarketTrade(tradeRequest);
+            var response = await _externalMarket.MarketTrade(request);
 
             var hedgeTrade = new HedgeTrade
             {
                 BaseAsset = market.ExchangeMarketInfo.BaseAsset,
-                BaseVolume = Convert.ToDecimal(tradeResp.Volume),
-                ExchangeName = tradeRequest.ExchangeName,
+                BaseVolume = Convert.ToDecimal(response.Volume),
+                ExchangeName = request.ExchangeName,
                 OperationId = operationId,
                 QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
-                QuoteVolume = Convert.ToDecimal(tradeResp.Price * tradeResp.Volume),
-                Price = Convert.ToDecimal(tradeResp.Price),
-                Id = tradeResp.ReferenceId ?? tradeRequest.ReferenceId,
+                QuoteVolume = Convert.ToDecimal(response.Price * response.Volume),
+                Price = Convert.ToDecimal(response.Price),
+                Id = response.ReferenceId ?? request.ReferenceId,
             };
+            
+            _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);
 
             return hedgeTrade;
         }
