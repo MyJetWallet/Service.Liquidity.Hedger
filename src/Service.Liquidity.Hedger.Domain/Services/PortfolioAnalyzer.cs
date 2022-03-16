@@ -36,7 +36,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         if (lastOperation != null && portfolio.HedgeOperationId == null)
         {
             _logger.LogWarning(
-                "Can't CalculateHedgeInstruction. There is HedgeOperation but HedgeOperationId in Portfolio is empty {@hedgeOperation}",
+                "Can't Hedge. There is HedgeOperation but HedgeOperationId in Portfolio is empty {@lastOperation}",
                 lastOperation);
             return false;
         }
@@ -46,7 +46,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             portfolio.HedgeOperationId != lastOperation.Id)
         {
             _logger.LogWarning(
-                "Can't CalculateHedgeInstruction. HedgeOperationId in Portfolio doesn't equals. Portfolio.OperationId={@portfolioOperationId} != OperationId={@lastOperationId}",
+                "Can't Hedge. HedgeOperationId in Portfolio doesn't equals. Portfolio.OperationId={@portfolioOperationId} != OperationId={@lastOperationId}",
                 portfolio.HedgeOperationId, lastOperation.Id);
             return false;
         }
@@ -83,6 +83,8 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             }
         }
 
+        
+        
         return rules;
     }
 
