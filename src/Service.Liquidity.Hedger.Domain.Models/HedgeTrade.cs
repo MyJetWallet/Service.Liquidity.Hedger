@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {
@@ -13,5 +14,9 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 6)] public string ExchangeName { get; set; }
         [DataMember(Order = 7)] public decimal Price { get; set; }
         [DataMember(Order = 8)] public string Id { get; set; }
+        [DataMember(Order = 9)] public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        [DataMember(Order = 10)] public string ExternalId { get; set; }
+        [DataMember(Order = 11)] public string FeeAsset { get; set; }
+        [DataMember(Order = 12)] public string FeeVolume { get; set; }
     }
 }

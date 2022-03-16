@@ -47,7 +47,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 Id = Guid.NewGuid().ToString(),
                 TargetVolume = hedgeInstruction.TargetVolume,
-                Trades = new List<HedgeTrade>()
+                Trades = new List<HedgeTrade>(),
+                CreatedDate = DateTime.UtcNow
             };
 
             var possibleMarkets = await _exchangesAnalyzer.FindPossibleMarketsAsync(hedgeInstruction);
@@ -123,6 +124,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 QuoteVolume = Convert.ToDecimal(response.Price * response.Volume),
                 Price = Convert.ToDecimal(response.Price),
                 Id = response.ReferenceId ?? request.ReferenceId,
+                CreatedDate = DateTime.UtcNow,
+                ExternalId = response.Id
             };
             
             _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);
