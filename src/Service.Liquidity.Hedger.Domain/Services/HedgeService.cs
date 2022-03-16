@@ -73,7 +73,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (Convert.ToDouble(volumeToBuy) < market.ExchangeMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        "Can't еrade on market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
+                        "Can't trade on market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
                         market.ExchangeMarketInfo.Market, volumeToBuy, market.ExchangeMarketInfo.MinVolume);
                     continue;
                 }
