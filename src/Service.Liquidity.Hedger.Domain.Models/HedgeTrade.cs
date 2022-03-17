@@ -17,6 +17,6 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 9)] public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         [DataMember(Order = 10)] public string ExternalId { get; set; }
         [DataMember(Order = 11)] public string FeeAsset { get; set; }
-        [DataMember(Order = 12)] public string FeeVolume { get; set; }
+        [DataMember(Order = 12)] public decimal FeeVolume { get; set; }
     }
 }
