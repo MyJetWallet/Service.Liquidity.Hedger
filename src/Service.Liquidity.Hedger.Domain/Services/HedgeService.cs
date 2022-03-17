@@ -47,7 +47,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 Id = Guid.NewGuid().ToString(),
                 TargetVolume = hedgeInstruction.TargetVolume,
-                Trades = new List<HedgeTrade>(),
+                HedgeTrades = new List<HedgeTrade>(),
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -81,7 +81,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
 
-                hedgeOperation.Trades.Add(trade);
+                hedgeOperation.HedgeTrades.Add(trade);
                 tradedVolume += Convert.ToDecimal(trade.BaseVolume);
 
                 if (tradedVolume >= hedgeInstruction.TargetVolume)
@@ -92,7 +92,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
 
-            if (hedgeOperation.Trades.Any())
+            if (hedgeOperation.HedgeTrades.Any())
             {
                 await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
             }

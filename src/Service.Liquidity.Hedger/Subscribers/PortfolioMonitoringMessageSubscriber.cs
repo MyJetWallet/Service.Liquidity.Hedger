@@ -87,7 +87,7 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                     var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
 
-                    if (hedgeOperation.Trades.Any())
+                    if (hedgeOperation.HedgeTrades.Any())
                     {
                         await _publisher.PublishAsync(hedgeOperation);
                     }
