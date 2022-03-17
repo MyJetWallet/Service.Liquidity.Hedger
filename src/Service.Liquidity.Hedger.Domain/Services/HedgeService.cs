@@ -119,7 +119,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 BaseAsset = market.ExchangeMarketInfo.BaseAsset,
                 BaseVolume = Convert.ToDecimal(response.Volume),
                 ExchangeName = request.ExchangeName,
-                OperationId = operationId,
+                HedgeOperationId = operationId,
                 QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
                 QuoteVolume = Convert.ToDecimal(response.Price * response.Volume),
                 Price = Convert.ToDecimal(response.Price),

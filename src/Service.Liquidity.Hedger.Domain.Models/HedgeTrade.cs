@@ -6,7 +6,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
     [DataContract]
     public class HedgeTrade
     {
-        [DataMember(Order = 1)] public string OperationId { get; set; }
+        [DataMember(Order = 1)] public string HedgeOperationId { get; set; }
         [DataMember(Order = 2)] public string BaseAsset { get; set; }
         [DataMember(Order = 3)] public decimal BaseVolume { get; set; }
         [DataMember(Order = 4)] public string QuoteAsset { get; set; }
