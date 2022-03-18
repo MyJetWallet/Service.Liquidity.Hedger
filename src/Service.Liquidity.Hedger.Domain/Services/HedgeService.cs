@@ -125,7 +125,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 Price = Convert.ToDecimal(response.Price),
                 Id = response.ReferenceId ?? request.ReferenceId,
                 CreatedDate = DateTime.UtcNow,
-                ExternalId = response.Id
+                ExternalId = response.Id,
+                FeeAsset = response.FeeSymbol,
+                FeeVolume = Convert.ToDecimal(response.Volume)
             };
             
             _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);
