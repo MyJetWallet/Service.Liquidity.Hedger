@@ -39,11 +39,11 @@ namespace Service.Liquidity.Hedger.Domain.Models
         {
             get
             {
-                var strValue = ParamValuesByName[nameof(HedgeStrategyType)];
+                var strValue = ParamValuesByName[nameof(HedgePercent)];
 
                 return decimal.Parse(strValue);
             }
-            set => ParamValuesByName[nameof(HedgeStrategyType)] = value.ToString(CultureInfo.InvariantCulture);
+            set => ParamValuesByName[nameof(HedgePercent)] = value.ToString(CultureInfo.InvariantCulture);
         }
 
         public void Map(MonitoringAction monitoringAction)
