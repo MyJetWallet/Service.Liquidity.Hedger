@@ -66,6 +66,15 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 continue;
             }
 
+            if (rule.ActionsByTypeName.TryGetValue(new MakeHedgeMonitoringAction().TypeName, out var action))
+            {
+                if (action.MapTo<MakeHedgeMonitoringAction>().HedgeStrategyType == HedgeStrategyType.Return)
+                {
+                    _logger.LogInformation("Found return Rule {@rule}", rule.Name);
+                    return new List<MonitoringRule>();
+                }
+            }
+
             _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule.Name, ruleMessage);
             hedgeRules.Add(rule);
         }
@@ -118,11 +127,10 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             message += $"Doesn't has {nameof(MakeHedgeMonitoringAction)};";
             return false;
         }
-        
-        message += $"Has {action.HedgeStrategyType.ToString()} strategy;";
 
         action.Map(baseAction);
-            
+        message += $"Has {action.HedgeStrategyType.ToString()} strategy;";
+
         if (!rule.CurrentState.IsActive)
         {
             message += "Is not active;";
