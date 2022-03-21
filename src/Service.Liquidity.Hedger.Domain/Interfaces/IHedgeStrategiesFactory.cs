@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
+using HedgeStrategyType = Service.Liquidity.Hedger.Domain.Models.HedgeStrategyType;
 
 namespace Service.Liquidity.Hedger.Domain.Interfaces
 {

@@ -5,15 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.ExternalMarketApi;
 using MyJetWallet.Domain.ExternalMarketApi.Dto;
-using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
-using MyJetWallet.Sdk.ServiceBus;
-using Service.Liquidity.Hedger.Domain.Extensions;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models.Checks;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
-using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {

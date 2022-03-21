@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using Service.Liquidity.Hedger.Domain.Interfaces;
-using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Tests;
@@ -99,13 +96,9 @@ public class StrategiesTests
                 }
             }
         };
-        var strParams = new HedgeStrategyParams
-        {
-            AmountPercent = 30m,
-        };
         var strategy = new ClosePositionMaxVelocityHedgeStrategy(Substitute.For<ILogger<IHedgeStrategy>>());
         
-        var instruction = strategy.CalculateHedgeInstruction(portfolio, checks, strParams);
+        var instruction = strategy.CalculateHedgeInstruction(portfolio, checks, 30m);
         
         Assert.IsNotNull(instruction);
         Assert.AreEqual(instruction.TargetVolume, 30);

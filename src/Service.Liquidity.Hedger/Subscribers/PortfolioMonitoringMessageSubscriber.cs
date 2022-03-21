@@ -57,27 +57,21 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 if (message.Portfolio == null)
                 {
-                    _logger.LogWarning("Received PortfolioMonitoringMessage without Portfolio");
+                    _logger.LogWarning($"Received {nameof(PortfolioMonitoringMessage)} without Portfolio");
                     return;
                 }
 
-                if (message.Checks == null || !message.Checks.Any())
+                if (message.Rules == null || !message.Rules.Any())
                 {
-                    _logger.LogWarning("Received PortfolioMonitoringMessage without Checks");
-                    return;
-                }
-
-                if (message.RuleSets == null || !message.RuleSets.Any())
-                {
-                    _logger.LogWarning("Received PortfolioMonitoringMessage without RuleSets");
+                    _logger.LogWarning($"Received {nameof(PortfolioMonitoringMessage)} without Rules");
                     return;
                 }
 
                 if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
-                    var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.RuleSets);
+                    var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.Rules);
                     var instructions = _portfolioAnalyzer.CalculateHedgeInstructions(
-                        message.Portfolio, hedgeRules, message.Checks);
+                        message.Portfolio, hedgeRules);
                     var hedgeInstruction = _portfolioAnalyzer.SelectPriorityInstruction(instructions);
 
                     if (hedgeInstruction == null)

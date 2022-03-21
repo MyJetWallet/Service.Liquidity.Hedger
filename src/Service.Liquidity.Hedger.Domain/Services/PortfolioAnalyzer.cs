@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Service.Liquidity.Hedger.Domain.Extensions;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models.Checks;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
+using Service.Liquidity.Monitoring.Domain.Models.Rules;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Services;
@@ -53,51 +51,38 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
         return true;
     }
+    
 
-    public ICollection<MonitoringRule> SelectHedgeRules(ICollection<MonitoringRuleSet> ruleSets)
+    public ICollection<MonitoringRule> SelectHedgeRules(ICollection<MonitoringRule> rules)
     {
-        var rules = new List<MonitoringRule>();
+        var hedgeRules = new List<MonitoringRule>();
 
-        foreach (var ruleSet in ruleSets ?? Array.Empty<MonitoringRuleSet>())
+        foreach (var rule in rules ?? Array.Empty<MonitoringRule>())
         {
-            var isHedgeRuleSet = ruleSet.NeedsHedging(out var ruleSetMessage);
+            var isHedgeRule = NeedsHedging(rule, out var ruleMessage);
 
-            if (!isHedgeRuleSet)
+            if (!isHedgeRule)
             {
                 continue;
             }
 
-            _logger.LogInformation("Found hedging RuleSet {@ruleSet}: {@message}", ruleSet.Name, ruleSetMessage);
-
-            foreach (var rule in ruleSet.Rules ?? Array.Empty<MonitoringRule>())
-            {
-                var isHedgeRule = rule.NeedsHedging(out var ruleMessage);
-
-                if (!isHedgeRule)
-                {
-                    continue;
-                }
-
-                _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule.Name, ruleMessage);
-                rules.Add(rule);
-            }
+            _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule.Name, ruleMessage);
+            hedgeRules.Add(rule);
         }
 
-        
-        
-        return rules;
+        return hedgeRules;
     }
 
-    public ICollection<HedgeInstruction> CalculateHedgeInstructions(Portfolio portfolio,
-        ICollection<MonitoringRule> rules, ICollection<PortfolioCheck> checks)
+    public ICollection<HedgeInstruction> CalculateHedgeInstructions(Portfolio portfolio, ICollection<MonitoringRule> rules)
     {
         var hedgeInstructions = new List<HedgeInstruction>();
 
         foreach (var rule in rules ?? Array.Empty<MonitoringRule>())
         {
-            var ruleChecks = checks.Where(ch => rule.CheckIds.Contains(ch.Id));
-            var strategy = _hedgeStrategiesFactory.Get(rule.HedgeStrategyType);
-            var instruction = strategy.CalculateHedgeInstruction(portfolio, ruleChecks, rule.HedgeStrategyParams);
+            var action = new MakeHedgeMonitoringAction();
+            action.Map(rule.ActionsByTypeName[action.TypeName]);
+            var strategy = _hedgeStrategiesFactory.Get(action.HedgeStrategyType);
+            var instruction = strategy.CalculateHedgeInstruction(portfolio, rule.Checks, action.HedgePercent);
 
             if (instruction.Validate(out var message))
             {
@@ -120,5 +105,40 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         _logger.LogInformation("SelectPriorityInstruction: {@instruction}", hedgeInstruction);
 
         return hedgeInstruction;
+    }
+    
+    private static bool NeedsHedging(MonitoringRule rule, out string message)
+    {
+        message = "";
+        var action = new MakeHedgeMonitoringAction();
+
+        if (rule.ActionsByTypeName == null ||
+            !rule.ActionsByTypeName.TryGetValue(action.TypeName, out var baseAction))
+        {
+            message += $"Doesn't has {nameof(MakeHedgeMonitoringAction)};";
+            return false;
+        }
+        
+        message += $"Has {action.HedgeStrategyType.ToString()} strategy;";
+
+        action.Map(baseAction);
+            
+        if (!rule.CurrentState.IsActive)
+        {
+            message += "Is not active;";
+            return false;
+        }
+
+        message += "Is active;";
+            
+        if (action.HedgePercent < 0)
+        {
+            message += "Doesn't Has hedge percent amount;";
+            return false;
+        }
+
+        message += "Has hedge percent amount;";
+
+        return true;
     }
 }

@@ -2,8 +2,8 @@
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
+using HedgeStrategyType = Service.Liquidity.Hedger.Domain.Models.HedgeStrategyType;
 
 namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 {
@@ -12,7 +12,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
         public HedgeStrategyType Type { get; set; } = HedgeStrategyType.Return;
 
         public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
-            HedgeStrategyParams strategyParams)
+            decimal hedgePercent)
         {
             return new HedgeInstruction();
         }

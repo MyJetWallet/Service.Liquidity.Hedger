@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.Serialization;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets.Actions;
+using Service.Liquidity.Monitoring.Domain.Models.Actions;
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {
@@ -20,7 +21,36 @@ namespace Service.Liquidity.Hedger.Domain.Models
                 new MonitoringActionParamInfo(nameof(HedgePercent), MonitoringActionParamType.Decimal),
             };
 
-        [DataMember(Order = 4)] public int HedgeStrategyType { get; set; }
-        [DataMember(Order = 5)] public decimal HedgePercent { get; set; }
+        [DataMember(Order = 4)]
+        public HedgeStrategyType HedgeStrategyType
+        {
+            get
+            {
+                var strValue = ParamValuesByName[nameof(HedgeStrategyType)];
+                var intValue = int.Parse(strValue);
+
+                return (HedgeStrategyType)intValue;
+            }
+            set => ParamValuesByName[nameof(HedgeStrategyType)] = ((int)value).ToString();
+        }
+
+        [DataMember(Order = 5)]
+        public decimal HedgePercent
+        {
+            get
+            {
+                var strValue = ParamValuesByName[nameof(HedgeStrategyType)];
+
+                return decimal.Parse(strValue);
+            }
+            set => ParamValuesByName[nameof(HedgeStrategyType)] = value.ToString(CultureInfo.InvariantCulture);
+        }
+
+        public void Map(MonitoringAction monitoringAction)
+        {
+            TypeName = monitoringAction.TypeName;
+            ParamValuesByName = monitoringAction.ParamValuesByName;
+            ParamInfos = monitoringAction.ParamInfos;
+        }
     }
 }

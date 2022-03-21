@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {
@@ -20,7 +19,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 { HedgeStrategyType.ClosePositionMaxVelocity, new ClosePositionMaxVelocityHedgeStrategy(logger) },
                 { HedgeStrategyType.Return, new ReturnHedgeStrategy() },
-                { HedgeStrategyType.None, new NoneHedgeStrategy() },
             };
         }
 

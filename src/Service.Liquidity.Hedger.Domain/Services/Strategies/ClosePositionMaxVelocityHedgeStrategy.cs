@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
-using Service.Liquidity.Monitoring.Domain.Models.RuleSets;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Services.Strategies
@@ -22,7 +21,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
         }
 
         public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
-            HedgeStrategyParams strategyParams)
+            decimal hedgePercent)
         {
             var selectedAssets = checks
                 .Where(ch => ch.CurrentState.IsActive)
@@ -49,7 +48,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 BaseAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
                 QuoteAssets = collateralAssets,
                 TargetVolume = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalance)) *
-                               (strategyParams.AmountPercent / 100)
+                               (hedgePercent / 100)
             };
 
             _logger.LogInformation(
