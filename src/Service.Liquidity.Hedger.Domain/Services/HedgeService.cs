@@ -42,7 +42,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 Id = Guid.NewGuid().ToString(),
                 TargetVolume = hedgeInstruction.TargetVolume,
                 HedgeTrades = new List<HedgeTrade>(),
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow,
+                TargetAsset = hedgeInstruction.BaseAssetSymbol,
+                TradedVolume = 0
             };
 
             var possibleMarkets = await _exchangesAnalyzer.FindPossibleMarketsAsync(hedgeInstruction);
@@ -53,14 +55,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 return hedgeOperation;
             }
 
-            decimal tradedVolume = 0;
-
             foreach (var market in possibleMarkets)
             {
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
                 var possibleVolumeToSell =
                     market.QuoteAssetExchangeBalance.Free / marketPrice.Price * BalancePercentToTrade;
-                var remainingVolumeToBuy = hedgeInstruction.TargetVolume - tradedVolume;
+                var remainingVolumeToBuy = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var volumeToBuy = possibleVolumeToSell < remainingVolumeToBuy
                     ? possibleVolumeToSell
                     : remainingVolumeToBuy;
@@ -76,9 +76,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
 
                 hedgeOperation.HedgeTrades.Add(trade);
-                tradedVolume += Convert.ToDecimal(trade.BaseVolume);
+                hedgeOperation.TradedVolume += Convert.ToDecimal(trade.BaseVolume);
 
-                if (tradedVolume >= hedgeInstruction.TargetVolume)
+                if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
                 {
                     break;
                 }
@@ -121,7 +121,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 CreatedDate = DateTime.UtcNow,
                 ExternalId = response.Id,
                 FeeAsset = response.FeeSymbol,
-                FeeVolume = Convert.ToDecimal(response.FeeVolume)
+                FeeVolume = Convert.ToDecimal(response.FeeVolume),
+                Market = response.Market,
+                Side = response.Side
             };
             
             _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);

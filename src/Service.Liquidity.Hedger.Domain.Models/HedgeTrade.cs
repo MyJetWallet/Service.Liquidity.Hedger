@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using MyJetWallet.Domain.Orders;
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {
@@ -18,5 +19,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 10)] public string ExternalId { get; set; }
         [DataMember(Order = 11)] public string FeeAsset { get; set; }
         [DataMember(Order = 12)] public decimal FeeVolume { get; set; }
+        [DataMember(Order = 13)] public string Market { get; set; }
+        [DataMember(Order = 14)] public OrderSide Side { get; set; }
     }
 }
