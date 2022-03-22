@@ -68,7 +68,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
             if (rule.ActionsByTypeName.TryGetValue(new MakeHedgeMonitoringAction().TypeName, out var action))
             {
-                if (action.MapTo<MakeHedgeMonitoringAction>().HedgeStrategyType == HedgeStrategyType.Return)
+                if (action.MapTo<MakeHedgeMonitoringAction>().HedgeStrategyType == HedgeStrategyType.Stop)
                 {
                     _logger.LogInformation("Found return Rule {@rule}", rule.Name);
                     return new List<MonitoringRule>();
