@@ -67,6 +67,17 @@ namespace Service.Liquidity.Hedger.Subscribers
                     return;
                 }
 
+                var stopActionType = new StopHedgeMonitoringAction().TypeName;
+                var stopHedgeRule = message.Rules.FirstOrDefault(rule => (rule.CurrentState?.IsActive ?? false) &&
+                                                                         rule.ActionsByTypeName.TryGetValue(
+                                                                             stopActionType, out _));
+
+                if (stopHedgeRule != null)
+                {
+                    _logger.LogWarning("Hedge is stopped. Found stop hedge rule {@rule}", stopHedgeRule.Name);
+                    return;
+                }
+
                 if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
                     var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.Rules);
