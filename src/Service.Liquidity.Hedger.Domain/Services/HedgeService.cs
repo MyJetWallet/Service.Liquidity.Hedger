@@ -123,7 +123,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 FeeAsset = response.FeeSymbol,
                 FeeVolume = Convert.ToDecimal(response.FeeVolume),
                 Market = response.Market,
-                Side = response.Side
+                Side = response.Side,
+                Type = OrderType.Market
             };
             
             _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);
