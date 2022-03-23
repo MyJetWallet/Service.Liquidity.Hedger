@@ -21,5 +21,6 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 12)] public decimal FeeVolume { get; set; }
         [DataMember(Order = 13)] public string Market { get; set; }
         [DataMember(Order = 14)] public OrderSide Side { get; set; }
+        [DataMember(Order = 15)] public OrderType Type { get; set; }
     }
 }
