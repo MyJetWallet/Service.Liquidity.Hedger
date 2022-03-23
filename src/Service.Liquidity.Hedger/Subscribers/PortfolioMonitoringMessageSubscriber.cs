@@ -69,6 +69,7 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 var stopActionType = new StopHedgeMonitoringAction().TypeName;
                 var stopHedgeRule = message.Rules.FirstOrDefault(rule => (rule.CurrentState?.IsActive ?? false) &&
+                                                                         rule.ActionsByTypeName != null &&
                                                                          rule.ActionsByTypeName.TryGetValue(
                                                                              stopActionType, out _));
 
