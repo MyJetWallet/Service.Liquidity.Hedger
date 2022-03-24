@@ -69,8 +69,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 ExchangeName = ExchangeName,
                 Weight = sellAsset.Weight,
-                AssetExchangeBalance = exchangeBalance,
-                ExchangeMarketInfo = exchangeMarketInfo
+                Balance = exchangeBalance,
+                Info = exchangeMarketInfo
             });
         }
 
