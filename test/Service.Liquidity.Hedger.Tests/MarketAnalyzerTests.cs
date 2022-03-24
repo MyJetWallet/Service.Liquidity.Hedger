@@ -37,7 +37,7 @@ public class MarketAnalyzerTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 4,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset>
             {
                 btcSellAsset
@@ -62,7 +62,7 @@ public class MarketAnalyzerTests
                 new ()
                 {
                     MinVolume = 1,
-                    BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                    BaseAsset = hedgeInstruction.TargetAssetSymbol,
                     QuoteAsset = btcSellAsset.Symbol,
                 }
             }
@@ -78,7 +78,7 @@ public class MarketAnalyzerTests
         markets.First().Weight.Should().Be(btcSellAsset.Weight);
         markets.First().AssetExchangeBalance.Symbol.Should().Be(btcSellAsset.Symbol);
         markets.First().ExchangeMarketInfo.QuoteAsset.Should().Be(btcSellAsset.Symbol);
-        markets.First().ExchangeMarketInfo.BaseAsset.Should().Be(hedgeInstruction.BuyAssetSymbol);
+        markets.First().ExchangeMarketInfo.BaseAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
     
     [Test]
@@ -93,7 +93,7 @@ public class MarketAnalyzerTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 4,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset>
             {
                 btcSellAsset
@@ -122,7 +122,7 @@ public class MarketAnalyzerTests
                 new ()
                 {
                     MinVolume = 1,
-                    BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                    BaseAsset = hedgeInstruction.TargetAssetSymbol,
                     QuoteAsset = btcSellAsset.Symbol,
                 },
                 new ()
@@ -154,7 +154,7 @@ public class MarketAnalyzerTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 4,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset>
             {
                 btcSellAsset
@@ -180,7 +180,7 @@ public class MarketAnalyzerTests
                 {
                     MinVolume = 1,
                     BaseAsset = btcSellAsset.Symbol,
-                    QuoteAsset = hedgeInstruction.BuyAssetSymbol,
+                    QuoteAsset = hedgeInstruction.TargetAssetSymbol,
                 }
             }
         });
@@ -195,7 +195,7 @@ public class MarketAnalyzerTests
         markets.First().Weight.Should().Be(btcSellAsset.Weight);
         markets.First().AssetExchangeBalance.Symbol.Should().Be(btcSellAsset.Symbol);
         markets.First().ExchangeMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
-        markets.First().ExchangeMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.BuyAssetSymbol);
+        markets.First().ExchangeMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
     
     [Test]
@@ -210,7 +210,7 @@ public class MarketAnalyzerTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 4,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset>
             {
                 btcSellAsset
@@ -236,7 +236,7 @@ public class MarketAnalyzerTests
                 {
                     MinVolume = 1,
                     BaseAsset = btcSellAsset.Symbol,
-                    QuoteAsset = hedgeInstruction.BuyAssetSymbol,
+                    QuoteAsset = hedgeInstruction.TargetAssetSymbol,
                 }
             }
         });
@@ -261,7 +261,7 @@ public class MarketAnalyzerTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 0.5m,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset>
             {
                 btcSellAsset
@@ -287,7 +287,7 @@ public class MarketAnalyzerTests
                 {
                     MinVolume = 1,
                     BaseAsset = btcSellAsset.Symbol,
-                    QuoteAsset = hedgeInstruction.BuyAssetSymbol,
+                    QuoteAsset = hedgeInstruction.TargetAssetSymbol,
                 }
             }
         });

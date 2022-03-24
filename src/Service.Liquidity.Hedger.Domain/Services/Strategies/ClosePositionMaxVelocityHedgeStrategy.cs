@@ -45,7 +45,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 
             var instruction = new HedgeInstruction
             {
-                BuyAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
+                TargetAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
                 SellAssets = collateralAssets,
                 TargetVolume = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalance)) *
                                (hedgePercent / 100)

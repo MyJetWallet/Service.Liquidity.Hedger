@@ -43,7 +43,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 TargetVolume = hedgeInstruction.TargetVolume,
                 HedgeTrades = new List<HedgeTrade>(),
                 CreatedDate = DateTime.UtcNow,
-                TargetAsset = hedgeInstruction.BuyAssetSymbol,
+                TargetAsset = hedgeInstruction.TargetAssetSymbol,
                 TradedVolume = 0
             };
 
@@ -63,7 +63,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 OrderSide side;
                 decimal tradeVolume;
                 
-                if (market.ExchangeMarketInfo.BaseAsset == hedgeInstruction.BuyAssetSymbol)
+                if (market.ExchangeMarketInfo.BaseAsset == hedgeInstruction.TargetAssetSymbol)
                 {
                     side = OrderSide.Buy;
                     var possibleVolumeToBuy = availableVolumeOnBalance / marketPrice.Price;
@@ -71,7 +71,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         ? possibleVolumeToBuy // trade max possible volume
                         : remainingVolumeToTrade;
                 }
-                else if (market.ExchangeMarketInfo.QuoteAsset == hedgeInstruction.BuyAssetSymbol)
+                else if (market.ExchangeMarketInfo.QuoteAsset == hedgeInstruction.TargetAssetSymbol)
                 {
                     side = OrderSide.Sell;
                     var neededVolumeToSell = remainingVolumeToTrade * marketPrice.Price;
@@ -83,7 +83,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 {
                     _logger.LogWarning(
                         "Can't trade on market {@market}. Doesn't has TargetAsset {@targetAsset}", 
-                        market.ExchangeMarketInfo.Market, hedgeInstruction.BuyAssetSymbol);
+                        market.ExchangeMarketInfo.Market, hedgeInstruction.TargetAssetSymbol);
                     continue;
                 }
 

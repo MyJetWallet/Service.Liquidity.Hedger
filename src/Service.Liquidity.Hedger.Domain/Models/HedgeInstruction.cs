@@ -7,7 +7,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
     [DataContract]
     public class HedgeInstruction
     {
-        [DataMember(Order = 1)] public string BuyAssetSymbol { get; set; }
+        [DataMember(Order = 1)] public string TargetAssetSymbol { get; set; }
         [DataMember(Order = 2)] public List<HedgeSellAsset> SellAssets { get; set; } = new();
         [DataMember(Order = 3)] public decimal TargetVolume { get; set; }
 
@@ -15,9 +15,9 @@ namespace Service.Liquidity.Hedger.Domain.Models
         {
             errors = new List<string>();
 
-            if (string.IsNullOrWhiteSpace(BuyAssetSymbol))
+            if (string.IsNullOrWhiteSpace(TargetAssetSymbol))
             {
-                errors.Add($"{nameof(BuyAssetSymbol)} are empty");
+                errors.Add($"{nameof(TargetAssetSymbol)} are empty");
             }
 
             if (!SellAssets.Any())

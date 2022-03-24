@@ -61,7 +61,7 @@ public class HedgeServiceTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 1,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset> { sellAsset }
         };
 
@@ -73,7 +73,7 @@ public class HedgeServiceTests
             },
             ExchangeMarketInfo = new ExchangeMarketInfo
             {
-                BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
                 MinVolume = 1,
             }
@@ -112,7 +112,7 @@ public class HedgeServiceTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 1,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset> { sellAsset }
         };
 
@@ -124,7 +124,7 @@ public class HedgeServiceTests
             },
             ExchangeMarketInfo = new ExchangeMarketInfo
             {
-                BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
                 MinVolume = 1,
             }
@@ -165,7 +165,7 @@ public class HedgeServiceTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 1,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset> { sellAsset }
         };
 
@@ -177,7 +177,7 @@ public class HedgeServiceTests
             },
             ExchangeMarketInfo = new ExchangeMarketInfo
             {
-                BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
                 MinVolume = 1,
             }
@@ -214,7 +214,7 @@ public class HedgeServiceTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 1,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset> { sellAsset }
         };
 
@@ -227,7 +227,7 @@ public class HedgeServiceTests
             ExchangeMarketInfo = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
-                QuoteAsset = hedgeInstruction.BuyAssetSymbol ,
+                QuoteAsset = hedgeInstruction.TargetAssetSymbol ,
                 MinVolume = 1,
             }
         };
@@ -263,7 +263,7 @@ public class HedgeServiceTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 110,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset> { sellAsset }
         };
 
@@ -276,7 +276,7 @@ public class HedgeServiceTests
             ExchangeMarketInfo = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
-                QuoteAsset = hedgeInstruction.BuyAssetSymbol ,
+                QuoteAsset = hedgeInstruction.TargetAssetSymbol ,
                 MinVolume = 1,
             }
         };
@@ -312,7 +312,7 @@ public class HedgeServiceTests
         var hedgeInstruction = new HedgeInstruction
         {
             TargetVolume = 110,
-            BuyAssetSymbol = "XRP",
+            TargetAssetSymbol = "XRP",
             SellAssets = new List<HedgeSellAsset> { sellAsset }
         };
 
@@ -324,7 +324,7 @@ public class HedgeServiceTests
             },
             ExchangeMarketInfo = new ExchangeMarketInfo
             {
-                BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
                 MinVolume = 1,
             }

@@ -102,7 +102,7 @@ public class StrategiesTests
         
         Assert.IsNotNull(instruction);
         Assert.AreEqual(instruction.TargetVolume, 30);
-        Assert.AreEqual(instruction.BuyAssetSymbol, "BTC");
+        Assert.AreEqual(instruction.TargetAssetSymbol, "BTC");
         Assert.IsNotEmpty(instruction.SellAssets);
         Assert.AreEqual(instruction.SellAssets.First().Symbol, "BUSD2");
         Assert.AreEqual(instruction.SellAssets.Last().Symbol, "BUSD");
