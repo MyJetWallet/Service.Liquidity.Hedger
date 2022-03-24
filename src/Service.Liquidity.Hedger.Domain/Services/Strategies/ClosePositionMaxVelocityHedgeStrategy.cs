@@ -36,7 +36,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 .Select(a => a.Value)
                 .Where(a => a.GetPositiveNetInUsd() != 0)
                 .OrderBy(a => a.DailyVelocityRiskInUsd)
-                .Select(a => new HedgeSellAsset
+                .Select(a => new HedgePairAsset
                 {
                     Weight = a.DailyVelocityRiskInUsd,
                     Symbol = a.Symbol,
@@ -46,7 +46,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
             var instruction = new HedgeInstruction
             {
                 TargetAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
-                SellAssets = collateralAssets,
+                PairAssets = collateralAssets,
                 TargetVolume = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalance)) *
                                (hedgePercent / 100)
             };

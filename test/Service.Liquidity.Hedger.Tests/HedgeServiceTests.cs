@@ -54,7 +54,7 @@ public class HedgeServiceTests
     public async Task Hedge_MakesBuyTrade_CalculatesTradedVolume()
     {
         // arrange
-        var sellAsset = new HedgeSellAsset
+        var sellAsset = new HedgePairAsset
         {
             Symbol = "BTC"
         };
@@ -62,7 +62,7 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
         var market = new HedgeExchangeMarket
@@ -105,7 +105,7 @@ public class HedgeServiceTests
     public async Task Hedge_MakesSellTrade_CalculatesTradedVolume()
     {
         // arrange
-        var sellAsset = new HedgeSellAsset
+        var sellAsset = new HedgePairAsset
         {
             Symbol = "BTC"
         };
@@ -113,7 +113,7 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
         var market = new HedgeExchangeMarket
@@ -158,7 +158,7 @@ public class HedgeServiceTests
     public async Task Hedge_DirectMarketInBaseAssetWihEnoughBalance_MakesBuyTradeOnTargetVolume()
     {
         // arrange
-        var sellAsset = new HedgeSellAsset
+        var sellAsset = new HedgePairAsset
         {
             Symbol = "BTC"
         };
@@ -166,7 +166,7 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
         var market = new HedgeExchangeMarket
@@ -207,7 +207,7 @@ public class HedgeServiceTests
     public async Task Hedge_DirectMarketInQuoteAssetWihEnoughBalance_MakesSellTradeOnTargetVolume()
     {
         // arrange
-        var sellAsset = new HedgeSellAsset
+        var sellAsset = new HedgePairAsset
         {
             Symbol = "BTC"
         };
@@ -215,7 +215,7 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
         var market = new HedgeExchangeMarket
@@ -256,7 +256,7 @@ public class HedgeServiceTests
     public async Task Hedge_DirectMarketInQuoteAssetWithoutEnoughBalance_MakesSellTradeOnPossibleVolume()
     {
         // arrange
-        var sellAsset = new HedgeSellAsset
+        var sellAsset = new HedgePairAsset
         {
             Symbol = "BTC"
         };
@@ -264,7 +264,7 @@ public class HedgeServiceTests
         {
             TargetVolume = 110,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
         var market = new HedgeExchangeMarket
@@ -305,7 +305,7 @@ public class HedgeServiceTests
     public async Task Hedge_DirectMarketInBaseAssetWithoutEnoughBalance_MakesBuyTradeOnPossibleVolume()
     {
         // arrange
-        var sellAsset = new HedgeSellAsset
+        var sellAsset = new HedgePairAsset
         {
             Symbol = "BTC"
         };
@@ -313,7 +313,7 @@ public class HedgeServiceTests
         {
             TargetVolume = 110,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
         var market = new HedgeExchangeMarket

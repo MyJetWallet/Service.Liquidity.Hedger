@@ -44,7 +44,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", ExchangeName,
             balancesResp?.Balances);
 
-        foreach (var sellAsset in hedgeInstruction.SellAssets)
+        foreach (var sellAsset in hedgeInstruction.PairAssets)
         {
             var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == hedgeInstruction.TargetAssetSymbol && m.QuoteAsset == sellAsset.Symbol ||

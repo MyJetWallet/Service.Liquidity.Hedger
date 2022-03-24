@@ -29,7 +29,7 @@ public class MarketAnalyzerTests
     public async Task FindPossibleMarkets_HasOneMarket_FindsMarketWithBaseTargetAsset()
     {
         // arrange
-        var btcSellAsset = new HedgeSellAsset
+        var btcSellAsset = new HedgePairAsset
         {
             Symbol = "BTC",
             Weight = -2
@@ -38,7 +38,7 @@ public class MarketAnalyzerTests
         {
             TargetVolume = 4,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset>
+            PairAssets = new List<HedgePairAsset>
             {
                 btcSellAsset
             }
@@ -85,7 +85,7 @@ public class MarketAnalyzerTests
     public async Task FindPossibleMarkets_HasSeveralMarkets_FiltersOutWrongMarket()
     {
         // arrange
-        var btcSellAsset = new HedgeSellAsset
+        var btcSellAsset = new HedgePairAsset
         {
             Symbol = "BTC",
             Weight = -2
@@ -94,7 +94,7 @@ public class MarketAnalyzerTests
         {
             TargetVolume = 4,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset>
+            PairAssets = new List<HedgePairAsset>
             {
                 btcSellAsset
             }
@@ -146,7 +146,7 @@ public class MarketAnalyzerTests
     public async Task FindPossibleMarkets_HasOneMarket_FindsMarketWithQuoteTargetAsset()
     {
         // arrange
-        var btcSellAsset = new HedgeSellAsset
+        var btcSellAsset = new HedgePairAsset
         {
             Symbol = "BTC",
             Weight = -2
@@ -155,7 +155,7 @@ public class MarketAnalyzerTests
         {
             TargetVolume = 4,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset>
+            PairAssets = new List<HedgePairAsset>
             {
                 btcSellAsset
             }
@@ -202,7 +202,7 @@ public class MarketAnalyzerTests
     public async Task FindPossibleMarkets_HasMarketWithZeroBalance_FiltersMarketWithZeroBalance()
     {
         // arrange
-        var btcSellAsset = new HedgeSellAsset
+        var btcSellAsset = new HedgePairAsset
         {
             Symbol = "BTC",
             Weight = -2
@@ -211,7 +211,7 @@ public class MarketAnalyzerTests
         {
             TargetVolume = 4,
             TargetAssetSymbol = "XRP",
-            SellAssets = new List<HedgeSellAsset>
+            PairAssets = new List<HedgePairAsset>
             {
                 btcSellAsset
             }

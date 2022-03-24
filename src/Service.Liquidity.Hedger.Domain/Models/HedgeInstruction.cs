@@ -8,7 +8,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
     public class HedgeInstruction
     {
         [DataMember(Order = 1)] public string TargetAssetSymbol { get; set; }
-        [DataMember(Order = 2)] public List<HedgeSellAsset> SellAssets { get; set; } = new();
+        [DataMember(Order = 2)] public List<HedgePairAsset> PairAssets { get; set; } = new();
         [DataMember(Order = 3)] public decimal TargetVolume { get; set; }
 
         public bool Validate(out ICollection<string> errors)
@@ -20,9 +20,9 @@ namespace Service.Liquidity.Hedger.Domain.Models
                 errors.Add($"{nameof(TargetAssetSymbol)} are empty");
             }
 
-            if (!SellAssets.Any())
+            if (!PairAssets.Any())
             {
-                errors.Add($"{nameof(SellAssets)} are empty");
+                errors.Add($"{nameof(PairAssets)} are empty");
             }
 
             if (TargetVolume <= 0)
