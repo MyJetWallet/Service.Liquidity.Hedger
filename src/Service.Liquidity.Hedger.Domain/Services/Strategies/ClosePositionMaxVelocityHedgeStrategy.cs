@@ -36,7 +36,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 .Select(a => a.Value)
                 .Where(a => a.GetPositiveNetInUsd() != 0)
                 .OrderBy(a => a.DailyVelocityRiskInUsd)
-                .Select(a => new HedgeSellAssets
+                .Select(a => new HedgeSellAsset
                 {
                     Weight = a.DailyVelocityRiskInUsd,
                     Symbol = a.Symbol,
