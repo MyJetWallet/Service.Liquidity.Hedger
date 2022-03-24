@@ -64,14 +64,6 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0", sellAsset.Symbol);
                 continue;
             }
-            
-            if (Convert.ToDouble(hedgeInstruction.TargetVolume) < exchangeMarketInfo.MinVolume)
-            {
-                _logger.LogWarning(
-                    "QuoteAsset {@quoteAsset} is skipped. TargetVolume {@volumeToBuy} < MarketMinVolume {@marketMinVolume}",
-                    sellAsset.Symbol, hedgeInstruction.TargetVolume, exchangeMarketInfo.MinVolume);
-                continue;
-            }
 
             markets.Add(new HedgeExchangeMarket
             {

@@ -74,7 +74,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 else if (market.ExchangeMarketInfo.QuoteAsset == hedgeInstruction.TargetAssetSymbol)
                 {
                     side = OrderSide.Sell;
-                    var neededVolumeToSell = remainingVolumeToTrade * marketPrice.Price;
+                    var neededVolumeToSell = remainingVolumeToTrade / marketPrice.Price;
                     tradeVolume = availableVolumeOnBalance < neededVolumeToSell
                         ? availableVolumeOnBalance  // trade max possible volume
                         : neededVolumeToSell;
@@ -97,8 +97,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 var trade = await TradeAsync(tradeVolume, side, market, hedgeOperation.Id);
                 hedgeOperation.HedgeTrades.Add(trade);
-                
-                
                 hedgeOperation.TradedVolume += side ==  OrderSide.Buy 
                     ? Convert.ToDecimal(trade.BaseVolume)
                     : Convert.ToDecimal(trade.QuoteVolume);
@@ -137,17 +135,17 @@ namespace Service.Liquidity.Hedger.Domain.Services
             var hedgeTrade = new HedgeTrade
             {
                 BaseAsset = market.ExchangeMarketInfo.BaseAsset,
-                BaseVolume = Convert.ToDecimal(response.Volume),
+                BaseVolume = Math.Abs(Convert.ToDecimal(response.Volume)),
                 ExchangeName = request.ExchangeName,
                 HedgeOperationId = operationId,
                 QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
-                QuoteVolume = Convert.ToDecimal(response.Price * response.Volume),
+                QuoteVolume = Math.Abs(Convert.ToDecimal(response.Price * response.Volume)),
                 Price = Convert.ToDecimal(response.Price),
                 Id = response.ReferenceId ?? request.ReferenceId,
                 CreatedDate = DateTime.UtcNow,
                 ExternalId = response.Id,
                 FeeAsset = response.FeeSymbol,
-                FeeVolume = Convert.ToDecimal(response.FeeVolume),
+                FeeVolume = Math.Abs(Convert.ToDecimal(response.FeeVolume)),
                 Market = response.Market,
                 Side = response.Side,
                 Type = OrderType.Market
