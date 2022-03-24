@@ -43,7 +43,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 TargetVolume = hedgeInstruction.TargetVolume,
                 HedgeTrades = new List<HedgeTrade>(),
                 CreatedDate = DateTime.UtcNow,
-                TargetAsset = hedgeInstruction.BaseAssetSymbol,
+                TargetAsset = hedgeInstruction.BuyAssetSymbol,
                 TradedVolume = 0
             };
 

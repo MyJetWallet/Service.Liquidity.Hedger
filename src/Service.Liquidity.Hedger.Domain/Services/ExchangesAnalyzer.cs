@@ -44,10 +44,10 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", ExchangeName,
             balancesResp?.Balances);
 
-        foreach (var quoteAsset in hedgeInstruction.QuoteAssets)
+        foreach (var quoteAsset in hedgeInstruction.SellAssets)
         {
             var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
-                m.BaseAsset == hedgeInstruction.BaseAssetSymbol &&
+                m.BaseAsset == hedgeInstruction.BuyAssetSymbol &&
                 m.QuoteAsset == quoteAsset.Symbol);
             var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == quoteAsset.Symbol);
 
