@@ -251,4 +251,102 @@ public class HedgeServiceTests
                 request.Side == OrderSide.Sell &&
                 Convert.ToDecimal(request.Volume) == hedgeInstruction.TargetVolume));
     }
+    
+    [Test]
+    public async Task Hedge_DirectMarketInQuoteAssetWithoutEnoughBalance_MakesSellTradeOnPossibleVolume()
+    {
+        // arrange
+        var sellAsset = new HedgeSellAsset
+        {
+            Symbol = "BTC"
+        };
+        var hedgeInstruction = new HedgeInstruction
+        {
+            TargetVolume = 110,
+            BuyAssetSymbol = "XRP",
+            SellAssets = new List<HedgeSellAsset> { sellAsset }
+        };
+
+        var market = new HedgeExchangeMarket
+        {
+            AssetExchangeBalance = new ExchangeBalance
+            {
+                Free = 100
+            },
+            ExchangeMarketInfo = new ExchangeMarketInfo
+            {
+                BaseAsset = sellAsset.Symbol,
+                QuoteAsset = hedgeInstruction.BuyAssetSymbol ,
+                MinVolume = 1,
+            }
+        };
+        _exchangesAnalyzer
+            .FindPossibleMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
+        {
+            Price = 1,
+        });
+        _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
+            _exchangesAnalyzer);
+
+        // act
+        await service.HedgeAsync(hedgeInstruction);
+
+        // assert
+        await _externalMarket.Received().MarketTrade(
+            Arg.Is<MarketTradeRequest>(request =>
+                request.Side == OrderSide.Sell &&
+                request.Volume == 90));
+    }
+    
+    [Test]
+    public async Task Hedge_DirectMarketInBaseAssetWithoutEnoughBalance_MakesBuyTradeOnPossibleVolume()
+    {
+        // arrange
+        var sellAsset = new HedgeSellAsset
+        {
+            Symbol = "BTC"
+        };
+        var hedgeInstruction = new HedgeInstruction
+        {
+            TargetVolume = 110,
+            BuyAssetSymbol = "XRP",
+            SellAssets = new List<HedgeSellAsset> { sellAsset }
+        };
+
+        var market = new HedgeExchangeMarket
+        {
+            AssetExchangeBalance = new ExchangeBalance
+            {
+                Free = 100
+            },
+            ExchangeMarketInfo = new ExchangeMarketInfo
+            {
+                BaseAsset = hedgeInstruction.BuyAssetSymbol,
+                QuoteAsset = sellAsset.Symbol,
+                MinVolume = 1,
+            }
+        };
+        _exchangesAnalyzer
+            .FindPossibleMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
+        {
+            Price = 1,
+        });
+        _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
+            _exchangesAnalyzer);
+
+        // act
+        await service.HedgeAsync(hedgeInstruction);
+
+        // assert
+        await _externalMarket.Received().MarketTrade(
+            Arg.Is<MarketTradeRequest>(request =>
+                request.Side == OrderSide.Buy &&
+                request.Volume == 90));
+    }
 }
