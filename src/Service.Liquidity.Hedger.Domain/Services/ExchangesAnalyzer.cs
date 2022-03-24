@@ -47,8 +47,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         foreach (var sellAsset in hedgeInstruction.SellAssets)
         {
             var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
-                m.BaseAsset == hedgeInstruction.BuyAssetSymbol &&
-                m.QuoteAsset == sellAsset.Symbol);
+                m.BaseAsset == hedgeInstruction.BuyAssetSymbol && m.QuoteAsset == sellAsset.Symbol ||
+                m.QuoteAsset == hedgeInstruction.BuyAssetSymbol && m.BaseAsset == sellAsset.Symbol);
             var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
 
             if (exchangeMarketInfo == null || exchangeBalance == null)
@@ -77,7 +77,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 ExchangeName = ExchangeName,
                 Weight = sellAsset.Weight,
-                QuoteAssetExchangeBalance = exchangeBalance,
+                AssetExchangeBalance = exchangeBalance,
                 ExchangeMarketInfo = exchangeMarketInfo
             });
         }

@@ -57,26 +57,51 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var market in possibleMarkets)
             {
+                var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
-                var possibleVolumeToSell =
-                    market.QuoteAssetExchangeBalance.Free / marketPrice.Price * BalancePercentToTrade;
-                var remainingVolumeToBuy = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
-                var volumeToBuy = possibleVolumeToSell < remainingVolumeToBuy
-                    ? possibleVolumeToSell
-                    : remainingVolumeToBuy;
-
-                if (Convert.ToDouble(volumeToBuy) < market.ExchangeMarketInfo.MinVolume)
+                var availableVolumeOnBalance = market.AssetExchangeBalance.Free * BalancePercentToTrade;
+                OrderSide side;
+                decimal tradeVolume;
+                
+                if (market.ExchangeMarketInfo.BaseAsset == hedgeInstruction.BuyAssetSymbol)
+                {
+                    side = OrderSide.Buy;
+                    var possibleVolumeToBuy = availableVolumeOnBalance / marketPrice.Price;
+                    tradeVolume = possibleVolumeToBuy < remainingVolumeToTrade
+                        ? possibleVolumeToBuy // trade max possible volume
+                        : remainingVolumeToTrade;
+                }
+                else if (market.ExchangeMarketInfo.QuoteAsset == hedgeInstruction.BuyAssetSymbol)
+                {
+                    side = OrderSide.Sell;
+                    var neededVolumeToSell = remainingVolumeToTrade * marketPrice.Price;
+                    tradeVolume = availableVolumeOnBalance < neededVolumeToSell
+                        ? availableVolumeOnBalance  // trade max possible volume
+                        : neededVolumeToSell;
+                }
+                else
                 {
                     _logger.LogWarning(
-                        "Can't trade on market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
-                        market.ExchangeMarketInfo.Market, volumeToBuy, market.ExchangeMarketInfo.MinVolume);
+                        "Can't trade on market {@market}. Doesn't has TargetAsset {@targetAsset}", 
+                        market.ExchangeMarketInfo.Market, hedgeInstruction.BuyAssetSymbol);
                     continue;
                 }
 
-                var trade = await TradeAsync(volumeToBuy, market, hedgeOperation.Id);
+                if (Convert.ToDouble(tradeVolume) < market.ExchangeMarketInfo.MinVolume)
+                {
+                    _logger.LogWarning(
+                        "Can't trade on market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
+                        market.ExchangeMarketInfo.Market, tradeVolume, market.ExchangeMarketInfo.MinVolume);
+                    continue;
+                }
 
+                var trade = await TradeAsync(tradeVolume, side, market, hedgeOperation.Id);
                 hedgeOperation.HedgeTrades.Add(trade);
-                hedgeOperation.TradedVolume += Convert.ToDecimal(trade.BaseVolume);
+                
+                
+                hedgeOperation.TradedVolume += side ==  OrderSide.Buy 
+                    ? Convert.ToDecimal(trade.BaseVolume)
+                    : Convert.ToDecimal(trade.QuoteVolume);
 
                 if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
                 {
@@ -94,13 +119,14 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeOperation;
         }
 
-        private async Task<HedgeTrade> TradeAsync(decimal targetVolume, HedgeExchangeMarket market, string operationId)
+        private async Task<HedgeTrade> TradeAsync(decimal tradeVolume, OrderSide orderSide,
+            HedgeExchangeMarket market, string operationId)
         {
             var request = new MarketTradeRequest
             {
-                Side = OrderSide.Buy,
+                Side = orderSide,
                 Market = market.ExchangeMarketInfo.Market,
-                Volume = Convert.ToDouble(targetVolume),
+                Volume = Convert.ToDouble(tradeVolume),
                 ExchangeName = market.ExchangeName,
                 OppositeVolume = 0,
                 ReferenceId = Guid.NewGuid().ToString(),
