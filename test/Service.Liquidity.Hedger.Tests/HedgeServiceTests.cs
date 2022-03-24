@@ -67,11 +67,11 @@ public class HedgeServiceTests
 
         var market = new HedgeExchangeMarket
         {
-            AssetExchangeBalance = new ExchangeBalance
+            Balance = new ExchangeBalance
             {
                 Free = 2
             },
-            ExchangeMarketInfo = new ExchangeMarketInfo
+            Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
@@ -118,11 +118,11 @@ public class HedgeServiceTests
 
         var market = new HedgeExchangeMarket
         {
-            AssetExchangeBalance = new ExchangeBalance
+            Balance = new ExchangeBalance
             {
                 Free = 2
             },
-            ExchangeMarketInfo = new ExchangeMarketInfo
+            Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
@@ -171,11 +171,11 @@ public class HedgeServiceTests
 
         var market = new HedgeExchangeMarket
         {
-            AssetExchangeBalance = new ExchangeBalance
+            Balance = new ExchangeBalance
             {
                 Free = 2
             },
-            ExchangeMarketInfo = new ExchangeMarketInfo
+            Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,
@@ -220,11 +220,11 @@ public class HedgeServiceTests
 
         var market = new HedgeExchangeMarket
         {
-            AssetExchangeBalance = new ExchangeBalance
+            Balance = new ExchangeBalance
             {
                 Free = 2
             },
-            ExchangeMarketInfo = new ExchangeMarketInfo
+            Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
                 QuoteAsset = hedgeInstruction.TargetAssetSymbol ,
@@ -269,11 +269,11 @@ public class HedgeServiceTests
 
         var market = new HedgeExchangeMarket
         {
-            AssetExchangeBalance = new ExchangeBalance
+            Balance = new ExchangeBalance
             {
                 Free = 100
             },
-            ExchangeMarketInfo = new ExchangeMarketInfo
+            Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
                 QuoteAsset = hedgeInstruction.TargetAssetSymbol ,
@@ -318,11 +318,11 @@ public class HedgeServiceTests
 
         var market = new HedgeExchangeMarket
         {
-            AssetExchangeBalance = new ExchangeBalance
+            Balance = new ExchangeBalance
             {
                 Free = 100
             },
-            ExchangeMarketInfo = new ExchangeMarketInfo
+            Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = sellAsset.Symbol,

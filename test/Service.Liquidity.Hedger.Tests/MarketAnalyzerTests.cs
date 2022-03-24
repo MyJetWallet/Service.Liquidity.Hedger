@@ -76,9 +76,9 @@ public class MarketAnalyzerTests
         markets.Should().NotBeNull();
         markets.Should().NotBeEmpty();
         markets.First().Weight.Should().Be(btcSellAsset.Weight);
-        markets.First().AssetExchangeBalance.Symbol.Should().Be(btcSellAsset.Symbol);
-        markets.First().ExchangeMarketInfo.QuoteAsset.Should().Be(btcSellAsset.Symbol);
-        markets.First().ExchangeMarketInfo.BaseAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
+        markets.First().Balance.Symbol.Should().Be(btcSellAsset.Symbol);
+        markets.First().Info.QuoteAsset.Should().Be(btcSellAsset.Symbol);
+        markets.First().Info.BaseAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
     
     [Test]
@@ -193,9 +193,9 @@ public class MarketAnalyzerTests
         markets.Should().NotBeNull();
         markets.Should().NotBeEmpty();
         markets.First().Weight.Should().Be(btcSellAsset.Weight);
-        markets.First().AssetExchangeBalance.Symbol.Should().Be(btcSellAsset.Symbol);
-        markets.First().ExchangeMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
-        markets.First().ExchangeMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
+        markets.First().Balance.Symbol.Should().Be(btcSellAsset.Symbol);
+        markets.First().Info.BaseAsset.Should().Be(btcSellAsset.Symbol);
+        markets.First().Info.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
     
     [Test]

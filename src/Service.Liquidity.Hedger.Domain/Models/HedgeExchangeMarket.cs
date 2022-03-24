@@ -6,7 +6,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
     {
         public decimal Weight { get; set; }
         public string ExchangeName { get; set; }
-        public ExchangeMarketInfo ExchangeMarketInfo { get; set; }
-        public ExchangeBalance AssetExchangeBalance { get; set; }
+        public ExchangeMarketInfo Info { get; set; }
+        public ExchangeBalance Balance { get; set; }
     }
 }

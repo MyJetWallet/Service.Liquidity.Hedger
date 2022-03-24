@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.ExternalMarketApi;
 using MyJetWallet.Domain.ExternalMarketApi.Dto;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
@@ -49,55 +50,24 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             var possibleMarkets = await _exchangesAnalyzer.FindPossibleMarketsAsync(hedgeInstruction);
 
-            if (!possibleMarkets.Any())
-            {
-                _logger.LogWarning("Can't hedge. Possible markets not found");
-                return hedgeOperation;
-            }
-
             foreach (var market in possibleMarkets)
             {
                 var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
-                var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.ExchangeMarketInfo.Market);
-                var availableVolumeOnBalance = market.AssetExchangeBalance.Free * BalancePercentToTrade;
-                OrderSide side;
-                decimal tradeVolume;
-                
-                if (market.ExchangeMarketInfo.BaseAsset == hedgeInstruction.TargetAssetSymbol)
-                {
-                    side = OrderSide.Buy;
-                    var possibleVolumeToBuy = availableVolumeOnBalance / marketPrice.Price;
-                    tradeVolume = possibleVolumeToBuy < remainingVolumeToTrade
-                        ? possibleVolumeToBuy // trade max possible volume
-                        : remainingVolumeToTrade;
-                }
-                else if (market.ExchangeMarketInfo.QuoteAsset == hedgeInstruction.TargetAssetSymbol)
-                {
-                    side = OrderSide.Sell;
-                    var neededVolumeToSell = remainingVolumeToTrade / marketPrice.Price;
-                    tradeVolume = availableVolumeOnBalance < neededVolumeToSell
-                        ? availableVolumeOnBalance  // trade max possible volume
-                        : neededVolumeToSell;
-                }
-                else
-                {
-                    _logger.LogWarning(
-                        "Can't trade on market {@market}. Doesn't has TargetAsset {@targetAsset}", 
-                        market.ExchangeMarketInfo.Market, hedgeInstruction.TargetAssetSymbol);
-                    continue;
-                }
+                var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.Info.Market);
+                var side = DetermineOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
+                var tradeVolume = CalculateTradeVolume(remainingVolumeToTrade, marketPrice.Price, market.Balance.Free, side);
 
-                if (Convert.ToDouble(tradeVolume) < market.ExchangeMarketInfo.MinVolume)
+                if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
                 {
                     _logger.LogWarning(
                         "Can't trade on market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
-                        market.ExchangeMarketInfo.Market, tradeVolume, market.ExchangeMarketInfo.MinVolume);
+                        market.Info.Market, tradeVolume, market.Info.MinVolume);
                     continue;
                 }
 
                 var trade = await TradeAsync(tradeVolume, side, market, hedgeOperation.Id);
                 hedgeOperation.HedgeTrades.Add(trade);
-                hedgeOperation.TradedVolume += side ==  OrderSide.Buy 
+                hedgeOperation.TradedVolume += side == OrderSide.Buy
                     ? Convert.ToDecimal(trade.BaseVolume)
                     : Convert.ToDecimal(trade.QuoteVolume);
 
@@ -117,13 +87,51 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeOperation;
         }
 
+        private OrderSide DetermineOrderSide(ExchangeMarketInfo market, string buyAsset)
+        {
+            if (market.BaseAsset == buyAsset)
+            {
+                return OrderSide.Buy;
+            }
+
+            if (market.QuoteAsset == buyAsset)
+            {
+                return OrderSide.Sell;
+            }
+
+            return OrderSide.UnknownOrderSide;
+        }
+
+        private decimal CalculateTradeVolume(decimal targetVolume, decimal price, decimal balance, OrderSide side)
+        {
+            var availableVolumeOnBalance = balance * BalancePercentToTrade;
+
+            if (side == OrderSide.Buy)
+            {
+                var possibleVolumeToBuy = availableVolumeOnBalance / price;
+                return possibleVolumeToBuy < targetVolume
+                    ? possibleVolumeToBuy // trade max possible volume
+                    : targetVolume;
+            }
+
+            if (side == OrderSide.Sell)
+            {
+                var neededVolumeToSell = targetVolume / price;
+                return availableVolumeOnBalance < neededVolumeToSell
+                    ? availableVolumeOnBalance // trade max possible volume
+                    : neededVolumeToSell;
+            }
+            
+            return 0;
+        }
+
         private async Task<HedgeTrade> TradeAsync(decimal tradeVolume, OrderSide orderSide,
             HedgeExchangeMarket market, string operationId)
         {
             var request = new MarketTradeRequest
             {
                 Side = orderSide,
-                Market = market.ExchangeMarketInfo.Market,
+                Market = market.Info.Market,
                 Volume = Convert.ToDouble(tradeVolume),
                 ExchangeName = market.ExchangeName,
                 OppositeVolume = 0,
@@ -134,11 +142,11 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             var hedgeTrade = new HedgeTrade
             {
-                BaseAsset = market.ExchangeMarketInfo.BaseAsset,
+                BaseAsset = market.Info.BaseAsset,
                 BaseVolume = Math.Abs(Convert.ToDecimal(response.Volume)),
                 ExchangeName = request.ExchangeName,
                 HedgeOperationId = operationId,
-                QuoteAsset = market.ExchangeMarketInfo.QuoteAsset,
+                QuoteAsset = market.Info.QuoteAsset,
                 QuoteVolume = Math.Abs(Convert.ToDecimal(response.Price * response.Volume)),
                 Price = Convert.ToDecimal(response.Price),
                 Id = response.ReferenceId ?? request.ReferenceId,
@@ -150,7 +158,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 Side = response.Side,
                 Type = OrderType.Market
             };
-            
+
             _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);
 
             return hedgeTrade;
