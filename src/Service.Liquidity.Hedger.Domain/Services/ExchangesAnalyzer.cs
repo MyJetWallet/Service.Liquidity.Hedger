@@ -44,24 +44,24 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", ExchangeName,
             balancesResp?.Balances);
 
-        foreach (var quoteAsset in hedgeInstruction.SellAssets)
+        foreach (var sellAsset in hedgeInstruction.SellAssets)
         {
             var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == hedgeInstruction.BuyAssetSymbol &&
-                m.QuoteAsset == quoteAsset.Symbol);
-            var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == quoteAsset.Symbol);
+                m.QuoteAsset == sellAsset.Symbol);
+            var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
 
             if (exchangeMarketInfo == null || exchangeBalance == null)
             {
                 _logger.LogWarning(
                     "QuoteAsset {@quoteAsset} is skipped. Market {@market}; ExchangeBalance={@exchangeBalance}",
-                    quoteAsset.Symbol, exchangeMarketInfo?.Market, exchangeBalance);
+                    sellAsset.Symbol, exchangeMarketInfo?.Market, exchangeBalance);
                 continue;
             }
 
             if (exchangeBalance.Free <= 0)
             {
-                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0", quoteAsset.Symbol);
+                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0", sellAsset.Symbol);
                 continue;
             }
             
@@ -69,14 +69,14 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 _logger.LogWarning(
                     "QuoteAsset {@quoteAsset} is skipped. TargetVolume {@volumeToBuy} < MarketMinVolume {@marketMinVolume}",
-                    quoteAsset.Symbol, hedgeInstruction.TargetVolume, exchangeMarketInfo.MinVolume);
+                    sellAsset.Symbol, hedgeInstruction.TargetVolume, exchangeMarketInfo.MinVolume);
                 continue;
             }
 
             markets.Add(new HedgeExchangeMarket
             {
                 ExchangeName = ExchangeName,
-                Weight = quoteAsset.Weight,
+                Weight = sellAsset.Weight,
                 QuoteAssetExchangeBalance = exchangeBalance,
                 ExchangeMarketInfo = exchangeMarketInfo
             });
