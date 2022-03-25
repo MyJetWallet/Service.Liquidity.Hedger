@@ -25,10 +25,77 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _externalMarket = externalMarket;
     }
 
+    public async Task<ICollection<IndirectHedgeExchangeMarket>> FindIndirectMarketsAsync(
+        string transitAssetSymbol, string targetAssetSymbol, IEnumerable<HedgePairAsset> pairAssets)
+    {
+        _logger.LogInformation("FindPossible markets started");
+
+        var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
+        {
+            ExchangeName = ExchangeName
+        });
+        var marketInfosResp = await _externalMarket.GetMarketInfoListAsync(new GetMarketInfoListRequest
+        {
+            ExchangeName = ExchangeName
+        });
+        var markets = new List<IndirectHedgeExchangeMarket>();
+
+        _logger.LogInformation("GetExchangeMarkets {@exchangeName}: {@markets}", ExchangeName,
+            marketInfosResp?.Infos.Select(i => i.Market));
+        _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", ExchangeName,
+            balancesResp?.Balances);
+
+        foreach (var pairAsset in pairAssets)
+        {
+            var firstExchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
+                m.BaseAsset == transitAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
+                m.QuoteAsset == transitAssetSymbol && m.BaseAsset == pairAsset.Symbol);
+            var firstAssetExchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
+
+            if (firstExchangeMarketInfo == null || firstAssetExchangeBalance == null)
+            {
+                _logger.LogWarning(
+                    "Asset {@quoteAsset} is skipped. Market {@market}; ExchangeBalance={@exchangeBalance}",
+                    pairAsset.Symbol, firstExchangeMarketInfo?.Market, firstAssetExchangeBalance);
+                continue;
+            }
+
+            if (firstAssetExchangeBalance.Free <= 0)
+            {
+                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0",
+                    pairAsset.Symbol);
+                continue;
+            }
+
+            var secondExchangeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
+                m.BaseAsset == transitAssetSymbol && m.QuoteAsset == targetAssetSymbol ||
+                m.QuoteAsset == transitAssetSymbol && m.BaseAsset == targetAssetSymbol);
+            var secondAssetExchangeBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
+
+            if (secondExchangeMarketInfo == null || secondAssetExchangeBalance == null)
+            {
+                continue;
+            }
+
+            markets.Add(new IndirectHedgeExchangeMarket
+            {
+                ExchangeName = ExchangeName,
+                Weight = pairAsset.Weight,
+                TransitAssetAssetBalance = firstAssetExchangeBalance,
+                TransitAssetMarketInfo = firstExchangeMarketInfo,
+                TargetAssetAssetBalance = secondAssetExchangeBalance,
+                TargetAssetMarketInfo = secondExchangeMarketInfo,
+                TransitAsset = transitAssetSymbol
+            });
+        }
+
+        return markets;
+    }
+
     public async Task<ICollection<HedgeExchangeMarket>> FindPossibleMarketsAsync(HedgeInstruction hedgeInstruction)
     {
         _logger.LogInformation("FindPossible markets started");
-        
+
         var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
         {
             ExchangeName = ExchangeName
@@ -61,7 +128,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
 
             if (exchangeBalance.Free <= 0)
             {
-                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0", sellAsset.Symbol);
+                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0",
+                    sellAsset.Symbol);
                 continue;
             }
 
@@ -74,7 +142,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             });
         }
 
-        _logger.LogInformation("FindPossible markets ended. Found markets: {@markets} for HedgeInstruction {@hedgeInstruction}",
+        _logger.LogInformation(
+            "FindPossible markets ended. Found markets: {@markets} for HedgeInstruction {@hedgeInstruction}",
             markets, hedgeInstruction);
 
         return markets;

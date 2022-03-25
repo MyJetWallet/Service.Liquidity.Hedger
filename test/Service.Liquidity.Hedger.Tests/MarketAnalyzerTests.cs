@@ -248,4 +248,72 @@ public class MarketAnalyzerTests
         // assert
         markets.Should().BeEmpty();
     }
+    
+    [Test]
+    public async Task FindPossibleMarkets_NoDirectMarkets_FindsIndirectMarket()
+    {
+        // arrange
+        var transitAsset = "USD";
+        var btcSellAsset = new HedgePairAsset
+        {
+            Symbol = "BTC",
+            Weight = -2
+        };
+        var hedgeInstruction = new HedgeInstruction
+        {
+            TargetVolume = 4,
+            TargetAssetSymbol = "XRP",
+            PairAssets = new List<HedgePairAsset>
+            {
+                btcSellAsset
+            }
+        };
+        _externalMarket.GetBalancesAsync(default).ReturnsForAnyArgs(new GetBalancesResponse
+        {
+            Balances = new List<ExchangeBalance>
+            {
+                new ()
+                {
+                    Symbol = btcSellAsset.Symbol,
+                    Free = 10
+                },
+                new ()
+                {
+                    Symbol = transitAsset,
+                    Free = 10
+                },
+            }
+        });
+        _externalMarket.GetMarketInfoListAsync(default).ReturnsForAnyArgs(new GetMarketInfoListResponse
+        {
+            Infos = new List<ExchangeMarketInfo>
+            {
+                new ()
+                {
+                    MinVolume = 1,
+                    BaseAsset = btcSellAsset.Symbol,
+                    QuoteAsset = transitAsset,
+                },
+                new ()
+                {
+                    MinVolume = 1,
+                    BaseAsset = transitAsset,
+                    QuoteAsset = hedgeInstruction.TargetAssetSymbol,
+                }
+            }
+        });
+        var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
+        
+        // act
+        var markets = await analyzer.FindIndirectMarketsAsync(transitAsset, 
+            hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
+        
+        // assert
+        markets.Should().NotBeEmpty();
+        markets.First().TransitAsset.Should().Be(transitAsset);
+        markets.First().TransitAssetMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
+        markets.First().TransitAssetMarketInfo.QuoteAsset.Should().Be(transitAsset);
+        markets.First().TargetAssetMarketInfo.BaseAsset.Should().Be(transitAsset);
+        markets.First().TargetAssetMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
+    }
 }
