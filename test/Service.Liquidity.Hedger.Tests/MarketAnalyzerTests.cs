@@ -310,10 +310,10 @@ public class MarketAnalyzerTests
         
         // assert
         markets.Should().NotBeEmpty();
-        markets.First().TransitAsset.Should().Be(transitAsset);
-        markets.First().TransitAssetMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
-        markets.First().TransitAssetMarketInfo.QuoteAsset.Should().Be(transitAsset);
-        markets.First().TargetAssetMarketInfo.BaseAsset.Should().Be(transitAsset);
-        markets.First().TargetAssetMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
+        markets.First().TransitAssetSymbol.Should().Be(transitAsset);
+        markets.First().TransitMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
+        markets.First().TransitMarketInfo.QuoteAsset.Should().Be(transitAsset);
+        markets.First().TargetMarketInfo.BaseAsset.Should().Be(transitAsset);
+        markets.First().TargetMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
 }

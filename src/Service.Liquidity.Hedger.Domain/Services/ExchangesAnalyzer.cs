@@ -81,11 +81,11 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 ExchangeName = ExchangeName,
                 Weight = pairAsset.Weight,
-                TransitAssetAssetBalance = firstAssetExchangeBalance,
-                TransitAssetMarketInfo = firstExchangeMarketInfo,
-                TargetAssetAssetBalance = secondAssetExchangeBalance,
-                TargetAssetMarketInfo = secondExchangeMarketInfo,
-                TransitAsset = transitAssetSymbol
+                TransitPairAssetBalance = firstAssetExchangeBalance,
+                TransitMarketInfo = firstExchangeMarketInfo,
+                TargetPairAssetBalance = secondAssetExchangeBalance,
+                TargetMarketInfo = secondExchangeMarketInfo,
+                TransitAssetSymbol = transitAssetSymbol
             });
         }
 

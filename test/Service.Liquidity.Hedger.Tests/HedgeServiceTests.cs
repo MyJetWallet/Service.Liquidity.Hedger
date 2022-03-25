@@ -49,7 +49,7 @@ public class HedgeServiceTests
         // assert
         operation.TradedVolume.Should().Be(0);
     }
-    
+
     [Test]
     public async Task Hedge_MakesBuyTrade_CalculatesTradedVolume()
     {
@@ -100,7 +100,7 @@ public class HedgeServiceTests
         // assert
         operation.TradedVolume.Should().Be(Convert.ToDecimal(exchangeTrade.Volume));
     }
-    
+
     [Test]
     public async Task Hedge_MakesSellTrade_CalculatesTradedVolume()
     {
@@ -202,7 +202,7 @@ public class HedgeServiceTests
                 request.Side == OrderSide.Buy &&
                 Convert.ToDecimal(request.Volume) == hedgeInstruction.TargetVolume));
     }
-    
+
     [Test]
     public async Task Hedge_DirectMarketInQuoteAssetWihEnoughBalance_MakesSellTradeOnTargetVolume()
     {
@@ -227,7 +227,7 @@ public class HedgeServiceTests
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
-                QuoteAsset = hedgeInstruction.TargetAssetSymbol ,
+                QuoteAsset = hedgeInstruction.TargetAssetSymbol,
                 MinVolume = 1,
             }
         };
@@ -251,7 +251,7 @@ public class HedgeServiceTests
                 request.Side == OrderSide.Sell &&
                 Convert.ToDecimal(request.Volume) == hedgeInstruction.TargetVolume));
     }
-    
+
     [Test]
     public async Task Hedge_DirectMarketInQuoteAssetWithoutEnoughBalance_MakesSellTradeOnPossibleVolume()
     {
@@ -276,7 +276,7 @@ public class HedgeServiceTests
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
-                QuoteAsset = hedgeInstruction.TargetAssetSymbol ,
+                QuoteAsset = hedgeInstruction.TargetAssetSymbol,
                 MinVolume = 1,
             }
         };
@@ -300,7 +300,7 @@ public class HedgeServiceTests
                 request.Side == OrderSide.Sell &&
                 request.Volume == 90));
     }
-    
+
     [Test]
     public async Task Hedge_DirectMarketInBaseAssetWithoutEnoughBalance_MakesBuyTradeOnPossibleVolume()
     {
@@ -348,5 +348,72 @@ public class HedgeServiceTests
             Arg.Is<MarketTradeRequest>(request =>
                 request.Side == OrderSide.Buy &&
                 request.Volume == 90));
+    }
+
+    [Test]
+    public async Task Hedge_NoDirectMarket_MakesTradeOnIndirectMarket()
+    {
+        // arrange
+        var transitAsset = new HedgePairAsset
+        {
+            Symbol = "USD"
+        };
+        ;
+        var pairAsset = new HedgePairAsset
+        {
+            Symbol = "BTC"
+        };
+        var hedgeInstruction = new HedgeInstruction
+        {
+            TargetVolume = 110,
+            TargetAssetSymbol = "XRP",
+            PairAssets = new List<HedgePairAsset> { pairAsset },
+        };
+
+        var market = new IndirectHedgeExchangeMarket
+        {
+            TransitAssetSymbol = transitAsset.Symbol,
+            TransitPairAssetBalance = new ExchangeBalance
+            {
+                Free = 100
+            },
+            TransitMarketInfo = new ExchangeMarketInfo
+            {
+                BaseAsset = transitAsset.Symbol,
+                QuoteAsset = pairAsset.Symbol,
+                MinVolume = 1,
+            },
+            TargetPairAssetBalance = new ExchangeBalance
+            {
+                Free = 0
+            },
+            TargetMarketInfo = new ExchangeMarketInfo
+            {
+                BaseAsset = hedgeInstruction.TargetAssetSymbol,
+                QuoteAsset = pairAsset.Symbol,
+                MinVolume = 1,
+            }
+        };
+        _exchangesAnalyzer
+            .FindIndirectMarketsAsync(default, default, default)
+            .ReturnsForAnyArgs(new List<IndirectHedgeExchangeMarket> { market });
+        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
+        {
+            Price = 1,
+        });
+        _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade
+        {
+            Volume = Convert.ToDouble(hedgeInstruction.TargetVolume),
+            OppositeVolume = Convert.ToDouble(hedgeInstruction.TargetVolume),
+        });
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
+            _exchangesAnalyzer);
+
+        // act
+        await service.HedgeAsync(hedgeInstruction, new[] { transitAsset });
+
+        // assert
+        await _externalMarket.Received(2).MarketTrade(
+            Arg.Any<MarketTradeRequest>());
     }
 }
