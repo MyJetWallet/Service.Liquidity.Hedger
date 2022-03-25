@@ -3,6 +3,7 @@ using MyJetWallet.Domain.ExternalMarketApi;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Services;
 using Service.Liquidity.Hedger.NoSql;
+using Service.Liquidity.Hedger.NoSql.Settings;
 using Service.Liquidity.Hedger.Subscribers;
 
 namespace Service.Liquidity.Hedger.Modules
@@ -26,6 +27,8 @@ namespace Service.Liquidity.Hedger.Modules
             builder.RegisterType<ExchangesAnalyzer>().As<IExchangesAnalyzer>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<PortfolioAnalyzer>().As<IPortfolioAnalyzer>()
+                .AutoActivate().SingleInstance();
+            builder.RegisterType<HedgeSettingsNoSqlStorage>().As<IHedgeSettingsStorage>()
                 .AutoActivate().SingleInstance();
         }
     }
