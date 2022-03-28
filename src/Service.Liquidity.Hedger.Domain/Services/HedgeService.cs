@@ -78,85 +78,19 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     break;
                 }
             }
-            
-            _logger.LogInformation("Traded on DirectMarkets: TargetVolume={@targetVolume}, TradedVolume={@tradedVolume}",
+
+            _logger.LogInformation(
+                "Traded on DirectMarkets: TargetVolume={@targetVolume}, TradedVolume={@tradedVolume}",
                 hedgeInstruction.TargetVolume, hedgeOperation.TradedVolume);
 
             foreach (var transitAsset in (transitAssets ?? Array.Empty<HedgePairAsset>()).OrderBy(a => a.Weight))
             {
-                if (hedgeOperation.TradedVolume < hedgeInstruction.TargetVolume)
+                if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
                 {
-                    var indirectMarkets = await _exchangesAnalyzer.FindIndirectMarketsAsync(
-                        transitAsset.Symbol, hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
-
-                    foreach (var market in indirectMarkets)
-                    {
-                        var remainingVolumeToTradeInTargetAsset =
-                            hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
-                        var targetAssetMarketPrice = _currentPricesCache.Get(market.ExchangeName,
-                            market.TargetMarketInfo.Market);
-                        var targetAssetSide =
-                            DetermineOrderSide(market.TargetMarketInfo, hedgeInstruction.TargetAssetSymbol);
-                        var neededVolumeInTransitAsset = targetAssetSide == OrderSide.Buy
-                            ? remainingVolumeToTradeInTargetAsset * targetAssetMarketPrice.Price
-                            : remainingVolumeToTradeInTargetAsset / targetAssetMarketPrice.Price;
-                        var transitAssetMarketPrice = _currentPricesCache.Get(market.ExchangeName,
-                            market.TransitMarketInfo.Market);
-                        var transitAssetSide = DetermineOrderSide(market.TransitMarketInfo, transitAsset.Symbol);
-                        var transitTradeVolume = CalculateTradeVolume(neededVolumeInTransitAsset,
-                            transitAssetMarketPrice.Price, market.TransitPairAssetBalance.Free, transitAssetSide,
-                            market.TransitMarketInfo.VolumeAccuracy);
-                        
-                        if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
-                        {
-                            _logger.LogWarning(
-                                "Can't trade on IndirectMarket {@transitMarket} -> {@targetMarket}. " +
-                                "TransitTradeVolume is less than MarketMinVolume: {@tradeVolume} < {@minVolume}",
-                                market.TransitMarketInfo.Market, market.TargetMarketInfo.Market, 
-                                transitTradeVolume, market.TransitMarketInfo.MinVolume);
-                            continue;
-                        }
-
-                        var availableVolumeInTransitAssetAfterTransitTrade =
-                            transitTradeVolume / transitAssetMarketPrice.Price + market.TargetPairAssetBalance.Free;
-                        var targetTradeVolume = CalculateTradeVolume(remainingVolumeToTradeInTargetAsset,
-                            targetAssetMarketPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
-                            targetAssetSide);
-
-                        if (Convert.ToDouble(targetTradeVolume) < market.TargetMarketInfo.MinVolume)
-                        {
-                            _logger.LogWarning(
-                                "Can't trade on IndirectMarket {@transitMarket} -> {@targetMarket}. " +
-                                "TargetTradeVolume after TransitTrade will be less than MarketMinVolume: {@tradeVolume} < {@minVolume}",
-                                market.TransitMarketInfo.Market, market.TargetMarketInfo.Market, 
-                                targetTradeVolume, market.TargetMarketInfo.MinVolume);
-                            continue;
-                        }
-
-                        var transitTrade = await TradeAsync(transitTradeVolume, transitAssetSide,
-                            market.TransitMarketInfo,
-                            market.ExchangeName, hedgeOperation.Id);
-                        hedgeOperation.HedgeTrades.Add(transitTrade);
-
-                        market.TargetPairAssetBalance.Free += transitAssetSide == OrderSide.Buy
-                            ? Convert.ToDecimal(transitTrade.BaseVolume)
-                            : Convert.ToDecimal(transitTrade.QuoteVolume);
-
-                        var targetTrade = await TradeAsync(targetTradeVolume, targetAssetSide,
-                            market.TransitMarketInfo,
-                            market.ExchangeName, hedgeOperation.Id);
-                        hedgeOperation.HedgeTrades.Add(targetTrade);
-
-                        hedgeOperation.TradedVolume += transitAssetSide == OrderSide.Buy
-                            ? Convert.ToDecimal(transitTrade.BaseVolume)
-                            : Convert.ToDecimal(transitTrade.QuoteVolume);
-
-                        if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
-                        {
-                            break;
-                        }
-                    }
+                    break;
                 }
+
+                await HedgeOnIndirectMarketsAsync(transitAsset, hedgeOperation, hedgeInstruction);
             }
 
             _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
@@ -167,6 +101,84 @@ namespace Service.Liquidity.Hedger.Domain.Services
             }
 
             return hedgeOperation;
+        }
+
+        private async Task HedgeOnIndirectMarketsAsync(HedgePairAsset transitAsset,
+            HedgeOperation hedgeOperation, HedgeInstruction hedgeInstruction)
+        {
+            if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
+            {
+                return;
+            }
+
+            var indirectMarkets = await _exchangesAnalyzer.FindIndirectMarketsAsync(
+                transitAsset.Symbol, hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
+
+            foreach (var market in indirectMarkets)
+            {
+                if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
+                {
+                    break;
+                }
+
+                var remainingVolumeToTradeInTargetAsset =
+                    hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
+                var targetAssetMarketPrice = _currentPricesCache.Get(market.ExchangeName,
+                    market.TargetMarketInfo.Market);
+                var targetAssetSide =
+                    DetermineOrderSide(market.TargetMarketInfo, hedgeInstruction.TargetAssetSymbol);
+                var neededVolumeInTransitAsset = targetAssetSide == OrderSide.Buy
+                    ? remainingVolumeToTradeInTargetAsset * targetAssetMarketPrice.Price
+                    : remainingVolumeToTradeInTargetAsset / targetAssetMarketPrice.Price;
+                var transitAssetMarketPrice = _currentPricesCache.Get(market.ExchangeName,
+                    market.TransitMarketInfo.Market);
+                var transitAssetSide = DetermineOrderSide(market.TransitMarketInfo, transitAsset.Symbol);
+                var transitTradeVolume = CalculateTradeVolume(neededVolumeInTransitAsset,
+                    transitAssetMarketPrice.Price, market.TransitPairAssetBalance.Free, transitAssetSide,
+                    market.TransitMarketInfo.VolumeAccuracy);
+
+                if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
+                {
+                    _logger.LogWarning(
+                        "Can't trade on IndirectMarket {@transitMarket} -> {@targetMarket}. " +
+                        "TransitTradeVolume is less than MarketMinVolume: {@tradeVolume} < {@minVolume}",
+                        market.TransitMarketInfo.Market, market.TargetMarketInfo.Market,
+                        transitTradeVolume, market.TransitMarketInfo.MinVolume);
+                    continue;
+                }
+
+                var availableVolumeInTransitAssetAfterTransitTrade =
+                    transitTradeVolume / transitAssetMarketPrice.Price + market.TargetPairAssetBalance.Free;
+                var targetTradeVolume = CalculateTradeVolume(remainingVolumeToTradeInTargetAsset,
+                    targetAssetMarketPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
+                    targetAssetSide);
+
+                if (Convert.ToDouble(targetTradeVolume) < market.TargetMarketInfo.MinVolume)
+                {
+                    _logger.LogWarning(
+                        "Can't trade on IndirectMarket {@transitMarket} -> {@targetMarket}. " +
+                        "TargetTradeVolume after TransitTrade will be less than MarketMinVolume: {@tradeVolume} < {@minVolume}",
+                        market.TransitMarketInfo.Market, market.TargetMarketInfo.Market,
+                        targetTradeVolume, market.TargetMarketInfo.MinVolume);
+                    continue;
+                }
+
+                var transitTrade = await TradeAsync(transitTradeVolume, transitAssetSide,
+                    market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
+                
+                hedgeOperation.HedgeTrades.Add(transitTrade);
+                market.TargetPairAssetBalance.Free += transitAssetSide == OrderSide.Buy
+                    ? Convert.ToDecimal(transitTrade.BaseVolume)
+                    : Convert.ToDecimal(transitTrade.QuoteVolume);
+
+                var targetTrade = await TradeAsync(targetTradeVolume, targetAssetSide,
+                    market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
+                
+                hedgeOperation.HedgeTrades.Add(targetTrade);
+                hedgeOperation.TradedVolume += transitAssetSide == OrderSide.Buy
+                    ? Convert.ToDecimal(transitTrade.BaseVolume)
+                    : Convert.ToDecimal(transitTrade.QuoteVolume);
+            }
         }
 
         private OrderSide DetermineOrderSide(ExchangeMarketInfo market, string buyAsset)
