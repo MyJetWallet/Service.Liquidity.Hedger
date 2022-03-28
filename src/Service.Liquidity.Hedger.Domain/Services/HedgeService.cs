@@ -162,7 +162,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 hedgeOperation.AddTrade(transitTrade);
 
                 var targetTrade = await TradeAsync(targetTradeVolume, targetAssetSide,
-                    market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
+                    market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id);
                 hedgeOperation.AddTrade(targetTrade);
             }
         }
