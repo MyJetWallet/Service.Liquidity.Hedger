@@ -20,7 +20,7 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IServiceBusPublisher<HedgeOperation> _publisher;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-        
+
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
             ISubscriber<PortfolioMonitoringMessage> subscriber,
@@ -91,7 +91,8 @@ namespace Service.Liquidity.Hedger.Subscribers
                         return;
                     }
 
-                    var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
+                    var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction,
+                        new[] { new HedgePairAsset { Symbol = "USD" } });
 
                     if (hedgeOperation.HedgeTrades.Any())
                     {
