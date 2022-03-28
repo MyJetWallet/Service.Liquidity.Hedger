@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -83,12 +84,12 @@ public class HedgeServiceTests
             .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
         _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
         {
-            Price = 1,
+            Price = 0.5m,
         });
         var exchangeTrade = new ExchangeTrade
         {
             Side = OrderSide.Buy,
-            Volume = 1
+            Volume = Convert.ToDouble(hedgeInstruction.TargetVolume)
         };
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(exchangeTrade);
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
@@ -99,6 +100,8 @@ public class HedgeServiceTests
 
         // assert
         operation.TradedVolume.Should().Be(Convert.ToDecimal(exchangeTrade.Volume));
+        operation.HedgeTrades.First().Side.Should().Be(OrderSide.Buy);
+
     }
 
     [Test]
@@ -124,24 +127,25 @@ public class HedgeServiceTests
             },
             Info = new ExchangeMarketInfo
             {
-                BaseAsset = hedgeInstruction.TargetAssetSymbol,
-                QuoteAsset = sellAsset.Symbol,
+                BaseAsset = sellAsset.Symbol,
+                QuoteAsset = hedgeInstruction.TargetAssetSymbol,
                 MinVolume = 1,
             }
         };
         _exchangesAnalyzer
             .FindPossibleMarketsAsync(default)
             .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
+        var price = new CurrentPrice
         {
-            Price = 1,
-        });
+            Price = 0.5m,
+        };
+        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(price);
 
         var exchangeTrade = new ExchangeTrade
         {
             Side = OrderSide.Sell,
             Volume = 1,
-            Price = 1
+            Price = Convert.ToDouble(price.Price)
         };
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(exchangeTrade);
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
@@ -152,6 +156,7 @@ public class HedgeServiceTests
 
         // assert
         operation.TradedVolume.Should().Be(Convert.ToDecimal(exchangeTrade.Price * exchangeTrade.Volume));
+        operation.HedgeTrades.First().Side.Should().Be(OrderSide.Sell);
     }
 
     [Test]
