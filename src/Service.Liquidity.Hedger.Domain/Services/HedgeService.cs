@@ -72,7 +72,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
 
                 var trade = await TradeAsync(tradeVolume, side, market.Info, market.ExchangeName, hedgeOperation.Id);
-                hedgeOperation.AddTrade(trade);
+                hedgeOperation.AddTrade(trade, false);
             }
 
             _logger.LogInformation(
@@ -159,11 +159,11 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 var transitTrade = await TradeAsync(transitTradeVolume, transitAssetSide,
                     market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
-                hedgeOperation.AddTrade(transitTrade);
+                hedgeOperation.AddTrade(transitTrade, true);
 
                 var targetTrade = await TradeAsync(targetTradeVolume, targetAssetSide,
                     market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id);
-                hedgeOperation.AddTrade(targetTrade);
+                hedgeOperation.AddTrade(targetTrade, false);
             }
         }
 

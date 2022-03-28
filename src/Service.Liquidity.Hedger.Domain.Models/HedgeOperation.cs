@@ -17,13 +17,17 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 5)] public string TargetAsset { get; set; }
         [DataMember(Order = 6)] public decimal TradedVolume { get; set; }
 
-        public void AddTrade(HedgeTrade trade)
+        public void AddTrade(HedgeTrade trade, bool isTransit)
         {
             HedgeTrades ??= new List<HedgeTrade>();
             HedgeTrades.Add(trade);
-            TradedVolume += trade.Side == OrderSide.Buy
-                ? Convert.ToDecimal(trade.BaseVolume)
-                : Convert.ToDecimal(trade.QuoteVolume);
+            
+            if (!isTransit)
+            {
+                TradedVolume += trade.Side == OrderSide.Buy
+                    ? Convert.ToDecimal(trade.BaseVolume)
+                    : Convert.ToDecimal(trade.QuoteVolume);
+            }
         }
 
         public bool IsFullyHedged()
