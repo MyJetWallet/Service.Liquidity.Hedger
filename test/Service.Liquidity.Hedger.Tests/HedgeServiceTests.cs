@@ -303,7 +303,7 @@ public class HedgeServiceTests
         await _externalMarket.Received().MarketTrade(
             Arg.Is<MarketTradeRequest>(request =>
                 request.Side == OrderSide.Sell &&
-                request.Volume == 90));
+                Convert.ToDecimal(request.Volume) == market.Balance.Free));
     }
 
     [Test]
@@ -352,7 +352,7 @@ public class HedgeServiceTests
         await _externalMarket.Received().MarketTrade(
             Arg.Is<MarketTradeRequest>(request =>
                 request.Side == OrderSide.Buy &&
-                request.Volume == 90));
+                Convert.ToDecimal(request.Volume) == market.Balance.Free));
     }
 
     [Test]

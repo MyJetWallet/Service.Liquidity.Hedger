@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using MyJetWallet.Domain.Orders;
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {
@@ -15,5 +16,19 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 4)] public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         [DataMember(Order = 5)] public string TargetAsset { get; set; }
         [DataMember(Order = 6)] public decimal TradedVolume { get; set; }
+
+        public void AddTrade(HedgeTrade trade)
+        {
+            HedgeTrades ??= new List<HedgeTrade>();
+            HedgeTrades.Add(trade);
+            TradedVolume += trade.Side == OrderSide.Buy
+                ? Convert.ToDecimal(trade.BaseVolume)
+                : Convert.ToDecimal(trade.QuoteVolume);
+        }
+
+        public bool IsFullyHedged()
+        {
+            return TradedVolume >= TargetVolume;
+        }
     }
 }

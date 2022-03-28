@@ -19,7 +19,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly IHedgeOperationsStorage _hedgeOperationsStorage;
         private readonly ICurrentPricesCache _currentPricesCache;
         private readonly IExchangesAnalyzer _exchangesAnalyzer;
-        private const decimal BalancePercentToTrade = 0.9m;
 
         public HedgeService(
             ILogger<HedgeService> logger,
@@ -53,11 +52,16 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var market in possibleMarkets)
             {
+                if (hedgeOperation.IsFullyHedged())
+                {
+                    break;
+                }
+                
                 var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.Info.Market);
-                var side = DetermineOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
+                var side = GetOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
                 var tradeVolume =
-                    CalculateTradeVolume(remainingVolumeToTrade, marketPrice.Price, market.Balance.Free, side);
+                    GetTradeVolume(remainingVolumeToTrade, marketPrice.Price, market.Balance.Free, side);
 
                 if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
                 {
@@ -68,15 +72,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
 
                 var trade = await TradeAsync(tradeVolume, side, market.Info, market.ExchangeName, hedgeOperation.Id);
-                hedgeOperation.HedgeTrades.Add(trade);
-                hedgeOperation.TradedVolume += side == OrderSide.Buy
-                    ? Convert.ToDecimal(trade.BaseVolume)
-                    : Convert.ToDecimal(trade.QuoteVolume);
-
-                if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
-                {
-                    break;
-                }
+                hedgeOperation.AddTrade(trade);
             }
 
             _logger.LogInformation(
@@ -85,12 +81,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var transitAsset in (transitAssets ?? Array.Empty<HedgePairAsset>()).OrderBy(a => a.Weight))
             {
-                if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
+                if (hedgeOperation.IsFullyHedged())
                 {
                     break;
                 }
 
-                await HedgeOnIndirectMarketsAsync(transitAsset, hedgeOperation, hedgeInstruction);
+                await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, hedgeOperation);
             }
 
             _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
@@ -103,10 +99,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return hedgeOperation;
         }
 
-        private async Task HedgeOnIndirectMarketsAsync(HedgePairAsset transitAsset,
-            HedgeOperation hedgeOperation, HedgeInstruction hedgeInstruction)
+        private async Task HedgeOnIndirectMarketsAsync(HedgeInstruction hedgeInstruction, HedgePairAsset transitAsset,
+            HedgeOperation hedgeOperation)
         {
-            if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
+            if (hedgeOperation.IsFullyHedged())
             {
                 return;
             }
@@ -116,7 +112,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var market in indirectMarkets)
             {
-                if (hedgeOperation.TradedVolume >= hedgeInstruction.TargetVolume)
+                if (hedgeOperation.IsFullyHedged())
                 {
                     break;
                 }
@@ -125,17 +121,15 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var targetAssetMarketPrice = _currentPricesCache.Get(market.ExchangeName,
                     market.TargetMarketInfo.Market);
-                var targetAssetSide =
-                    DetermineOrderSide(market.TargetMarketInfo, hedgeInstruction.TargetAssetSymbol);
+                var targetAssetSide = GetOrderSide(market.TargetMarketInfo, hedgeInstruction.TargetAssetSymbol);
                 var neededVolumeInTransitAsset = targetAssetSide == OrderSide.Buy
                     ? remainingVolumeToTradeInTargetAsset * targetAssetMarketPrice.Price
                     : remainingVolumeToTradeInTargetAsset / targetAssetMarketPrice.Price;
                 var transitAssetMarketPrice = _currentPricesCache.Get(market.ExchangeName,
                     market.TransitMarketInfo.Market);
-                var transitAssetSide = DetermineOrderSide(market.TransitMarketInfo, transitAsset.Symbol);
-                var transitTradeVolume = CalculateTradeVolume(neededVolumeInTransitAsset,
-                    transitAssetMarketPrice.Price, market.TransitPairAssetBalance.Free, transitAssetSide,
-                    market.TransitMarketInfo.VolumeAccuracy);
+                var transitAssetSide = GetOrderSide(market.TransitMarketInfo, transitAsset.Symbol);
+                var transitTradeVolume = GetTradeVolume(neededVolumeInTransitAsset,
+                    transitAssetMarketPrice.Price, market.TransitPairAssetBalance.Free, transitAssetSide);
 
                 if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
                 {
@@ -148,8 +142,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
 
                 var availableVolumeInTransitAssetAfterTransitTrade =
-                    transitTradeVolume / transitAssetMarketPrice.Price + market.TargetPairAssetBalance.Free;
-                var targetTradeVolume = CalculateTradeVolume(remainingVolumeToTradeInTargetAsset,
+                    Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) / transitAssetMarketPrice.Price + market.TargetPairAssetBalance.Free;
+                var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
                     targetAssetMarketPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
                     targetAssetSide);
 
@@ -165,23 +159,15 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 var transitTrade = await TradeAsync(transitTradeVolume, transitAssetSide,
                     market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
-                
-                hedgeOperation.HedgeTrades.Add(transitTrade);
-                market.TargetPairAssetBalance.Free += transitAssetSide == OrderSide.Buy
-                    ? Convert.ToDecimal(transitTrade.BaseVolume)
-                    : Convert.ToDecimal(transitTrade.QuoteVolume);
+                hedgeOperation.AddTrade(transitTrade);
 
                 var targetTrade = await TradeAsync(targetTradeVolume, targetAssetSide,
                     market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
-                
-                hedgeOperation.HedgeTrades.Add(targetTrade);
-                hedgeOperation.TradedVolume += transitAssetSide == OrderSide.Buy
-                    ? Convert.ToDecimal(transitTrade.BaseVolume)
-                    : Convert.ToDecimal(transitTrade.QuoteVolume);
+                hedgeOperation.AddTrade(targetTrade);
             }
         }
 
-        private OrderSide DetermineOrderSide(ExchangeMarketInfo market, string buyAsset)
+        private OrderSide GetOrderSide(ExchangeMarketInfo market, string buyAsset)
         {
             if (market.BaseAsset == buyAsset)
             {
@@ -196,10 +182,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return OrderSide.UnknownOrderSide;
         }
 
-        private decimal CalculateTradeVolume(decimal targetVolume, decimal price, decimal balance, OrderSide side,
-            int? volumeAccuracy = null)
+        private decimal GetTradeVolume(decimal targetVolume, decimal price, decimal balance, OrderSide side,
+            decimal balancePercentToTrade = 1, int? volumeAccuracy = null)
         {
-            var availableVolumeOnBalance = balance * BalancePercentToTrade;
+            var availableVolumeOnBalance = balance * balancePercentToTrade;
             var tradeVolume = 0m;
 
             if (side == OrderSide.Buy)
