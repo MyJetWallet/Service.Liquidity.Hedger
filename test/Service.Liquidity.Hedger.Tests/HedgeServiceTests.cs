@@ -39,7 +39,7 @@ public class HedgeServiceTests
     public async Task Hedge_NoMarkets_DoNotMakesTrades()
     {
         // arrange
-        _exchangesAnalyzer.FindPossibleMarketsAsync(default).ReturnsForAnyArgs(new List<HedgeExchangeMarket>());
+        _exchangesAnalyzer.FindDirectMarketsAsync(default).ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket>());
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
             _exchangesAnalyzer);
         var hedgeInstruction = new HedgeInstruction();
@@ -66,7 +66,7 @@ public class HedgeServiceTests
             PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
-        var market = new HedgeExchangeMarket
+        var market = new DirectHedgeExchangeMarket
         {
             Balance = new ExchangeBalance
             {
@@ -80,8 +80,8 @@ public class HedgeServiceTests
             }
         };
         _exchangesAnalyzer
-            .FindPossibleMarketsAsync(default)
-            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+            .FindDirectMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
         _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
         {
             Price = 0.5m,
@@ -119,7 +119,7 @@ public class HedgeServiceTests
             PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
-        var market = new HedgeExchangeMarket
+        var market = new DirectHedgeExchangeMarket
         {
             Balance = new ExchangeBalance
             {
@@ -133,8 +133,8 @@ public class HedgeServiceTests
             }
         };
         _exchangesAnalyzer
-            .FindPossibleMarketsAsync(default)
-            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+            .FindDirectMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
         var price = new CurrentPrice
         {
             Price = 0.5m,
@@ -174,7 +174,7 @@ public class HedgeServiceTests
             PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
-        var market = new HedgeExchangeMarket
+        var market = new DirectHedgeExchangeMarket
         {
             Balance = new ExchangeBalance
             {
@@ -188,8 +188,8 @@ public class HedgeServiceTests
             }
         };
         _exchangesAnalyzer
-            .FindPossibleMarketsAsync(default)
-            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+            .FindDirectMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
         _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
         {
             Price = 1,
@@ -223,7 +223,7 @@ public class HedgeServiceTests
             PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
-        var market = new HedgeExchangeMarket
+        var market = new DirectHedgeExchangeMarket
         {
             Balance = new ExchangeBalance
             {
@@ -237,8 +237,8 @@ public class HedgeServiceTests
             }
         };
         _exchangesAnalyzer
-            .FindPossibleMarketsAsync(default)
-            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+            .FindDirectMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
         _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
         {
             Price = 1,
@@ -272,7 +272,7 @@ public class HedgeServiceTests
             PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
-        var market = new HedgeExchangeMarket
+        var market = new DirectHedgeExchangeMarket
         {
             Balance = new ExchangeBalance
             {
@@ -286,8 +286,8 @@ public class HedgeServiceTests
             }
         };
         _exchangesAnalyzer
-            .FindPossibleMarketsAsync(default)
-            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+            .FindDirectMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
         _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
         {
             Price = 1,
@@ -321,7 +321,7 @@ public class HedgeServiceTests
             PairAssets = new List<HedgePairAsset> { sellAsset }
         };
 
-        var market = new HedgeExchangeMarket
+        var market = new DirectHedgeExchangeMarket
         {
             Balance = new ExchangeBalance
             {
@@ -335,8 +335,8 @@ public class HedgeServiceTests
             }
         };
         _exchangesAnalyzer
-            .FindPossibleMarketsAsync(default)
-            .ReturnsForAnyArgs(new List<HedgeExchangeMarket> { market });
+            .FindDirectMarketsAsync(default)
+            .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
         _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
         {
             Price = 1,

@@ -2,7 +2,7 @@
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {
-    public class HedgeExchangeMarket
+    public class DirectHedgeExchangeMarket
     {
         public decimal Weight { get; set; }
         public string ExchangeName { get; set; }
