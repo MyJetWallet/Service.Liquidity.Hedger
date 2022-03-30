@@ -6,7 +6,7 @@
 
     <ItemGroup>
       <PackageReference Include="MyJetWallet.Domain" Version="1.1.1" />
-      <PackageReference Include="MyJetWallet.Domain.ExternalMarketApi" Version="1.2.1" />
+      <PackageReference Include="MyJetWallet.Domain.ExternalMarketApi" Version="1.3.4" />
       <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.1.7" />
       <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.2.2" />
       <PackageReference Include="MyJetWallet.Service.IndexPrices.Client" Version="1.7.3" />
