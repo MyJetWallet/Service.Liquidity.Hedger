@@ -8,7 +8,9 @@ using Autofac;
 using MyJetWallet.Sdk.GrpcSchema;
 using MyJetWallet.Sdk.Service;
 using Prometheus;
+using Service.Liquidity.Hedger.Grpc.HedgeSettings;
 using Service.Liquidity.Hedger.Modules;
+using Service.Liquidity.Hedger.Services;
 using SimpleTrading.ServiceStatusReporterConnector;
 
 namespace Service.Liquidity.Hedger
@@ -41,6 +43,8 @@ namespace Service.Liquidity.Hedger
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapGrpcSchema<HedgeSettingsService, IHedgeSettingsService>();
+
                 endpoints.MapGrpcSchemaRegistry();
 
                 endpoints.MapGet("/",
