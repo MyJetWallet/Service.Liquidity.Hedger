@@ -140,9 +140,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         transitTradeVolume, market.TransitMarketInfo.MinVolume);
                     continue;
                 }
-
+                
+                var volumeInTransitAssetAfterTransitTrade = transitAssetSide == OrderSide.Buy
+                    ? Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) / transitAssetMarketPrice.Price
+                    : Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) * transitAssetMarketPrice.Price;
                 var availableVolumeInTransitAssetAfterTransitTrade =
-                    Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) / transitAssetMarketPrice.Price + market.TargetPairAssetBalance.Free;
+                    volumeInTransitAssetAfterTransitTrade + market.TargetPairAssetBalance.Free;
                 var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
                     targetAssetMarketPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
                     targetAssetSide);
