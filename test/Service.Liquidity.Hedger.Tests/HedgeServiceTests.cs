@@ -24,6 +24,7 @@ public class HedgeServiceTests
     private IHedgeOperationsStorage _hedgeOperationsStorage;
     private ICurrentPricesCache _currentPricesCache;
     private IExchangesAnalyzer _exchangesAnalyzer;
+    private IHedgeSettingsStorage _hedgeSettingsStorage;
 
     [SetUp]
     public void Setup()
@@ -33,6 +34,7 @@ public class HedgeServiceTests
         _hedgeOperationsStorage = Substitute.For<IHedgeOperationsStorage>();
         _currentPricesCache = Substitute.For<ICurrentPricesCache>();
         _exchangesAnalyzer = Substitute.For<IExchangesAnalyzer>();
+        _hedgeSettingsStorage = Substitute.For<IHedgeSettingsStorage>();
     }
 
     [Test]
@@ -41,7 +43,7 @@ public class HedgeServiceTests
         // arrange
         _exchangesAnalyzer.FindDirectMarketsAsync(default).ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket>());
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
         var hedgeInstruction = new HedgeInstruction();
 
         // act
@@ -93,7 +95,7 @@ public class HedgeServiceTests
         };
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(exchangeTrade);
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         var operation = await service.HedgeAsync(hedgeInstruction);
@@ -149,7 +151,7 @@ public class HedgeServiceTests
         };
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(exchangeTrade);
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         var operation = await service.HedgeAsync(hedgeInstruction);
@@ -196,7 +198,7 @@ public class HedgeServiceTests
         });
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -245,7 +247,7 @@ public class HedgeServiceTests
         });
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -294,7 +296,7 @@ public class HedgeServiceTests
         });
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -343,7 +345,7 @@ public class HedgeServiceTests
         });
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -412,7 +414,7 @@ public class HedgeServiceTests
             OppositeVolume = Convert.ToDouble(hedgeInstruction.TargetVolume),
         });
         var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer);
+            _exchangesAnalyzer, _hedgeSettingsStorage);
 
         // act
         await service.HedgeAsync(hedgeInstruction, new[] { transitAsset });
