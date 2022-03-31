@@ -24,9 +24,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
             
             if (trade.QuoteAsset == TargetAsset || trade.BaseAsset == TargetAsset)
             {
-                TradedVolume += trade.Side == OrderSide.Buy
-                    ? Convert.ToDecimal(trade.BaseVolume)
-                    : Convert.ToDecimal(trade.QuoteVolume);
+                TradedVolume += trade.GetTradedVolume();
             }
         }
 

@@ -19,13 +19,15 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly IHedgeOperationsStorage _hedgeOperationsStorage;
         private readonly ICurrentPricesCache _currentPricesCache;
         private readonly IExchangesAnalyzer _exchangesAnalyzer;
+        private readonly IHedgeSettingsStorage _hedgeSettingsStorage;
 
         public HedgeService(
             ILogger<HedgeService> logger,
             IExternalMarket externalMarket,
             IHedgeOperationsStorage hedgeOperationsStorage,
             ICurrentPricesCache currentPricesCache,
-            IExchangesAnalyzer exchangesAnalyzer
+            IExchangesAnalyzer exchangesAnalyzer,
+            IHedgeSettingsStorage hedgeSettingsStorage
         )
         {
             _logger = logger;
@@ -33,6 +35,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             _hedgeOperationsStorage = hedgeOperationsStorage;
             _currentPricesCache = currentPricesCache;
             _exchangesAnalyzer = exchangesAnalyzer;
+            _hedgeSettingsStorage = hedgeSettingsStorage;
         }
 
         public async Task<HedgeOperation> HedgeAsync(HedgeInstruction hedgeInstruction,
@@ -56,7 +59,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 {
                     break;
                 }
-                
+
                 var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.Info.Market);
                 var side = GetOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
@@ -71,7 +74,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     continue;
                 }
 
-                var trade = await TradeAsync(tradeVolume, side, market.Info, market.ExchangeName, hedgeOperation.Id);
+                var trade = await MakeMarketTradeAsync(tradeVolume, side, market.Info, market.ExchangeName,
+                    hedgeOperation.Id);
                 hedgeOperation.AddTrade(trade);
             }
 
@@ -140,10 +144,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         transitTradeVolume, market.TransitMarketInfo.MinVolume);
                     continue;
                 }
-                
+
                 var volumeInTransitAssetAfterTransitTrade = transitAssetSide == OrderSide.Buy
-                    ? Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) / transitAssetMarketPrice.Price
-                    : Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) * transitAssetMarketPrice.Price;
+                    ? Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) /
+                      transitAssetMarketPrice.Price
+                    : Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) *
+                      transitAssetMarketPrice.Price;
                 var availableVolumeInTransitAssetAfterTransitTrade =
                     volumeInTransitAssetAfterTransitTrade + market.TargetPairAssetBalance.Free;
                 var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
@@ -160,11 +166,11 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     continue;
                 }
 
-                var transitTrade = await TradeAsync(transitTradeVolume, transitAssetSide,
+                var transitTrade = await MakeMarketTradeAsync(transitTradeVolume, transitAssetSide,
                     market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
                 hedgeOperation.AddTrade(transitTrade);
 
-                var targetTrade = await TradeAsync(targetTradeVolume, targetAssetSide,
+                var targetTrade = await MakeMarketTradeAsync(targetTradeVolume, targetAssetSide,
                     market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id);
                 hedgeOperation.AddTrade(targetTrade);
             }
@@ -210,7 +216,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             return volumeAccuracy == null ? tradeVolume : Truncate(targetVolume, volumeAccuracy.Value);
         }
 
-        private async Task<HedgeTrade> TradeAsync(decimal tradeVolume, OrderSide orderSide,
+        private async Task<HedgeTrade> MakeMarketTradeAsync(decimal tradeVolume, OrderSide orderSide,
             ExchangeMarketInfo marketInfo, string exchangeName, string operationId)
         {
             var request = new MarketTradeRequest
@@ -255,6 +261,80 @@ namespace Service.Liquidity.Hedger.Domain.Services
             var tmp = Math.Truncate(step * value);
 
             return tmp / step;
+        }
+
+        private async Task<ICollection<HedgeTrade>> MakeLimitTradesAsync(decimal tradeVolume, OrderSide orderSide,
+            ExchangeMarketInfo marketInfo, string exchangeName, string operationId, decimal price)
+        {
+            var settings = await _hedgeSettingsStorage.GetAsync();
+            var trades = new List<HedgeTrade>();
+            var tradedVolume = 0m;
+
+            foreach (var step in settings.LimitTradeSteps)
+            {
+                var currentPrice = _currentPricesCache.Get(marketInfo.Market, exchangeName);
+                var priceIncreasedOnLimit = price * step.PriceIncreasePercentLimit / 100 + price < currentPrice.Price;
+
+                if (priceIncreasedOnLimit)
+                {
+                    _logger.LogInformation("Price hit limit. CurrentPrice={@price} Limit={@limit}",
+                        currentPrice.Price, step.PriceIncreasePercentLimit);
+                }
+
+                var request = new MakeLimitTradeRequest
+                {
+                    Side = orderSide,
+                    Market = marketInfo.Market,
+                    Volume = tradeVolume - tradedVolume,
+                    ExchangeName = exchangeName,
+                    ReferenceId = Guid.NewGuid().ToString(),
+                    PriceLimit = priceIncreasedOnLimit
+                        ? price * step.PriceIncrementPercentOnLimitHit / 100 + price
+                        : price * step.PriceIncreasePercentLimit / 100 + price,
+                    TimeLimit = step.TimeLimit
+                };
+
+                if (request.Volume < Convert.ToDecimal(marketInfo.MinVolume))
+                {
+                    _logger.LogInformation(
+                        "Can't make LimitTrade. Trade Volume < MarketMinVolume: {@volume} {@minVolume}",
+                        request.Volume, marketInfo.MinVolume);
+                    break;
+                }
+
+                var response = await _externalMarket.MakeLimitTradeAsync(request);
+
+                var hedgeTrade = new HedgeTrade
+                {
+                    BaseAsset = marketInfo.BaseAsset,
+                    BaseVolume = Math.Abs(Convert.ToDecimal(response.Volume)),
+                    ExchangeName = request.ExchangeName,
+                    HedgeOperationId = operationId,
+                    QuoteAsset = marketInfo.QuoteAsset,
+                    QuoteVolume = Math.Abs(Convert.ToDecimal(response.Price * response.Volume)),
+                    Price = Convert.ToDecimal(response.Price),
+                    Id = response.ReferenceId ?? request.ReferenceId,
+                    CreatedDate = DateTime.UtcNow,
+                    ExternalId = response.Id,
+                    FeeAsset = response.FeeSymbol,
+                    FeeVolume = Math.Abs(Convert.ToDecimal(response.FeeVolume)),
+                    Market = response.Market,
+                    Side = response.Side,
+                    Type = OrderType.Limit
+                };
+
+                _logger.LogInformation("Made LimitTrade. Request: {@request} Response: {@response}", request, response);
+
+                trades.Add(hedgeTrade);
+                tradedVolume += hedgeTrade.GetTradedVolume();
+
+                if (tradedVolume >= Truncate(tradeVolume, marketInfo.VolumeAccuracy))
+                {
+                    break;
+                }
+            }
+
+            return trades;
         }
     }
 }
