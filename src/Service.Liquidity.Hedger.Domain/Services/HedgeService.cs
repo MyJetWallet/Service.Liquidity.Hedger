@@ -82,9 +82,18 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         continue;
                     }
 
-                    var trade = await MakeMarketTradeAsync(tradeVolume, side, market.Info, market.ExchangeName,
-                        hedgeOperation.Id);
-                    hedgeOperation.AddTrade(trade);
+                    if (settings.DirectMarketLimitTradeSteps.Any())
+                    {
+                        var trades = await MakeLimitTradesAsync(tradeVolume, side, market.Info, 
+                            market.ExchangeName, hedgeOperation.Id, marketPrice.Price, settings.DirectMarketLimitTradeSteps);
+                        hedgeOperation.AddTrades(trades);
+                    }
+                    else
+                    {
+                        var trade = await MakeMarketTradeAsync(tradeVolume, side, market.Info, market.ExchangeName,
+                            hedgeOperation.Id);
+                        hedgeOperation.AddTrade(trade);
+                    }
                 }
 
                 _logger.LogInformation(

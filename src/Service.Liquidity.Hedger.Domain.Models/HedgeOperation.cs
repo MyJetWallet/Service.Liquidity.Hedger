@@ -21,10 +21,25 @@ namespace Service.Liquidity.Hedger.Domain.Models
         {
             HedgeTrades ??= new List<HedgeTrade>();
             HedgeTrades.Add(trade);
-            
+
             if (trade.QuoteAsset == TargetAsset || trade.BaseAsset == TargetAsset)
             {
                 TradedVolume += trade.GetTradedVolume();
+            }
+        }
+
+        public void AddTrades(IEnumerable<HedgeTrade> trades)
+        {
+            HedgeTrades ??= new List<HedgeTrade>();
+
+            foreach (var trade in trades ?? Array.Empty<HedgeTrade>())
+            {
+                HedgeTrades.Add(trade);
+
+                if (trade.QuoteAsset == TargetAsset || trade.BaseAsset == TargetAsset)
+                {
+                    TradedVolume += trade.GetTradedVolume();
+                }
             }
         }
 
