@@ -6,6 +6,6 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface IHedgeService
     {
-        Task<HedgeOperation> HedgeAsync(HedgeInstruction hedgeInstruction, IEnumerable<HedgePairAsset> transitAssets = null);
+        Task<HedgeOperation> HedgeAsync(HedgeInstruction hedgeInstruction);
     }
 }

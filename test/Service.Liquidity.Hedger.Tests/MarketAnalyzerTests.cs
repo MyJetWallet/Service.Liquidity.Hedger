@@ -70,7 +70,7 @@ public class MarketAnalyzerTests
         var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
         
         // act
-        var markets = await analyzer.FindDirectMarketsAsync(hedgeInstruction);
+        var markets = await analyzer.FindDirectMarketsAsync(default, hedgeInstruction);
         
         // assert
         markets.Should().NotBeNull();
@@ -136,7 +136,7 @@ public class MarketAnalyzerTests
         var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
         
         // act
-        var markets = await analyzer.FindDirectMarketsAsync(hedgeInstruction);
+        var markets = await analyzer.FindDirectMarketsAsync(default, hedgeInstruction);
         
         // assert
         markets.Count.Should().Be(1);        
@@ -187,7 +187,7 @@ public class MarketAnalyzerTests
         var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
         
         // act
-        var markets = await analyzer.FindDirectMarketsAsync(hedgeInstruction);
+        var markets = await analyzer.FindDirectMarketsAsync(default, hedgeInstruction);
         
         // assert
         markets.Should().NotBeNull();
@@ -243,7 +243,7 @@ public class MarketAnalyzerTests
         var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
         
         // act
-        var markets = await analyzer.FindDirectMarketsAsync(hedgeInstruction);
+        var markets = await analyzer.FindDirectMarketsAsync(default, hedgeInstruction);
         
         // assert
         markets.Should().BeEmpty();
@@ -305,7 +305,7 @@ public class MarketAnalyzerTests
         var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
         
         // act
-        var markets = await analyzer.FindIndirectMarketsAsync(transitAsset, 
+        var markets = await analyzer.FindIndirectMarketsAsync(default, transitAsset, 
             hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
         
         // assert

@@ -91,8 +91,7 @@ namespace Service.Liquidity.Hedger.Subscribers
                         return;
                     }
 
-                    var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction,
-                        new[] { new HedgePairAsset { Symbol = "USD" } });
+                    var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
 
                     if (hedgeOperation.HedgeTrades.Any())
                     {

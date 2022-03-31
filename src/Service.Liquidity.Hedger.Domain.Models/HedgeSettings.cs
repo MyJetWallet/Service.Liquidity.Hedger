@@ -6,8 +6,9 @@ namespace Service.Liquidity.Hedger.Domain.Models;
 [DataContract]
 public class HedgeSettings
 {
-    [DataMember(Order = 1)] public bool IsEnabled { get; set; }
-    [DataMember(Order = 2)] public ICollection<HedgePairAsset> TransitAssets { get; set; }
-    [DataMember(Order = 3)] public ICollection<HedgeExchange> EnabledExchanges { get; set; }
-    [DataMember(Order = 4)] public ICollection<LimitTradeStep> LimitTradeSteps { get; set; }
+    [DataMember(Order = 1)] public ICollection<string> EnabledExchanges { get; set; } = new List<string>();
+    [DataMember(Order = 2)] public ICollection<string> IndirectMarketTransitAssets { get; set; } = new List<string>();
+
+    [DataMember(Order = 3)]
+    public ICollection<LimitTradeStep> DirectMarketLimitTradeSteps { get; set; } = new List<LimitTradeStep>();
 }
