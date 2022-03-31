@@ -51,29 +51,44 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
                 m.QuoteAsset == transitAssetSymbol && m.BaseAsset == pairAsset.Symbol);
             var transitPairAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
-
-            if (transitMarketInfo == null || transitPairAssetBalance == null)
+            
+            if (transitMarketInfo == null)
             {
-                _logger.LogWarning(
-                    "Asset {@quoteAsset} is skipped. Market {@market}; ExchangeBalance={@exchangeBalance}",
-                    pairAsset.Symbol, transitMarketInfo?.Market, transitPairAssetBalance);
+                _logger.LogWarning("PairAsset {@pairAsset} is skipped.  Market with {@targetAsset} not found", 
+                    pairAsset.Symbol, targetAssetSymbol);
+                continue;
+            }
+            
+            if (transitPairAssetBalance == null)
+            {
+                _logger.LogWarning("Market {@market} with PairAsset {@pairAsset} is skipped. Balance not found",
+                    transitMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
             if (transitPairAssetBalance.Free <= 0)
             {
-                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0",
-                    pairAsset.Symbol);
+                _logger.LogWarning("Market {@market} with PairAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0",
+                    transitMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
             var targetMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == targetAssetSymbol ||
                 m.QuoteAsset == transitAssetSymbol && m.BaseAsset == targetAssetSymbol);
-            var targetPairAssetBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
-
-            if (targetMarketInfo == null || targetPairAssetBalance == null)
+            var targetPairAssetBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == transitAssetSymbol);
+            
+            if (targetMarketInfo == null)
             {
+                _logger.LogWarning("PairAsset {@pairAsset} is skipped.  Market with {@targetAsset} not found", 
+                    pairAsset.Symbol, targetAssetSymbol);
+                continue;
+            }
+            
+            if (targetPairAssetBalance == null)
+            {
+                _logger.LogWarning("Market {@market} with PairAsset {@pairAsset} is skipped. Balance not found",
+                    targetMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
@@ -115,32 +130,38 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", ExchangeName,
             balancesResp?.Balances);
 
-        foreach (var sellAsset in hedgeInstruction.PairAssets)
+        foreach (var pairAsset in hedgeInstruction.PairAssets)
         {
             var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
-                m.BaseAsset == hedgeInstruction.TargetAssetSymbol && m.QuoteAsset == sellAsset.Symbol ||
-                m.QuoteAsset == hedgeInstruction.TargetAssetSymbol && m.BaseAsset == sellAsset.Symbol);
-            var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == sellAsset.Symbol);
+                m.BaseAsset == hedgeInstruction.TargetAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
+                m.QuoteAsset == hedgeInstruction.TargetAssetSymbol && m.BaseAsset == pairAsset.Symbol);
+            var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
 
-            if (exchangeMarketInfo == null || exchangeBalance == null)
+            if (exchangeMarketInfo == null)
             {
-                _logger.LogWarning(
-                    "QuoteAsset {@quoteAsset} is skipped. Market {@market}; ExchangeBalance={@exchangeBalance}",
-                    sellAsset.Symbol, exchangeMarketInfo?.Market, exchangeBalance);
+                _logger.LogWarning("PairAsset {@pairAsset} is skipped.  Market with {@targetAsset} not found", 
+                    pairAsset.Symbol, hedgeInstruction.TargetAssetSymbol);
+                continue;
+            }
+            
+            if (exchangeBalance == null)
+            {
+                _logger.LogWarning("Market {@market} with PairAsset {@pairAsset} is skipped. Balance not found",
+                    exchangeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
             if (exchangeBalance.Free <= 0)
             {
-                _logger.LogWarning("QuoteAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0",
-                    sellAsset.Symbol);
+                _logger.LogWarning("Market {@market} with PairAsset {@quoteAsset} is skipped. FreeBalance is 0",
+                    exchangeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
             markets.Add(new DirectHedgeExchangeMarket
             {
                 ExchangeName = ExchangeName,
-                Weight = sellAsset.Weight,
+                Weight = pairAsset.Weight,
                 Balance = exchangeBalance,
                 Info = exchangeMarketInfo
             });
