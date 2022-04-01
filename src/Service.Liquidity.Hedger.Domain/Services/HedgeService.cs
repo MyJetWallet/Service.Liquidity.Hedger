@@ -334,9 +334,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     ExchangeName = exchangeName,
                     ReferenceId = Guid.NewGuid().ToString(),
                     PriceLimit = priceIncreasedOnLimit
-                        ? price * step.PriceIncrementPercentOnLimitHit / 100 + price
+                        ? price * step.PriceIncrementPercentWhenLimitHit / 100 + price
                         : price * step.PriceIncreasePercentLimit / 100 + price,
-                    TimeLimit = step.TimeLimit
+                    TimeLimit = step.DurationLimit
                 };
 
                 if (request.Volume < Convert.ToDecimal(marketInfo.MinVolume))
