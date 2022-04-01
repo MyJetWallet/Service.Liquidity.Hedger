@@ -315,7 +315,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             var trades = new List<HedgeTrade>();
             var tradedVolume = 0m;
 
-            foreach (var step in steps)
+            foreach (var step in steps.OrderBy(s => s.Number))
             {
                 var currentPrice = _currentPricesCache.Get(marketInfo.Market, exchangeName);
                 var priceIncreasedOnLimit = price * step.PriceIncreasePercentLimit / 100 + price < currentPrice.Price;
