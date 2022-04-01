@@ -11,4 +11,7 @@ public class HedgeSettings
 
     [DataMember(Order = 3)]
     public ICollection<LimitTradeStep> DirectMarketLimitTradeSteps { get; set; } = new List<LimitTradeStep>();
+
+    [DataMember(Order = 4)]
+    public ICollection<LimitTradeStep> IndirectMarketLimitTradeSteps { get; set; } = new List<LimitTradeStep>();
 }
