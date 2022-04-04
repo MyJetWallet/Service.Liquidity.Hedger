@@ -87,14 +87,7 @@ namespace Service.Liquidity.Hedger.Subscribers
                     var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.Rules);
                     var instructions = _portfolioAnalyzer.CalculateHedgeInstructions(
                         message.Portfolio, hedgeRules);
-                    var instruction = _portfolioAnalyzer.SelectPriorityInstruction(instructions);
-
-                    if (instruction == null)
-                    {
-                        return;
-                    }
-                    
-                    await _hedgeInstructionsStorage.AddOrUpdateAsync(instruction);
+                    await _hedgeInstructionsStorage.AddOrUpdateAsync(instructions);
                 }
             }
             catch (Exception ex)

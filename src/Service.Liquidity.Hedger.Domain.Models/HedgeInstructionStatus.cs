@@ -3,7 +3,7 @@
 public enum HedgeInstructionStatus
 {
     Pending = 0,
-    Started = 1,
-    Finished = 2,
+    InProgress = 1,
+    Processed = 2,
     Confirmed = 3,
 }

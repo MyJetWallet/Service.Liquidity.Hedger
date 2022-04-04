@@ -64,11 +64,12 @@ namespace Service.Liquidity.Hedger.Jobs
                 await _semaphore.WaitAsync();
                 started = true;
                 _logger.LogInformation("{@Message} started", nameof(HedgeJob));
-                
-                var instructions = (await _hedgeInstructionsStorage.GetAsync())?.ToList() ?? new List<HedgeInstruction>();
-                
+
+                var instructions = (await _hedgeInstructionsStorage.GetAsync())?.ToList() ??
+                                   new List<HedgeInstruction>();
+
                 if (instructions.Count == 0 ||
-                    instructions.Any(i => i.Status == HedgeInstructionStatus.Started))
+                    instructions.Any(i => i.Status == HedgeInstructionStatus.InProgress))
                 {
                     return;
                 }
@@ -86,11 +87,11 @@ namespace Service.Liquidity.Hedger.Jobs
                 }
 
                 var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
-                await _hedgeInstructionsStorage.DeleteAsync(hedgeInstruction.MonitoringRuleId);
 
                 if (hedgeOperation.HedgeTrades.Any())
                 {
                     await _publisher.PublishAsync(hedgeOperation);
+                    await _hedgeInstructionsStorage.AddOrUpdateAsync(new List<HedgeInstruction>());
                 }
             }
             catch (Exception ex)
