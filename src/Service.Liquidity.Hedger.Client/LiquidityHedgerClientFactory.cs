@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using MyJetWallet.Sdk.Grpc;
+using Service.Liquidity.Hedger.Grpc.HedgeInstructions;
 using Service.Liquidity.Hedger.Grpc.HedgeSettings;
 
 namespace Service.Liquidity.Hedger.Client
@@ -13,5 +14,7 @@ namespace Service.Liquidity.Hedger.Client
         }
 
         public IHedgeSettingsService GetHedgeSettingsService() => CreateGrpcService<IHedgeSettingsService>();
+        public IHedgeInstructionsService GetHedgeInstructionsService() => CreateGrpcService<IHedgeInstructionsService>();
+
     }
 }
