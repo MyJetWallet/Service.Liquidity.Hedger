@@ -76,7 +76,8 @@ namespace Service.Liquidity.Hedger.Jobs
                 var settings = await _hedgeSettingsStorage.GetAsync();
                 var candidateInstructions = settings.ConfirmRequired
                     ? instructions.Where(i => i.Status == HedgeInstructionStatus.Confirmed)
-                    : instructions.Where(i => i.Status == HedgeInstructionStatus.Pending);
+                    : instructions.Where(i => i.Status == HedgeInstructionStatus.Pending ||
+                                              i.Status == HedgeInstructionStatus.Confirmed);
                 var hedgeInstruction = _portfolioAnalyzer.SelectPriorityInstruction(candidateInstructions);
 
                 if (hedgeInstruction == null)
