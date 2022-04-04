@@ -14,4 +14,6 @@ public class HedgeSettings
 
     [DataMember(Order = 4)]
     public ICollection<LimitTradeStep> IndirectMarketLimitTradeSteps { get; set; } = new List<LimitTradeStep>();
+    
+    [DataMember(Order = 5)] public bool ConfirmRequired { get; set; }
 }

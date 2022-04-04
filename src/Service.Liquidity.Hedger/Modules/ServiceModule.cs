@@ -2,7 +2,9 @@
 using MyJetWallet.Domain.ExternalMarketApi;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Services;
+using Service.Liquidity.Hedger.Jobs;
 using Service.Liquidity.Hedger.NoSql;
+using Service.Liquidity.Hedger.NoSql.HedgeInstructions;
 using Service.Liquidity.Hedger.NoSql.Settings;
 using Service.Liquidity.Hedger.Subscribers;
 
@@ -15,6 +17,8 @@ namespace Service.Liquidity.Hedger.Modules
             builder.RegisterExternalMarketClient(Program.Settings.ExternalApiGrpcUrl);
 
             builder.RegisterType<PortfolioMonitoringMessageSubscriber>().As<IStartable>()
+                .AutoActivate().SingleInstance();
+            builder.RegisterType<HedgeJob>().As<IStartable>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeService>().As<IHedgeService>()
                 .AutoActivate().SingleInstance();
@@ -29,6 +33,8 @@ namespace Service.Liquidity.Hedger.Modules
             builder.RegisterType<PortfolioAnalyzer>().As<IPortfolioAnalyzer>()
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeSettingsNoSqlStorage>().As<IHedgeSettingsStorage>()
+                .AutoActivate().SingleInstance();
+            builder.RegisterType<HedgeInstructionsNoSqlStorage>().As<IHedgeInstructionsStorage>()
                 .AutoActivate().SingleInstance();
         }
     }

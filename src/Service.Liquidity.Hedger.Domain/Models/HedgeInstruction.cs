@@ -10,6 +10,8 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 1)] public string TargetAssetSymbol { get; set; }
         [DataMember(Order = 2)] public List<HedgePairAsset> PairAssets { get; set; } = new();
         [DataMember(Order = 3)] public decimal TargetVolume { get; set; }
+        [DataMember(Order = 4)] public string MonitoringRuleId { get; set; }
+        [DataMember(Order = 5)] public HedgeInstructionStatus Status { get; set; }
 
         public bool Validate(out ICollection<string> errors)
         {

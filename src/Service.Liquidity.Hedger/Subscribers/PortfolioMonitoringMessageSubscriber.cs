@@ -43,6 +43,7 @@ namespace Service.Liquidity.Hedger.Subscribers
 
         private async ValueTask Handle(PortfolioMonitoringMessage message)
         {
+            return;
             var isHandleStarted = false;
             try
             {

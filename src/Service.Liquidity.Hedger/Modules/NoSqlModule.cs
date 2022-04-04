@@ -2,6 +2,7 @@
 using MyJetWallet.Sdk.NoSql;
 using Service.IndexPrices.Domain.Models;
 using Service.Liquidity.Hedger.NoSql;
+using Service.Liquidity.Hedger.NoSql.HedgeInstructions;
 using Service.Liquidity.Hedger.NoSql.Settings;
 
 namespace Service.Liquidity.Hedger.Modules
@@ -17,6 +18,8 @@ namespace Service.Liquidity.Hedger.Modules
             builder.RegisterMyNoSqlReader<CurrentPricesNoSql>(noSqlClient, CurrentPricesNoSql.TableName);
             builder.RegisterMyNoSqlWriter<HedgeSettingsNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
                 HedgeSettingsNoSql.TableName);
+            builder.RegisterMyNoSqlWriter<HedgeInstructionNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl),
+                HedgeInstructionNoSql.TableName);
         }
     }
 }
