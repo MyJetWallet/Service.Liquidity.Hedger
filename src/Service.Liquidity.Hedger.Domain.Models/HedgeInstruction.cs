@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -12,6 +13,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 3)] public decimal TargetVolume { get; set; }
         [DataMember(Order = 4)] public string MonitoringRuleId { get; set; }
         [DataMember(Order = 5)] public HedgeInstructionStatus Status { get; set; }
+        [DataMember(Order = 6)] public DateTime Date { get; set; } = DateTime.UtcNow;
 
         public bool Validate(out ICollection<string> errors)
         {
