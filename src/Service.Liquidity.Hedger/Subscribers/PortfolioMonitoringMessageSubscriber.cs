@@ -43,7 +43,6 @@ namespace Service.Liquidity.Hedger.Subscribers
 
         private async ValueTask Handle(PortfolioMonitoringMessage message)
         {
-            return;
             var isHandleStarted = false;
             try
             {
@@ -54,17 +53,17 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 await _semaphore.WaitAsync();
                 isHandleStarted = true;
-                _logger.LogInformation("Handle of {@message} started", nameof(PortfolioMonitoringMessage));
+                _logger.LogInformation("Handle of {@Message} started", nameof(PortfolioMonitoringMessage));
 
                 if (message.Portfolio == null)
                 {
-                    _logger.LogWarning($"Received {nameof(PortfolioMonitoringMessage)} without Portfolio");
+                    _logger.LogWarning("Received {@Message} without Portfolio", nameof(PortfolioMonitoringMessage));
                     return;
                 }
 
                 if (message.Rules == null || !message.Rules.Any())
                 {
-                    _logger.LogWarning($"Received {nameof(PortfolioMonitoringMessage)} without Rules");
+                    _logger.LogWarning("Received {@Message} without Rules", nameof(PortfolioMonitoringMessage));
                     return;
                 }
 
@@ -76,7 +75,7 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 if (stopHedgeRule != null)
                 {
-                    _logger.LogWarning("Hedge is stopped. Found stop hedge rule {@rule}", stopHedgeRule.Name);
+                    _logger.LogWarning("Hedge is stopped. Found stop hedge rule {@Rule}", stopHedgeRule.Name);
                     return;
                 }
 
@@ -102,14 +101,14 @@ namespace Service.Liquidity.Hedger.Subscribers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to handle {@message}. {@exMessage}", nameof(PortfolioMonitoringMessage),
+                _logger.LogError(ex, "Failed to handle {@Message}. {@ExMessage}", nameof(PortfolioMonitoringMessage),
                     ex.Message);
             }
             finally
             {
                 if (isHandleStarted)
                 {
-                    _logger.LogInformation("Handle of {@message} ended", nameof(PortfolioMonitoringMessage));
+                    _logger.LogInformation("Handle of {@Message} ended", nameof(PortfolioMonitoringMessage));
                     _semaphore.Release();
                 }
             }
