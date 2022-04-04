@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
+using Service.Liquidity.Monitoring.Domain.Models.Rules;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Tests;
@@ -96,9 +97,13 @@ public class StrategiesTests
                 }
             }
         };
+        var rule = new MonitoringRule
+        {
+            Checks = checks
+        };
         var strategy = new ClosePositionMaxVelocityHedgeStrategy(Substitute.For<ILogger<IHedgeStrategy>>());
         
-        var instruction = strategy.CalculateHedgeInstruction(portfolio, checks, 30m);
+        var instruction = strategy.CalculateHedgeInstruction(portfolio, rule, 30m);
         
         Assert.IsNotNull(instruction);
         Assert.AreEqual(instruction.TargetVolume, 30);

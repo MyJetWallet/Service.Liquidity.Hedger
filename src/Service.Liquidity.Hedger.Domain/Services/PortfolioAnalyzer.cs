@@ -82,7 +82,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             var action = new MakeHedgeMonitoringAction();
             action.Map(rule.ActionsByTypeName[action.TypeName]);
             var strategy = _hedgeStrategiesFactory.Get(action.HedgeStrategyType);
-            var instruction = strategy.CalculateHedgeInstruction(portfolio, rule.Checks, action.HedgePercent);
+            var instruction = strategy.CalculateHedgeInstruction(portfolio, rule, action.HedgePercent);
 
             if (instruction.Validate(out var message))
             {
@@ -90,7 +90,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
             }
             else
             {
-                _logger.LogWarning("HedgeInstruction is skipped: {@instruction} {@message}",
+                _logger.LogWarning("HedgeInstruction is skipped: {@Instruction} {@Message}",
                     instruction, message);
             }
         }

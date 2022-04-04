@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models.Checks;
+using Service.Liquidity.Monitoring.Domain.Models.Rules;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
 
 namespace Service.Liquidity.Hedger.Domain.Services.Strategies
@@ -20,10 +19,9 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
             _logger = logger;
         }
 
-        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, IEnumerable<PortfolioCheck> checks,
-            decimal hedgePercent)
+        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule, decimal hedgePercent)
         {
-            var selectedAssets = checks
+            var selectedAssets = rule.Checks
                 .Where(ch => ch.CurrentState.IsActive)
                 .SelectMany(ch => ch.AssetSymbols)
                 .ToHashSet();
@@ -48,11 +46,13 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 TargetAssetSymbol = selectedPositionAssets.FirstOrDefault()?.Symbol,
                 PairAssets = collateralAssets,
                 TargetVolume = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalance)) *
-                               (hedgePercent / 100)
+                               (hedgePercent / 100),
+                Date = DateTime.UtcNow,
+                MonitoringRuleId = rule.Id
             };
 
             _logger.LogInformation(
-                "HedgeInstruction: {@instruction} {@selectedPositionAssets} {@collateralAssets}", instruction,
+                "HedgeInstruction: {@Instruction} {@SelectedPositionAssets} {@CollateralAssets}", instruction,
                 selectedPositionAssets, collateralAssets);
 
             return instruction;

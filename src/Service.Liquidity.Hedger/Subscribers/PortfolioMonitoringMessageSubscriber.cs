@@ -19,6 +19,7 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly IHedgeService _hedgeService;
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IServiceBusPublisher<HedgeOperation> _publisher;
+        private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         public PortfolioMonitoringMessageSubscriber(
@@ -26,7 +27,8 @@ namespace Service.Liquidity.Hedger.Subscribers
             ISubscriber<PortfolioMonitoringMessage> subscriber,
             IHedgeService hedgeService,
             IPortfolioAnalyzer portfolioAnalyzer,
-            IServiceBusPublisher<HedgeOperation> publisher
+            IServiceBusPublisher<HedgeOperation> publisher,
+            IHedgeInstructionsStorage hedgeInstructionsStorage
         )
         {
             _logger = logger;
@@ -34,6 +36,7 @@ namespace Service.Liquidity.Hedger.Subscribers
             _hedgeService = hedgeService;
             _portfolioAnalyzer = portfolioAnalyzer;
             _publisher = publisher;
+            _hedgeInstructionsStorage = hedgeInstructionsStorage;
         }
 
         public void Start()
@@ -84,19 +87,14 @@ namespace Service.Liquidity.Hedger.Subscribers
                     var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.Rules);
                     var instructions = _portfolioAnalyzer.CalculateHedgeInstructions(
                         message.Portfolio, hedgeRules);
-                    var hedgeInstruction = _portfolioAnalyzer.SelectPriorityInstruction(instructions);
+                    var instruction = _portfolioAnalyzer.SelectPriorityInstruction(instructions);
 
-                    if (hedgeInstruction == null)
+                    if (instruction == null)
                     {
                         return;
                     }
-
-                    var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
-
-                    if (hedgeOperation.HedgeTrades.Any())
-                    {
-                        await _publisher.PublishAsync(hedgeOperation);
-                    }
+                    
+                    await _hedgeInstructionsStorage.AddOrUpdateAsync(instruction);
                 }
             }
             catch (Exception ex)
