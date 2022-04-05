@@ -78,14 +78,18 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
-                    var savedInstructions = await _hedgeInstructionsStorage.GetAsync();
-                    var pendingRuleIds = savedInstructions?
+                    var savedInstructions = (await _hedgeInstructionsStorage.GetAsync())?
+                        .ToList() ?? new List<HedgeInstruction>();
+                    var savedRuleIds = savedInstructions
+                        .Select(i => i.MonitoringRuleId)
+                        .ToHashSet();;
+                    var pendingRuleIds = savedInstructions
                         .Where(i => i.Status == HedgeInstructionStatus.Pending)
                         .Select(i => i.MonitoringRuleId)
-                        .ToHashSet() ?? new HashSet<string>();
+                        .ToHashSet();
                     var needCalculationRules = _portfolioAnalyzer
                         .SelectHedgeRules(message.Rules)
-                        .Where(r => pendingRuleIds.Contains(r.Id))
+                        .Where(r => pendingRuleIds.Contains(r.Id) || !savedRuleIds.Contains(r.Id))
                         .ToList();
                     var recalculatedInstructions = _portfolioAnalyzer.CalculateHedgeInstructions(
                         message.Portfolio, needCalculationRules);
