@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Autofac;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
-using MyJetWallet.Sdk.ServiceBus;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models;
@@ -16,26 +15,20 @@ namespace Service.Liquidity.Hedger.Subscribers
     {
         private readonly ILogger<PortfolioMonitoringMessageSubscriber> _logger;
         private readonly ISubscriber<PortfolioMonitoringMessage> _subscriber;
-        private readonly IHedgeService _hedgeService;
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
-        private readonly IServiceBusPublisher<HedgeOperation> _publisher;
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
             ISubscriber<PortfolioMonitoringMessage> subscriber,
-            IHedgeService hedgeService,
             IPortfolioAnalyzer portfolioAnalyzer,
-            IServiceBusPublisher<HedgeOperation> publisher,
             IHedgeInstructionsStorage hedgeInstructionsStorage
         )
         {
             _logger = logger;
             _subscriber = subscriber;
-            _hedgeService = hedgeService;
             _portfolioAnalyzer = portfolioAnalyzer;
-            _publisher = publisher;
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
         }
 
