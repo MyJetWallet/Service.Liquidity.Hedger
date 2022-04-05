@@ -78,24 +78,24 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
-                    var instructionsWithUpdatedStatus = (await _hedgeInstructionsStorage.GetAsync())?
-                        .Where(i => i.Status != HedgeInstructionStatus.Pending)
-                        .ToList() ?? new List<HedgeInstruction>();
-                    var excludedRuleIds = instructionsWithUpdatedStatus
+                    var savedInstructions = await _hedgeInstructionsStorage.GetAsync();
+                    var pendingRuleIds = savedInstructions?
+                        .Where(i => i.Status == HedgeInstructionStatus.Pending)
                         .Select(i => i.MonitoringRuleId)
-                        .ToHashSet();
+                        .ToHashSet() ?? new HashSet<string>();
                     var needCalculationRules = _portfolioAnalyzer
                         .SelectHedgeRules(message.Rules)
-                        .Where(r => !excludedRuleIds.Contains(r.Id))
+                        .Where(r => pendingRuleIds.Contains(r.Id))
                         .ToList();
                     var recalculatedInstructions = _portfolioAnalyzer.CalculateHedgeInstructions(
                         message.Portfolio, needCalculationRules);
                     
-                    var instructions = new List<HedgeInstruction>();
-                    instructions.AddRange(instructionsWithUpdatedStatus);
-                    instructions.AddRange(recalculatedInstructions);
-
-                    await _hedgeInstructionsStorage.AddOrUpdateAsync(instructions);
+                    foreach (var pendingRuleId in pendingRuleIds)
+                    {
+                        await _hedgeInstructionsStorage.DeleteAsync(pendingRuleId);
+                    }
+                    
+                    await _hedgeInstructionsStorage.AddOrUpdateAsync(recalculatedInstructions);
                 }
             }
             catch (Exception ex)
