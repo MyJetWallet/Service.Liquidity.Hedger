@@ -57,7 +57,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 return hedgeOperation;
             }
 
-            foreach (var exchange in settings.EnabledExchanges)
+            foreach (var exchange in settings.EnabledExchanges ?? new List<string>())
             {
                 var possibleMarkets = await _exchangesAnalyzer
                     .FindDirectMarketsAsync(exchange, hedgeInstruction);

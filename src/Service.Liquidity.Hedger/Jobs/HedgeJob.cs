@@ -64,6 +64,14 @@ namespace Service.Liquidity.Hedger.Jobs
                 await _semaphore.WaitAsync();
                 started = true;
                 _logger.LogInformation("{@Message} started", nameof(HedgeJob));
+                
+                var settings = await _hedgeSettingsStorage.GetAsync();
+
+                if (!settings.EnabledExchanges?.Any() ?? true)
+                {
+                    _logger.LogWarning("Can't Hedge. No enabled exchanges");
+                    return;
+                }
 
                 var instructions = (await _hedgeInstructionsStorage.GetAsync())?.ToList() ??
                                    new List<HedgeInstruction>();
@@ -74,7 +82,6 @@ namespace Service.Liquidity.Hedger.Jobs
                     return;
                 }
 
-                var settings = await _hedgeSettingsStorage.GetAsync();
                 var candidateInstructions = settings.ConfirmRequired
                     ? instructions.Where(i => i.Status == HedgeInstructionStatus.Confirmed)
                     : instructions.Where(i => i.Status == HedgeInstructionStatus.Pending ||
