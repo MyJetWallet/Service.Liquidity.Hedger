@@ -86,12 +86,14 @@ namespace Service.Liquidity.Hedger.Jobs
                     return;
                 }
 
+                hedgeInstruction.Status = HedgeInstructionStatus.InProgress;
+                await _hedgeInstructionsStorage.AddOrUpdateAsync(hedgeInstruction);
                 var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
+                await _hedgeInstructionsStorage.AddOrUpdateAsync(new List<HedgeInstruction>());
 
                 if (hedgeOperation.HedgeTrades.Any())
                 {
                     await _publisher.PublishAsync(hedgeOperation);
-                    await _hedgeInstructionsStorage.AddOrUpdateAsync(new List<HedgeInstruction>());
                 }
             }
             catch (Exception ex)

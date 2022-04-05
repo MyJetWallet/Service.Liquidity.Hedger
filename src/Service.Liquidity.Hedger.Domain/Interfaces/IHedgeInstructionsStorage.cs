@@ -6,7 +6,7 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces;
 
 public interface IHedgeInstructionsStorage
 {
-    Task<IEnumerable<HedgeInstruction>> GetAsync();
+    Task<IEnumerable<HedgeInstruction>> GetAsync(HedgeInstructionStatus? status = null);
     Task AddOrUpdateAsync(HedgeInstruction model);
     Task<HedgeInstruction> GetAsync(string monitoringRuleId);
     Task DeleteAsync(string monitoringRuleId);

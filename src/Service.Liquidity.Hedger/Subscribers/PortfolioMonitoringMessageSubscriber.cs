@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,9 +78,23 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
-                    var hedgeRules = _portfolioAnalyzer.SelectHedgeRules(message.Rules);
-                    var instructions = _portfolioAnalyzer.CalculateHedgeInstructions(
-                        message.Portfolio, hedgeRules);
+                    var existingInstructions = (await _hedgeInstructionsStorage.GetAsync())?
+                                               .ToList() ?? new List<HedgeInstruction>();
+                    var pendingMonitoringRuleIds = existingInstructions
+                        .Where(i => i.Status == HedgeInstructionStatus.Pending)
+                        .Select(i => i.MonitoringRuleId)
+                        .ToHashSet() ?? new HashSet<string>();
+                    var needCalculationRules = _portfolioAnalyzer
+                        .SelectHedgeRules(message.Rules)
+                        .Where(r => pendingMonitoringRuleIds.Contains(r.Id))
+                        .ToList();
+                    var recalculatedInstructions = _portfolioAnalyzer.CalculateHedgeInstructions(
+                        message.Portfolio, needCalculationRules);
+                    
+                    var instructions = new List<HedgeInstruction>();
+                    instructions.AddRange(existingInstructions.Where(i => i.Status != HedgeInstructionStatus.Pending));
+                    instructions.AddRange(recalculatedInstructions);
+
                     await _hedgeInstructionsStorage.AddOrUpdateAsync(instructions);
                 }
             }

@@ -24,11 +24,14 @@ namespace Service.Liquidity.Hedger.NoSql.HedgeInstructions
             await _myNoSqlServerDataWriter.InsertOrReplaceAsync(nosqlModel);
         }
 
-        public async Task<IEnumerable<HedgeInstruction>> GetAsync()
+        public async Task<IEnumerable<HedgeInstruction>> GetAsync(HedgeInstructionStatus? status = null)
         {
-            var models = await _myNoSqlServerDataWriter.GetAsync();
+            var models = (await _myNoSqlServerDataWriter.GetAsync())?
+                .Select(m => m.Value) ?? new List<HedgeInstruction>();
 
-            return models?.Select(m => m.Value) ?? new List<HedgeInstruction>();
+            return status.HasValue
+                ? models.Where(m => m.Status == status)
+                : models;
         }
 
         public async Task<HedgeInstruction> GetAsync(string monitoringRuleId)
