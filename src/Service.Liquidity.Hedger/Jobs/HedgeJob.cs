@@ -76,9 +76,9 @@ namespace Service.Liquidity.Hedger.Jobs
                 var instructions = (await _hedgeInstructionsStorage.GetAsync())?.ToList() ??
                                    new List<HedgeInstruction>();
 
-                if (instructions.Count == 0 ||
-                    instructions.Any(i => i.Status == HedgeInstructionStatus.InProgress))
+                if (instructions.Any(i => i.Status == HedgeInstructionStatus.InProgress))
                 {
+                    _logger.LogInformation("Hedge is skipped. There is already instruction in progress");
                     return;
                 }
 
