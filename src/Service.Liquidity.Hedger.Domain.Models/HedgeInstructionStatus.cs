@@ -6,4 +6,5 @@ public enum HedgeInstructionStatus
     InProgress = 1,
     Processed = 2,
     Confirmed = 3,
+    Failed = 4,
 }
