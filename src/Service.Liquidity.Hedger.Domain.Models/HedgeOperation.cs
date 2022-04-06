@@ -19,6 +19,11 @@ namespace Service.Liquidity.Hedger.Domain.Models
 
         public void AddTrade(HedgeTrade trade)
         {
+            if (trade.BaseVolume == 0 && trade.QuoteVolume == 0 && trade.FeeVolume == 0)
+            {
+                return;
+            }
+            
             HedgeTrades ??= new List<HedgeTrade>();
             HedgeTrades.Add(trade);
 
@@ -34,12 +39,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
 
             foreach (var trade in trades ?? Array.Empty<HedgeTrade>())
             {
-                HedgeTrades.Add(trade);
-
-                if (trade.QuoteAsset == TargetAsset || trade.BaseAsset == TargetAsset)
-                {
-                    TradedVolume += trade.GetTradedVolume();
-                }
+                AddTrade(trade);
             }
         }
 
