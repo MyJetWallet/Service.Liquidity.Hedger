@@ -324,6 +324,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
             foreach (var step in steps.OrderBy(s => s.Number))
             {
                 var currentPrice = _currentPricesCache.Get(marketInfo.Market, exchangeName);
+
+                if (currentPrice == null)
+                {
+                    throw new Exception($"Cant MakeLimitTrade. Price for {exchangeName} {marketInfo.Market} not found");
+                }
+                
                 var priceIncreasedOnLimit = price * step.PriceIncreasePercentLimit / 100 + price < currentPrice.Price;
 
                 if (priceIncreasedOnLimit)
