@@ -54,6 +54,8 @@ namespace Service.Liquidity.Hedger.Jobs
         private async Task DoAsync()
         {
             var started = false;
+            HedgeInstruction hedgeInstruction = null;
+            
             try
             {
                 if (_semaphore.CurrentCount == 0)
@@ -86,7 +88,7 @@ namespace Service.Liquidity.Hedger.Jobs
                     ? instructions.Where(i => i.Status == HedgeInstructionStatus.Confirmed)
                     : instructions.Where(i => i.Status == HedgeInstructionStatus.Pending ||
                                               i.Status == HedgeInstructionStatus.Confirmed);
-                var hedgeInstruction = _portfolioAnalyzer.SelectPriorityInstruction(candidateInstructions);
+                hedgeInstruction = _portfolioAnalyzer.SelectPriorityInstruction(candidateInstructions);
 
                 if (hedgeInstruction == null)
                 {
@@ -107,6 +109,12 @@ namespace Service.Liquidity.Hedger.Jobs
             {
                 _logger.LogError(ex, "Failed to do {@Message}. {@ExMessage}", nameof(HedgeJob),
                     ex.Message);
+
+                if (hedgeInstruction != null)
+                {
+                    hedgeInstruction.Status = HedgeInstructionStatus.Failed;
+                    await _hedgeInstructionsStorage.AddOrUpdateAsync(hedgeInstruction);
+                }
             }
             finally
             {
