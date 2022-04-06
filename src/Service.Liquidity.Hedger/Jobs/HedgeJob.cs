@@ -96,7 +96,7 @@ namespace Service.Liquidity.Hedger.Jobs
                 hedgeInstruction.Status = HedgeInstructionStatus.InProgress;
                 await _hedgeInstructionsStorage.AddOrUpdateAsync(hedgeInstruction);
                 var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
-                await _hedgeInstructionsStorage.AddOrUpdateAsync(new List<HedgeInstruction>());
+                await _hedgeInstructionsStorage.DeleteAsync(hedgeInstruction.MonitoringRuleId);
 
                 if (hedgeOperation.HedgeTrades.Any())
                 {
