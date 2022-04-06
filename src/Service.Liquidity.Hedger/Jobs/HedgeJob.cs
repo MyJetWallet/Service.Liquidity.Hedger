@@ -71,7 +71,6 @@ namespace Service.Liquidity.Hedger.Jobs
 
                 if (!settings.EnabledExchanges?.Any() ?? true)
                 {
-                    _logger.LogWarning("Can't Hedge. No enabled exchanges");
                     return;
                 }
 
@@ -80,7 +79,6 @@ namespace Service.Liquidity.Hedger.Jobs
 
                 if (instructions.Any(i => i.Status == HedgeInstructionStatus.InProgress))
                 {
-                    _logger.LogInformation("Hedge is skipped. There is already instruction in progress");
                     return;
                 }
 
