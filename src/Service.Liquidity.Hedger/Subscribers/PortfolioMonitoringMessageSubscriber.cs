@@ -50,7 +50,6 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 await _semaphore.WaitAsync();
                 isHandleStarted = true;
-                _logger.LogInformation("Handle of {@Message} started", nameof(PortfolioMonitoringMessage));
 
                 if (message.Portfolio == null)
                 {
@@ -111,7 +110,6 @@ namespace Service.Liquidity.Hedger.Subscribers
             {
                 if (isHandleStarted)
                 {
-                    _logger.LogInformation("Handle of {@Message} ended", nameof(PortfolioMonitoringMessage));
                     _semaphore.Release();
                 }
             }

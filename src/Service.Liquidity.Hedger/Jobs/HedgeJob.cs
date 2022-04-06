@@ -65,7 +65,6 @@ namespace Service.Liquidity.Hedger.Jobs
 
                 await _semaphore.WaitAsync();
                 started = true;
-                _logger.LogInformation("{@Message} started", nameof(HedgeJob));
                 
                 var settings = await _hedgeSettingsStorage.GetAsync();
 
@@ -92,6 +91,7 @@ namespace Service.Liquidity.Hedger.Jobs
                 {
                     return;
                 }
+                _logger.LogInformation("Selected Instruction for hedging: {@Instruction}", hedgeInstruction);
 
                 hedgeInstruction.Status = HedgeInstructionStatus.InProgress;
                 await _hedgeInstructionsStorage.AddOrUpdateAsync(hedgeInstruction);
@@ -118,7 +118,6 @@ namespace Service.Liquidity.Hedger.Jobs
             {
                 if (started)
                 {
-                    _logger.LogInformation("{@Message} ended", nameof(HedgeJob));
                     _semaphore.Release();
                 }
             }

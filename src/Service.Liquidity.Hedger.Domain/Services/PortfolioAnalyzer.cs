@@ -66,7 +66,6 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
                 continue;
             }
 
-            _logger.LogInformation("Found hedging Rule {@rule}: {@message}", rule.Name, ruleMessage);
             hedgeRules.Add(rule);
         }
 
@@ -101,8 +100,6 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
     public HedgeInstruction SelectPriorityInstruction(IEnumerable<HedgeInstruction> instructions)
     {
         var hedgeInstruction = instructions.MaxBy(instruction => instruction.TargetVolume);
-
-        _logger.LogInformation("SelectPriorityInstruction: {@instruction}", hedgeInstruction);
 
         return hedgeInstruction;
     }
