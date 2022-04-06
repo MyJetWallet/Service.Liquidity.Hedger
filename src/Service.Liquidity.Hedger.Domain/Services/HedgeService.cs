@@ -369,7 +369,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     HedgeOperationId = operationId,
                     QuoteAsset = marketInfo.QuoteAsset,
                     QuoteVolume = Math.Abs(Convert.ToDecimal(response.Price * response.Volume)),
-                    Price = Convert.ToDecimal(response.Price),
+                    Price = Convert.ToDecimal(response.Price > 0 ? response.Price : request.PriceLimit),
                     Id = response.ReferenceId ?? request.ReferenceId,
                     CreatedDate = DateTime.UtcNow,
                     ExternalId = response.Id,
