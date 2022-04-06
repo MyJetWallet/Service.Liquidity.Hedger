@@ -51,12 +51,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
             };
             var settings = await _hedgeSettingsStorage.GetAsync();
 
-            if (!settings.EnabledExchanges?.Any() ?? true)
-            {
-                _logger.LogWarning("Can't Hedge. No enabled exchanges");
-                return hedgeOperation;
-            }
-
             foreach (var exchange in settings.EnabledExchanges ?? new List<string>())
             {
                 var possibleMarkets = await _exchangesAnalyzer
@@ -78,7 +72,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
                     {
                         _logger.LogWarning(
-                            "Can't trade on market {@market}. VolumeToBuy {@volumeToBuy} < MarketMinVolume {@minVolume}",
+                            "Can't trade on market {@Market}. VolumeToBuy {@VolumeToBuy} < MarketMinVolume {@MinVolume}",
                             market.Info.Market, tradeVolume, market.Info.MinVolume);
                         continue;
                     }
@@ -98,7 +92,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
 
                 _logger.LogInformation(
-                    "Traded on DirectMarkets: TargetVolume={@targetVolume}, TradedVolume={@tradedVolume}",
+                    "Traded on DirectMarkets: TargetVolume={@TargetVolume}, TradedVolume={@TradedVolume}",
                     hedgeInstruction.TargetVolume, hedgeOperation.TradedVolume);
 
                 foreach (var transitAsset in settings.IndirectMarketTransitAssets ?? new List<string>())
@@ -112,7 +106,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         settings.IndirectMarketLimitTradeSteps ?? new List<LimitTradeStep>());
                 }
 
-                _logger.LogInformation("HedgeOperation ended. {@operation}", hedgeOperation);
+                _logger.LogInformation("HedgeOperation ended. {@Operation}", hedgeOperation);
 
                 if (hedgeOperation.IsFullyHedged())
                 {
@@ -163,8 +157,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        "Can't trade on IndirectMarket {@transitMarket} -> {@targetMarket}. " +
-                        "TransitTradeVolume is less than MarketMinVolume: {@tradeVolume} < {@minVolume}",
+                        "Can't trade on IndirectMarket {@TransitMarket} -> {@TargetMarket}. " +
+                        "TransitTradeVolume is less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
                         market.TransitMarketInfo.Market, market.TargetMarketInfo.Market,
                         transitTradeVolume, market.TransitMarketInfo.MinVolume);
                     continue;
@@ -184,8 +178,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (Convert.ToDouble(targetTradeVolume) < market.TargetMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        "Can't trade on IndirectMarket {@transitMarket} -> {@targetMarket}. " +
-                        "TargetTradeVolume after TransitTrade will be less than MarketMinVolume: {@tradeVolume} < {@minVolume}",
+                        "Can't trade on IndirectMarket {@TransitMarket} -> {@TargetMarket}. " +
+                        "TargetTradeVolume after TransitTrade will be less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
                         market.TransitMarketInfo.Market, market.TargetMarketInfo.Market,
                         targetTradeVolume, market.TargetMarketInfo.MinVolume);
                     continue;
@@ -295,7 +289,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 Type = OrderType.Market
             };
 
-            _logger.LogInformation("Made Trade. Request: {@request} Response: {@response}", request, response);
+            _logger.LogInformation("Made Trade. Request: {@Request} Response: {@Response}", request, response);
 
             return hedgeTrade;
         }
@@ -322,7 +316,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 if (priceIncreasedOnLimit)
                 {
-                    _logger.LogInformation("Price hit limit. CurrentPrice={@price} Limit={@limit}",
+                    _logger.LogInformation("Price hit limit. CurrentPrice={@Price} Limit={@Limit}",
                         currentPrice.Price, step.PriceIncreasePercentLimit);
                 }
 
@@ -342,7 +336,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (request.Volume < Convert.ToDecimal(marketInfo.MinVolume))
                 {
                     _logger.LogInformation(
-                        "Can't make LimitTrade. Trade Volume < MarketMinVolume: {@volume} {@minVolume}",
+                        "Can't make LimitTrade. Trade Volume < MarketMinVolume: {@Volume} {@MinVolume}",
                         request.Volume, marketInfo.MinVolume);
                     break;
                 }
@@ -368,7 +362,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     Type = OrderType.Limit
                 };
 
-                _logger.LogInformation("Made LimitTrade. Request: {@request} Response: {@response}", request, response);
+                _logger.LogInformation("Made LimitTrade. Request: {@Request} Response: {@Response}", request, response);
 
                 trades.Add(hedgeTrade);
                 tradedVolume += hedgeTrade.GetTradedVolume();
