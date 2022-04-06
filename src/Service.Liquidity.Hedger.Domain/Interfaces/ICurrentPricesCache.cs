@@ -4,6 +4,6 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface ICurrentPricesCache
     {
-        CurrentPrice Get(string source, string sourceMarket);
+        CurrentPrice Get(string source, string market);
     }
 }

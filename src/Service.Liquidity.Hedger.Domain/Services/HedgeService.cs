@@ -323,7 +323,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var step in steps.OrderBy(s => s.Number))
             {
-                var currentPrice = _currentPricesCache.Get(marketInfo.Market, exchangeName);
+                var currentPrice = _currentPricesCache.Get(exchangeName, marketInfo.Market);
 
                 if (currentPrice == null)
                 {

@@ -36,14 +36,14 @@ namespace Service.Liquidity.Hedger.NoSql
             });
         }
 
-        public CurrentPrice Get(string source, string sourceMarket)
+        public CurrentPrice Get(string source, string market)
         {
             if (!_data.Any())
             {
                 LoadData();
             }
 
-            var key = GeneratePriceKey(source, sourceMarket);
+            var key = GeneratePriceKey(source, market);
 
             return _data.TryGetValue(key, out var pricesNoSql) ? pricesNoSql.Price : null;
         }
@@ -58,9 +58,9 @@ namespace Service.Liquidity.Hedger.NoSql
             return GeneratePriceKey(priceNoSql.Price.Source, priceNoSql.Price.SourceMarket);
         }
 
-        private string GeneratePriceKey(string source, string sourceMarket)
+        private string GeneratePriceKey(string source, string market)
         {
-            return $"{source}-{sourceMarket}";
+            return $"{source}-{market}";
         }
     }
 }
