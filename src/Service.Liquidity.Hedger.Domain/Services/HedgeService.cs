@@ -63,32 +63,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         break;
                     }
 
-                    var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
-                    var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.Info.Market);
-                    var side = GetOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
-                    var tradeVolume =
-                        GetTradeVolume(remainingVolumeToTrade, marketPrice.Price, market.Balance.Free, side);
-
-                    if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
-                    {
-                        _logger.LogWarning(
-                            "Can't trade on market {@Market}. VolumeToBuy {@VolumeToBuy} < MarketMinVolume {@MinVolume}",
-                            market.Info.Market, tradeVolume, market.Info.MinVolume);
-                        continue;
-                    }
-
-                    if (settings.DirectMarketLimitTradeSteps.Any())
-                    {
-                        var trades = await MakeLimitTradesAsync(tradeVolume, side, market.Info, 
-                            market.ExchangeName, hedgeOperation.Id, marketPrice.Price, settings.DirectMarketLimitTradeSteps);
-                        hedgeOperation.AddTrades(trades);
-                    }
-                    else
-                    {
-                        var trade = await MakeMarketTradeAsync(tradeVolume, side, market.Info, market.ExchangeName,
-                            hedgeOperation.Id);
-                        hedgeOperation.AddTrade(trade);
-                    }
+                    await HedgeOnDirectMarketAsync(hedgeInstruction, hedgeOperation, market,
+                        settings.DirectMarketLimitTradeSteps ?? new List<LimitTradeStep>());
                 }
 
                 _logger.LogInformation(
@@ -120,6 +96,42 @@ namespace Service.Liquidity.Hedger.Domain.Services
             }
 
             return hedgeOperation;
+        }
+
+        private async Task HedgeOnDirectMarketAsync(HedgeInstruction hedgeInstruction, HedgeOperation hedgeOperation,
+            DirectHedgeExchangeMarket market, ICollection<LimitTradeStep> limitTradeSteps)
+        {
+            if (hedgeOperation.IsFullyHedged())
+            {
+                return;
+            }
+            
+            var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
+            var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.Info.Market);
+            var side = GetOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
+            var tradeVolume =
+                GetTradeVolume(remainingVolumeToTrade, marketPrice.Price, market.Balance.Free, side);
+
+            if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
+            {
+                _logger.LogWarning(
+                    "Can't trade on market {@Market}. VolumeToBuy {@VolumeToBuy} < MarketMinVolume {@MinVolume}",
+                    market.Info.Market, tradeVolume, market.Info.MinVolume);
+                return;
+            }
+
+            if (limitTradeSteps.Any())
+            {
+                var trades = await MakeLimitTradesAsync(tradeVolume, side, market.Info, 
+                    market.ExchangeName, hedgeOperation.Id, marketPrice.Price, limitTradeSteps);
+                hedgeOperation.AddTrades(trades);
+            }
+            else
+            {
+                var trade = await MakeMarketTradeAsync(tradeVolume, side, market.Info, market.ExchangeName,
+                    hedgeOperation.Id);
+                hedgeOperation.AddTrade(trade);
+            }
         }
 
         private async Task HedgeOnIndirectMarketsAsync(HedgeInstruction hedgeInstruction, string transitAsset,
