@@ -329,13 +329,30 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 {
                     throw new Exception($"Cant MakeLimitTrade. Price for {exchangeName} {marketInfo.Market} not found");
                 }
-                
-                var priceIncreasedOnLimit = price * step.PriceIncreasePercentLimit / 100 + price < currentPrice.Price;
 
-                if (priceIncreasedOnLimit)
+                bool priceChangedOnLimit;
+                decimal priceLimit;
+
+                if (orderSide == OrderSide.Buy)
                 {
-                    _logger.LogInformation("Price hit limit. CurrentPrice={@Price} Limit={@Limit}",
-                        currentPrice.Price, step.PriceIncreasePercentLimit);
+                    priceChangedOnLimit = price + price * step.PriceChangePercentLimit / 100 < currentPrice.Price;
+                    priceLimit = priceChangedOnLimit
+                        ? price * step.PriceChangePercentWhenLimitHit / 100 + price
+                        : price * step.PriceChangePercentLimit / 100 + price;
+                }
+                else
+                {
+                    priceChangedOnLimit =
+                        price - price * step.PriceChangePercentLimit / 100 < currentPrice.Price;
+                    priceLimit = priceChangedOnLimit
+                        ? price - price * step.PriceChangePercentWhenLimitHit / 100
+                        : price - price * step.PriceChangePercentLimit / 100;
+                }
+
+                if (priceChangedOnLimit)
+                {
+                    _logger.LogInformation("Price changed on limit. CurrentPrice={@Price} Limit={@Limit}",
+                        currentPrice.Price, step.PriceChangePercentLimit);
                 }
 
                 var request = new MakeLimitTradeRequest
@@ -345,9 +362,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     Volume = tradeVolume - tradedVolume,
                     ExchangeName = exchangeName,
                     ReferenceId = Guid.NewGuid().ToString(),
-                    PriceLimit = priceIncreasedOnLimit
-                        ? price * step.PriceIncrementPercentWhenLimitHit / 100 + price
-                        : price * step.PriceIncreasePercentLimit / 100 + price,
+                    PriceLimit = priceLimit,
                     TimeLimit = step.DurationLimit
                 };
 

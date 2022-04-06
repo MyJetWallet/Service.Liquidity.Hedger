@@ -7,7 +7,7 @@ namespace Service.Liquidity.Hedger.Domain.Models;
 public class LimitTradeStep
 {
     [DataMember(Order = 1)] public TimeSpan DurationLimit { get; set; }
-    [DataMember(Order = 2)] public decimal PriceIncreasePercentLimit { get; set; }
-    [DataMember(Order = 3)] public decimal PriceIncrementPercentWhenLimitHit { get; set; }
+    [DataMember(Order = 2)] public decimal PriceChangePercentLimit { get; set; }
+    [DataMember(Order = 3)] public decimal PriceChangePercentWhenLimitHit { get; set; }
     [DataMember(Order = 4)] public int Number { get; set; }
 }
