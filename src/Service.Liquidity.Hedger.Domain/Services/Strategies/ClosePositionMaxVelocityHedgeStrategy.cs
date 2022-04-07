@@ -48,7 +48,9 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 TargetVolume = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalance)) *
                                (hedgePercent / 100),
                 Date = DateTime.UtcNow,
-                MonitoringRuleId = rule.Id
+                MonitoringRuleId = rule.Id,
+                Weight = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalanceInUsd)) *
+                         (hedgePercent / 100),
             };
 
             return instruction;

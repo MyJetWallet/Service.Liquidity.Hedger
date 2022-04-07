@@ -99,7 +99,7 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
     
     public HedgeInstruction SelectPriorityInstruction(IEnumerable<HedgeInstruction> instructions)
     {
-        var hedgeInstruction = instructions.MaxBy(instruction => instruction.TargetVolume);
+        var hedgeInstruction = instructions.MaxBy(instruction => instruction.Weight);
 
         return hedgeInstruction;
     }

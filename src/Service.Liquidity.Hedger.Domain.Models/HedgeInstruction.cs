@@ -14,6 +14,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 4)] public string MonitoringRuleId { get; set; }
         [DataMember(Order = 5)] public HedgeInstructionStatus Status { get; set; }
         [DataMember(Order = 6)] public DateTime Date { get; set; } = DateTime.UtcNow;
+        [DataMember(Order = 7)] public decimal Weight { get; set; }
 
         public bool Validate(out ICollection<string> errors)
         {
