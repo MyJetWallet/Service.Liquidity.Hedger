@@ -36,7 +36,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 .OrderBy(a => a.DailyVelocityRiskInUsd)
                 .Select(a => new HedgePairAsset
                 {
-                    Weight = a.DailyVelocityRiskInUsd,
+                    Weight = a.DailyVelocityRiskInUsd * -1,
                     Symbol = a.Symbol,
                 })
                 .ToList();
