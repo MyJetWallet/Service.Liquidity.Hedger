@@ -332,27 +332,36 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 bool priceChangedOnLimit;
                 decimal priceLimit;
+                var priceChange = price * step.PriceChangePercentLimit / 100;
 
-                if (orderSide == OrderSide.Buy)
+                switch (orderSide)
                 {
-                    priceChangedOnLimit = price + price * step.PriceChangePercentLimit / 100 < currentPrice.Price;
-                    priceLimit = priceChangedOnLimit
-                        ? price * step.PriceChangePercentWhenLimitHit / 100 + price
-                        : price * step.PriceChangePercentLimit / 100 + price;
-                }
-                else
-                {
-                    priceChangedOnLimit =
-                        price - price * step.PriceChangePercentLimit / 100 < currentPrice.Price;
-                    priceLimit = priceChangedOnLimit
-                        ? price - price * step.PriceChangePercentWhenLimitHit / 100
-                        : price - price * step.PriceChangePercentLimit / 100;
+                    case OrderSide.Buy:
+                    {
+                        var priceThreshold = price + priceChange;
+                        priceChangedOnLimit = priceThreshold < currentPrice.Price; // increased more than on limit
+                        priceLimit = priceChangedOnLimit
+                            ? price + price * step.PriceChangePercentWhenLimitHit / 100
+                            : priceThreshold;
+                        break;
+                    }
+                    case OrderSide.Sell:
+                    {
+                        var priceThreshold = price - priceChange;
+                        priceChangedOnLimit = priceThreshold < currentPrice.Price; // decreased more than on limit
+                        priceLimit = priceChangedOnLimit
+                            ? price - price * step.PriceChangePercentWhenLimitHit / 100
+                            : priceThreshold;
+                        break;
+                    }
+                    default:
+                        throw new NotSupportedException($"Order side {orderSide.ToString()}");
                 }
 
                 if (priceChangedOnLimit)
                 {
-                    _logger.LogInformation("Price changed on limit. CurrentPrice={@Price} Limit={@Limit}",
-                        currentPrice.Price, step.PriceChangePercentLimit);
+                    _logger.LogInformation("Price changed on limit. InitialPrice={@InitialPrice} CurrentPrice={@Price} Limit={@Limit}",
+                        price, currentPrice.Price, step.PriceChangePercentLimit);
                 }
 
                 var request = new MakeLimitTradeRequest
