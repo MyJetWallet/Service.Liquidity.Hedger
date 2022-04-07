@@ -51,10 +51,6 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 MonitoringRuleId = rule.Id
             };
 
-            _logger.LogInformation(
-                "HedgeInstruction: {@Instruction} {@SelectedPositionAssets} {@CollateralAssets}", instruction,
-                selectedPositionAssets, collateralAssets);
-
             return instruction;
         }
     }
