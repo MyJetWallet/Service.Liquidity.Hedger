@@ -210,7 +210,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         targetAssetPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
                         targetAssetSide);
                     var targetTrades = await MakeLimitTradesAsync(targetTradeVolume, targetAssetSide,
-                        market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id, transitAssetPrice.Price,
+                        market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id, targetAssetPrice.Price,
                         limitTradeSteps);
                     hedgeOperation.AddTrades(targetTrades);
                 }
