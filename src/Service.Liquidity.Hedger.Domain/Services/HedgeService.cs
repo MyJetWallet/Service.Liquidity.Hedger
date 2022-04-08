@@ -348,7 +348,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     case OrderSide.Sell:
                     {
                         var priceThreshold = price - priceChange;
-                        priceChangedOnLimit = priceThreshold < currentPrice.Price; // decreased more than on limit
+                        priceChangedOnLimit = priceThreshold > currentPrice.Price; // decreased more than on limit
                         priceLimit = priceChangedOnLimit
                             ? price - price * step.PriceChangePercentWhenLimitHit / 100
                             : priceThreshold;
