@@ -54,10 +54,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             foreach (var exchange in settings.EnabledExchanges ?? new List<string>())
             {
-                var possibleMarkets = await _exchangesAnalyzer
+                var directMarkets = await _exchangesAnalyzer
                     .FindDirectMarketsAsync(exchange, hedgeInstruction);
 
-                foreach (var market in possibleMarkets)
+                foreach (var market in directMarkets)
                 {
                     if (hedgeOperation.IsFullyHedged())
                     {
@@ -81,6 +81,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                     await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, hedgeOperation, exchange,
                         settings.IndirectMarketLimitTradeSteps ?? new List<LimitTradeStep>());
+                    
+                    _logger.LogInformation(
+                        "Traded on IndirectMarkets: TargetVolume={@TargetVolume}, TradedVolume={@TradedVolume}",
+                        hedgeInstruction.TargetVolume, hedgeOperation.TradedVolume);
                 }
 
                 _logger.LogInformation("HedgeOperation ended. {@Operation}", hedgeOperation);
@@ -287,7 +291,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 Type = OrderType.Market
             };
 
-            _logger.LogInformation("Made Trade. Request: {@Request} Response: {@Response}", request, response);
+            _logger.LogInformation("Made MarketTrade. Request: {@Request} Response: {@Response}", request, response);
 
             return hedgeTrade;
         }
@@ -358,6 +362,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     break;
                 }
             }
+            
+            _logger.LogInformation("MakeLimitTrades ended. Market: {@Market} TradedVolume: {@TradedVolume}",
+                marketInfo.Market, tradedVolume);
 
             return trades;
         }
