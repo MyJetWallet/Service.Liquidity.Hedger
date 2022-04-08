@@ -1,4 +1,6 @@
 ﻿using MyJetWallet.Domain.ExternalMarketApi.Models;
+using MyJetWallet.Domain.Orders;
+using Service.Liquidity.Hedger.Domain.Extensions;
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {

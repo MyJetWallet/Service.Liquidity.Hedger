@@ -7,6 +7,7 @@ using MyJetWallet.Domain.ExternalMarketApi;
 using MyJetWallet.Domain.ExternalMarketApi.Dto;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
+using Service.Liquidity.Hedger.Domain.Extensions;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 
@@ -89,7 +90,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     break;
                 }
             }
-            
+
             if (hedgeOperation.HedgeTrades.Any())
             {
                 await _hedgeOperationsStorage.AddOrUpdateLastAsync(hedgeOperation);
@@ -105,10 +106,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 return;
             }
-            
+
             var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
             var marketPrice = _currentPricesCache.Get(market.ExchangeName, market.Info.Market);
-            var side = GetOrderSide(market.Info, hedgeInstruction.TargetAssetSymbol);
+            var side = market.Info.GetOrderSide(hedgeInstruction.TargetAssetSymbol);
             var tradeVolume =
                 GetTradeVolume(remainingVolumeToTrade, marketPrice.Price, market.Balance.Free, side);
 
@@ -122,7 +123,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             if (limitTradeSteps.Any())
             {
-                var trades = await MakeLimitTradesAsync(tradeVolume, side, market.Info, 
+                var trades = await MakeLimitTradesAsync(tradeVolume, side, market.Info,
                     market.ExchangeName, hedgeOperation.Id, marketPrice.Price, limitTradeSteps);
                 hedgeOperation.AddTrades(trades);
             }
@@ -156,13 +157,13 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var targetAssetPrice = _currentPricesCache.Get(market.ExchangeName,
                     market.TargetMarketInfo.Market);
-                var targetAssetSide = GetOrderSide(market.TargetMarketInfo, hedgeInstruction.TargetAssetSymbol);
+                var targetAssetSide = market.TargetMarketInfo.GetOrderSide(hedgeInstruction.TargetAssetSymbol);
                 var neededVolumeInTransitAsset = targetAssetSide == OrderSide.Buy
                     ? remainingVolumeToTradeInTargetAsset * targetAssetPrice.Price
                     : remainingVolumeToTradeInTargetAsset / targetAssetPrice.Price;
                 var transitAssetPrice = _currentPricesCache.Get(market.ExchangeName,
                     market.TransitMarketInfo.Market);
-                var transitAssetSide = GetOrderSide(market.TransitMarketInfo, transitAsset);
+                var transitAssetSide = market.TransitMarketInfo.GetOrderSide(transitAsset);
                 var transitTradeVolume = GetTradeVolume(neededVolumeInTransitAsset,
                     transitAssetPrice.Price, market.TransitPairAssetBalance.Free, transitAssetSide);
 
@@ -177,9 +178,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
 
                 var volumeInTransitAssetAfterTransitTrade = transitAssetSide == OrderSide.Buy
-                    ? Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) /
+                    ? transitTradeVolume.Truncate(market.TransitMarketInfo.VolumeAccuracy) /
                       transitAssetPrice.Price
-                    : Truncate(transitTradeVolume, market.TransitMarketInfo.VolumeAccuracy) *
+                    : transitTradeVolume.Truncate(market.TransitMarketInfo.VolumeAccuracy) *
                       transitAssetPrice.Price;
                 var availableVolumeInTransitAssetAfterTransitTrade =
                     volumeInTransitAssetAfterTransitTrade + market.TargetPairAssetBalance.Free;
@@ -203,7 +204,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id, transitAssetPrice.Price,
                         limitTradeSteps);
                     hedgeOperation.AddTrades(transitTrades);
-                    
+
                     availableVolumeInTransitAssetAfterTransitTrade =
                         transitTrades.Sum(t => t.GetTradedVolume()) + market.TargetPairAssetBalance.Free;
                     targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
@@ -219,27 +220,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     var transitTrade = await MakeMarketTradeAsync(transitTradeVolume, transitAssetSide,
                         market.TransitMarketInfo, market.ExchangeName, hedgeOperation.Id);
                     hedgeOperation.AddTrade(transitTrade);
-                    
+
                     var targetTrade = await MakeMarketTradeAsync(targetTradeVolume, targetAssetSide,
                         market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id);
                     hedgeOperation.AddTrade(targetTrade);
                 }
             }
-        }
-
-        private OrderSide GetOrderSide(ExchangeMarketInfo market, string buyAsset)
-        {
-            if (market.BaseAsset == buyAsset)
-            {
-                return OrderSide.Buy;
-            }
-
-            if (market.QuoteAsset == buyAsset)
-            {
-                return OrderSide.Sell;
-            }
-
-            return OrderSide.UnknownOrderSide;
         }
 
         private decimal GetTradeVolume(decimal targetVolume, decimal price, decimal balance, OrderSide side,
@@ -264,7 +250,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     : neededVolumeToSell;
             }
 
-            return volumeAccuracy == null ? tradeVolume : Truncate(targetVolume, volumeAccuracy.Value);
+            return volumeAccuracy == null ? tradeVolume : targetVolume.Truncate(volumeAccuracy.Value);
         }
 
         private async Task<HedgeTrade> MakeMarketTradeAsync(decimal tradeVolume, OrderSide orderSide,
@@ -304,14 +290,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
             _logger.LogInformation("Made Trade. Request: {@Request} Response: {@Response}", request, response);
 
             return hedgeTrade;
-        }
-
-        private decimal Truncate(decimal value, int precision)
-        {
-            var step = (decimal)Math.Pow(10, precision);
-            var tmp = Math.Truncate(step * value);
-
-            return tmp / step;
         }
 
         private async Task<ICollection<HedgeTrade>> MakeLimitTradesAsync(decimal tradeVolume, OrderSide orderSide,
@@ -375,7 +353,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 trades.Add(hedgeTrade);
                 tradedVolume += hedgeTrade.GetTradedVolume();
 
-                if (tradedVolume >= Truncate(tradeVolume, marketInfo.VolumeAccuracy))
+                if (tradedVolume >= tradeVolume.Truncate(marketInfo.VolumeAccuracy))
                 {
                     break;
                 }
