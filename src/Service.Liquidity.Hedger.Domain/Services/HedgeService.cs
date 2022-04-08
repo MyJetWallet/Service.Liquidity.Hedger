@@ -325,45 +325,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 var currentPrice = _currentPricesCache.Get(exchangeName, marketInfo.Market);
 
-                if (currentPrice == null)
-                {
-                    throw new Exception($"Cant MakeLimitTrade. Price for {exchangeName} {marketInfo.Market} not found");
-                }
-
-                bool priceChangedOnLimit;
-                decimal priceLimit;
-                var priceChange = price * step.PriceChangePercentLimit / 100;
-
-                switch (orderSide)
-                {
-                    case OrderSide.Buy:
-                    {
-                        var priceThreshold = price + priceChange;
-                        priceChangedOnLimit = priceThreshold < currentPrice.Price; // increased more than on limit
-                        priceLimit = priceChangedOnLimit
-                            ? price + price * step.PriceChangePercentWhenLimitHit / 100
-                            : priceThreshold;
-                        break;
-                    }
-                    case OrderSide.Sell:
-                    {
-                        var priceThreshold = price - priceChange;
-                        priceChangedOnLimit = priceThreshold > currentPrice.Price; // decreased more than on limit
-                        priceLimit = priceChangedOnLimit
-                            ? price - price * step.PriceChangePercentWhenLimitHit / 100
-                            : priceThreshold;
-                        break;
-                    }
-                    default:
-                        throw new NotSupportedException($"Order side {orderSide.ToString()}");
-                }
-
-                if (priceChangedOnLimit)
-                {
-                    _logger.LogInformation("Price changed on limit. InitialPrice={@InitialPrice} CurrentPrice={@Price} Limit={@Limit}",
-                        price, currentPrice.Price, step.PriceChangePercentLimit);
-                }
-
                 var request = new MakeLimitTradeRequest
                 {
                     Side = orderSide,
@@ -371,14 +332,18 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     Volume = tradeVolume - tradedVolume,
                     ExchangeName = exchangeName,
                     ReferenceId = Guid.NewGuid().ToString(),
-                    PriceLimit = priceLimit,
+                    PriceLimit = step.CalculatePriceLimit(orderSide, price, currentPrice.Price),
                     TimeLimit = step.DurationLimit
                 };
+
+                _logger.LogInformation(
+                    "Calculated PriceLimit: {@PriceLimit}; InitialPrice: {@InitialPrice}; CurrentPrice: {@CurrentPrice}; Step: {@Step}",
+                    request.PriceLimit, price, currentPrice.Price, step);
 
                 if (request.Volume < Convert.ToDecimal(marketInfo.MinVolume))
                 {
                     _logger.LogInformation(
-                        "Can't make LimitTrade. Trade Volume < MarketMinVolume: {@Volume} {@MinVolume}",
+                        "Can't make LimitTrade. TradeVolume: {@Volume} < MarketMinVolume: {@MinVolume}",
                         request.Volume, marketInfo.MinVolume);
                     break;
                 }
@@ -404,7 +369,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     Type = OrderType.Limit
                 };
 
-                _logger.LogInformation("Made LimitTrade. Request: {@Request} Response: {@Response}", request, response);
+                _logger.LogInformation("Made LimitTrade. Step: {@Step}; Request: {@Request}; Response: {@Response}",
+                    step, request, response);
 
                 trades.Add(hedgeTrade);
                 tradedVolume += hedgeTrade.GetTradedVolume();

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using MyNoSqlServer.Abstractions;
@@ -45,7 +46,12 @@ namespace Service.Liquidity.Hedger.NoSql
 
             var key = GeneratePriceKey(source, market);
 
-            return _data.TryGetValue(key, out var pricesNoSql) ? pricesNoSql.Price : null;
+            if (!_data.TryGetValue(key, out var pricesNoSql))
+            {
+                throw new Exception($"Price for {source} {market} not found");
+            }
+            
+            return pricesNoSql.Price;
         }
 
         private void LoadData()
