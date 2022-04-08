@@ -11,7 +11,7 @@ namespace Service.Liquidity.Hedger.Modules
         protected override void Load(ContainerBuilder builder)
         {
             var serviceBusClient = builder.RegisterMyServiceBusTcpClient(
-                () => Program.Settings.MyNoSqlReaderHostPort,
+                () => Program.Settings.SpotServiceBusHostPort,
                 Program.LogFactory);
 
             builder.RegisterMyServiceBusPublisher<HedgeOperation>(serviceBusClient,
