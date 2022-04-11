@@ -17,7 +17,7 @@ namespace Service.Liquidity.Hedger.Modules
             builder.RegisterMyServiceBusPublisher<HedgeOperation>(serviceBusClient,
                 HedgeOperation.TopicName, true);
 
-            var queueName = "Liquidity-Hedger-local";
+            var queueName = "Liquidity-Hedger";
             builder.RegisterMyServiceBusSubscriberSingle<PortfolioMonitoringMessage>(serviceBusClient,
                 PortfolioMonitoringMessage.TopicName,
                 queueName,
