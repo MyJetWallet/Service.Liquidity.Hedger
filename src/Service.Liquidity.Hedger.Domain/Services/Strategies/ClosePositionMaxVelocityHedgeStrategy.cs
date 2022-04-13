@@ -11,18 +11,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 {
     public class ClosePositionMaxVelocityHedgeStrategy : IHedgeStrategy
     {
-        private readonly ILogger<IHedgeStrategy> _logger;
-        private readonly IIndexPricesClient _indexPricesClient;
         public HedgeStrategyType Type { get; set; } = HedgeStrategyType.ClosePositionMaxVelocity;
-
-        public ClosePositionMaxVelocityHedgeStrategy(
-            ILogger<IHedgeStrategy> logger,
-            IIndexPricesClient indexPricesClient
-        )
-        {
-            _logger = logger;
-            _indexPricesClient = indexPricesClient;
-        }
 
         public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule, decimal hedgePercent)
         {
@@ -61,12 +50,12 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
             
             if (selectedAssets.Count == 1)
             {
-                instruction.TargetVolume = selectedAsset.NetBalance * (hedgePercent / 100);
+                instruction.TargetVolume = Math.Abs(selectedAsset.NetBalance * (hedgePercent / 100));
             }
             else
             {
-                var price = _indexPricesClient.GetIndexPriceByAssetAsync(instruction.TargetAssetSymbol);
-                instruction.TargetVolume = targetVolumeInUsd / price.UsdPrice;
+                var price = selectedAsset.NetBalanceInUsd / selectedAsset.NetBalance;
+                instruction.TargetVolume = Math.Abs(targetVolumeInUsd / price);
             }
 
             instruction.TargetAssetSymbol = selectedAsset.Symbol;

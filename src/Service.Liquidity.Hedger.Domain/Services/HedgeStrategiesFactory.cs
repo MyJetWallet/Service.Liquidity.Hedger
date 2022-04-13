@@ -13,15 +13,13 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly Dictionary<HedgeStrategyType, IHedgeStrategy> _strategies;
 
         public HedgeStrategiesFactory(
-            ILogger<IHedgeStrategy> logger,
-            IIndexPricesClient indexPricesClient
         )
         {
             _strategies = new Dictionary<HedgeStrategyType, IHedgeStrategy>
             {
                 {
                     HedgeStrategyType.ClosePositionMaxVelocity,
-                    new ClosePositionMaxVelocityHedgeStrategy(logger, indexPricesClient)
+                    new ClosePositionMaxVelocityHedgeStrategy()
                 },
             };
         }

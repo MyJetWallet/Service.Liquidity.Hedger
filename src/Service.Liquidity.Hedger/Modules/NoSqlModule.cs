@@ -13,7 +13,6 @@ namespace Service.Liquidity.Hedger.Modules
         protected override void Load(ContainerBuilder builder)
         {
             var noSqlClient = builder.CreateNoSqlClient(() => Program.Settings.MyNoSqlReaderHostPort);
-            builder.RegisterIndexPricesClient(noSqlClient);
 
             builder.RegisterMyNoSqlWriter<HedgeOperationNoSql>(() => Program.Settings.MyNoSqlWriterUrl,
                 HedgeOperationNoSql.TableName);

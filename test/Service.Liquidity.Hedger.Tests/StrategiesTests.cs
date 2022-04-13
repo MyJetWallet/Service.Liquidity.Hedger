@@ -103,13 +103,7 @@ public class StrategiesTests
         {
             Checks = checks
         };
-        var pricesService = Substitute.For<IIndexPricesClient>();
-        pricesService.GetIndexPriceByAssetAsync(default).ReturnsForAnyArgs(new IndexPrice
-        {
-            UsdPrice = 1
-        });
-
-        var strategy = new ClosePositionMaxVelocityHedgeStrategy(Substitute.For<ILogger<IHedgeStrategy>>(), pricesService);
+        var strategy = new ClosePositionMaxVelocityHedgeStrategy();
         
         var instruction = strategy.CalculateHedgeInstruction(portfolio, rule, 30m);
         
