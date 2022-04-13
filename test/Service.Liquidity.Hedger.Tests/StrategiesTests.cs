@@ -3,6 +3,8 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
+using Service.IndexPrices.Client;
+using Service.IndexPrices.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
 using Service.Liquidity.Monitoring.Domain.Models.Checks;
@@ -38,7 +40,7 @@ public class StrategiesTests
                     "ETH", new Portfolio.Asset
                     {
                         Symbol = "ETH",
-                        NetBalanceInUsd = -1,
+                        NetBalanceInUsd = -40,
                         NetBalance = 40,
                         DailyVelocityRiskInUsd = -1
                     }
@@ -47,7 +49,7 @@ public class StrategiesTests
                     "BTC", new Portfolio.Asset
                     {
                         Symbol = "BTC",
-                        NetBalanceInUsd = -1,
+                        NetBalanceInUsd = -60,
                         NetBalance = 60,
                         DailyVelocityRiskInUsd = -2
                     }
@@ -101,7 +103,13 @@ public class StrategiesTests
         {
             Checks = checks
         };
-        var strategy = new ClosePositionMaxVelocityHedgeStrategy(Substitute.For<ILogger<IHedgeStrategy>>());
+        var pricesService = Substitute.For<IIndexPricesClient>();
+        pricesService.GetIndexPriceByAssetAsync(default).ReturnsForAnyArgs(new IndexPrice
+        {
+            UsdPrice = 1
+        });
+
+        var strategy = new ClosePositionMaxVelocityHedgeStrategy(Substitute.For<ILogger<IHedgeStrategy>>(), pricesService);
         
         var instruction = strategy.CalculateHedgeInstruction(portfolio, rule, 30m);
         

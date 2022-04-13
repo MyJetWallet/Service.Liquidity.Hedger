@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using Service.IndexPrices.Client;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
@@ -12,12 +13,16 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly Dictionary<HedgeStrategyType, IHedgeStrategy> _strategies;
 
         public HedgeStrategiesFactory(
-            ILogger<IHedgeStrategy> logger
+            ILogger<IHedgeStrategy> logger,
+            IIndexPricesClient indexPricesClient
         )
         {
             _strategies = new Dictionary<HedgeStrategyType, IHedgeStrategy>
             {
-                { HedgeStrategyType.ClosePositionMaxVelocity, new ClosePositionMaxVelocityHedgeStrategy(logger) },
+                {
+                    HedgeStrategyType.ClosePositionMaxVelocity,
+                    new ClosePositionMaxVelocityHedgeStrategy(logger, indexPricesClient)
+                },
             };
         }
 

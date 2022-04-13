@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using MyJetWallet.Sdk.NoSql;
+using Service.IndexPrices.Client;
 using Service.IndexPrices.Domain.Models;
 using Service.Liquidity.Hedger.NoSql;
 using Service.Liquidity.Hedger.NoSql.HedgeInstructions;
@@ -12,6 +13,7 @@ namespace Service.Liquidity.Hedger.Modules
         protected override void Load(ContainerBuilder builder)
         {
             var noSqlClient = builder.CreateNoSqlClient(() => Program.Settings.MyNoSqlReaderHostPort);
+            builder.RegisterIndexPricesClient(noSqlClient);
 
             builder.RegisterMyNoSqlWriter<HedgeOperationNoSql>(() => Program.Settings.MyNoSqlWriterUrl,
                 HedgeOperationNoSql.TableName);

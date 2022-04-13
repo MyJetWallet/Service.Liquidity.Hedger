@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using MyJetWallet.Domain.ExternalMarketApi;
+using Service.IndexPrices.Client;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Services;
 using Service.Liquidity.Hedger.Jobs;
