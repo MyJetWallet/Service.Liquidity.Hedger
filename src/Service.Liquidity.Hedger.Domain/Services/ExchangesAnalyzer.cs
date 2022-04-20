@@ -104,9 +104,12 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             });
         }
 
+        var marketNames = string.Join(", ",
+            markets.Select(m => $"{m.TransitMarketInfo.Market} -> {m.TargetMarketInfo.Market}"));
+
         _logger.LogInformation(
-            "FindPossible IndirectMarkets ended. Found markets: {@Markets}. TransitAsset: {@TransitAsset}, TargetAsset: {@TargetAsset}",
-            markets, transitAssetSymbol, targetAssetSymbol);
+            "FindPossible IndirectMarkets ended. Markets: {@Markets}. TransitAsset: {@TransitAsset}, TargetAsset: {@TargetAsset}",
+            marketNames, transitAssetSymbol, targetAssetSymbol);
 
         return markets;
     }
