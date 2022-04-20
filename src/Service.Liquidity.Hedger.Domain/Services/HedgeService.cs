@@ -257,7 +257,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeOperation.AddTrades(transitTrades);
 
                     availableVolumeInTransitAssetAfterTransitTrade =
-                        transitTrades.Sum(t => t.GetTradedVolume()) + transitAssetBalance;
+                        transitTrades.Sum(t => t.GetTradedVolume(transitAsset)) + transitAssetBalance;
                     targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
                         targetAssetPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
                         targetAssetSide);
@@ -408,7 +408,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     step, request, response, hedgeTrade);
 
                 trades.Add(hedgeTrade);
-                tradedVolume += hedgeTrade.GetTradedVolume();
+                tradedVolume += hedgeTrade.BaseVolume;
 
                 if (tradedVolume >= tradeVolume.Truncate(marketInfo.VolumeAccuracy))
                 {

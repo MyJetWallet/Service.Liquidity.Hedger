@@ -29,7 +29,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
 
             if (trade.QuoteAsset == TargetAsset || trade.BaseAsset == TargetAsset)
             {
-                TradedVolume += trade.GetTradedVolume();
+                TradedVolume += trade.GetTradedVolume(TargetAsset);
             }
         }
 

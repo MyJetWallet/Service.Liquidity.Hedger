@@ -23,9 +23,19 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 14)] public OrderSide Side { get; set; }
         [DataMember(Order = 15)] public OrderType Type { get; set; }
 
-        public decimal GetTradedVolume()
+        public decimal GetTradedVolume(string asset)
         {
-            return Side == OrderSide.Buy ? BaseVolume : QuoteVolume;
+            if (BaseAsset == asset)
+            {
+                return BaseVolume;
+            }
+
+            if (QuoteAsset == asset)
+            {
+                return QuoteVolume;
+            }
+            
+            return 0;
         }
     }
 }
