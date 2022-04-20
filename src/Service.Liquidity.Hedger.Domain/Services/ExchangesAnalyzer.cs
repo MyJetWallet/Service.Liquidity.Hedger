@@ -44,7 +44,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _logger.LogInformation("GetExchangeBalances {@ExchangeName}: {@Markets}", exchangeName,
             balancesResp?.Balances);
 
-        foreach (var pairAsset in pairAssets)
+        foreach (var pairAsset in pairAssets.OrderByDescending(a => a.Weight))
         {
             var transitMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||

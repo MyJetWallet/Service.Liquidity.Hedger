@@ -57,7 +57,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 var directMarkets = await _exchangesAnalyzer
                     .FindDirectMarketsAsync(exchange, hedgeInstruction);
 
-                foreach (var market in directMarkets)
+                foreach (var market in directMarkets.OrderByDescending(m => m.Weight))
                 {
                     if (hedgeOperation.IsFullyHedged())
                     {
@@ -150,7 +150,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             var indirectMarkets = await _exchangesAnalyzer.FindIndirectMarketsAsync(exchangeName,
                 transitAsset, hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
 
-            foreach (var market in indirectMarkets)
+            foreach (var market in indirectMarkets.OrderByDescending(m => m.Weight))
             {
                 if (hedgeOperation.IsFullyHedged())
                 {
