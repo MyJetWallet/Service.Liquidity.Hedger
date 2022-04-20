@@ -372,8 +372,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 };
 
                 _logger.LogInformation(
-                    "Calculated PriceLimit: {@PriceLimit}; InitialPrice: {@InitialPrice}; CurrentPrice: {@CurrentPrice}; Step: {@Step}",
-                    request.PriceLimit, price, currentPrice.Price, step);
+                    "Calculated PriceLimit for {@Market}: {@PriceLimit}; InitialPrice: {@InitialPrice}; CurrentPrice: {@CurrentPrice}; Step: {@Step}",
+                    marketInfo.Market, request.PriceLimit, price, currentPrice.Price, step);
 
                 if (request.Volume < Convert.ToDecimal(marketInfo.MinVolume))
                 {
@@ -404,8 +404,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     Type = OrderType.Limit
                 };
 
-                _logger.LogInformation("Made LimitTrade. Step: {@Step}; Request: {@Request}; Response: {@Response}",
-                    step, request, response);
+                _logger.LogInformation("Made LimitTrade. Step: {@Step}; Request: {@Request}; Response: {@Response}; Trade: {@Trade}",
+                    step, request, response, hedgeTrade);
 
                 trades.Add(hedgeTrade);
                 tradedVolume += hedgeTrade.GetTradedVolume();
