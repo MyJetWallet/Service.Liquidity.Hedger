@@ -156,6 +156,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 {
                     break;
                 }
+                
+                _logger.LogInformation("Trying to HedgeOnIndirectMarket: {@Market}", market);
 
                 var remainingVolumeToTradeInTargetAsset =
                     hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
@@ -302,6 +304,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
         {
             var trades = new List<HedgeTrade>();
             var tradedVolume = 0m;
+            
+            _logger.LogInformation("Trying to MakeLimitTades {@Exchange} {@Market} {@Volume} {@OrderSide}",
+                exchangeName, marketInfo.Market, tradeVolume, orderSide);
 
             foreach (var step in steps.OrderBy(s => s.Number))
             {
