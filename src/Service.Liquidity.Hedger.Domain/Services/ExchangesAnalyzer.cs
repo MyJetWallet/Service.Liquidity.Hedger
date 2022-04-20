@@ -96,11 +96,10 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 ExchangeName = exchangeName,
                 Weight = pairAsset.Weight,
-                TransitPairAssetBalance = transitPairAssetBalance,
                 TransitMarketInfo = transitMarketInfo,
-                TargetPairAssetBalance = targetPairAssetBalance,
                 TargetMarketInfo = targetMarketInfo,
-                TransitAssetSymbol = transitAssetSymbol
+                TransitAssetSymbol = transitAssetSymbol,
+                TransitPairAssetSymbol = pairAsset.Symbol
             });
         }
 
@@ -108,7 +107,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             markets.Select(m => $"{m.TransitMarketInfo.Market} -> {m.TargetMarketInfo.Market}"));
 
         _logger.LogInformation(
-            "FindPossible IndirectMarkets ended. Markets: {@Markets}. TransitAsset: {@TransitAsset}, TargetAsset: {@TargetAsset}",
+            "FindPossible IndirectMarkets ended. Markets: {@Markets}, TransitAsset: {@TransitAsset}, TargetAsset: {@TargetAsset}",
             marketNames, transitAssetSymbol, targetAssetSymbol);
 
         return markets;

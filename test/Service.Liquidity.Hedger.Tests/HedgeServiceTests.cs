@@ -382,26 +382,19 @@ public class HedgeServiceTests
         var market = new IndirectHedgeExchangeMarket
         {
             TransitAssetSymbol = transitAsset.Symbol,
-            TransitPairAssetBalance = new ExchangeBalance
-            {
-                Free = 100
-            },
             TransitMarketInfo = new ExchangeMarketInfo
             {
                 BaseAsset = transitAsset.Symbol,
                 QuoteAsset = pairAsset.Symbol,
                 MinVolume = 1,
             },
-            TargetPairAssetBalance = new ExchangeBalance
-            {
-                Free = 0
-            },
             TargetMarketInfo = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = pairAsset.Symbol,
                 MinVolume = 1,
-            }
+            },
+            TransitPairAssetSymbol = pairAsset.Symbol
         };
         _exchangesAnalyzer
             .FindIndirectMarketsAsync(default, default, default, default)
@@ -414,6 +407,22 @@ public class HedgeServiceTests
         {
             Volume = Convert.ToDouble(hedgeInstruction.TargetVolume),
             OppositeVolume = Convert.ToDouble(hedgeInstruction.TargetVolume),
+        });
+        _externalMarket.GetBalancesAsync(default).ReturnsForAnyArgs(new GetBalancesResponse
+        {
+            Balances = new List<ExchangeBalance>
+            {
+                new ()
+                {
+                    Symbol = transitAsset.Symbol,
+                    Free = 0
+                },
+                new ()
+                {
+                    Symbol = pairAsset.Symbol,
+                    Free = 100
+                }
+            }
         });
         _hedgeSettingsStorage.GetAsync().ReturnsForAnyArgs(new HedgeSettings
             { IndirectMarketTransitAssets = new List<string> { "USD" }, EnabledExchanges = new List<string> {"exchange"}});

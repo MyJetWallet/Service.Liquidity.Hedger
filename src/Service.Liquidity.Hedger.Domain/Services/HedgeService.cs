@@ -158,20 +158,30 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
                 
                 _logger.LogInformation("Trying to HedgeOnIndirectMarket: {@Market}", market);
+                
+                var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
+                {
+                    ExchangeName = exchangeName
+                });
+                var transitAssetBalance =
+                    balancesResp.Balances?.FirstOrDefault(b => b.Symbol == market.TransitAssetSymbol)?.Free ?? 0;
+                var transitPairAssetBalance =
+                    balancesResp.Balances?.FirstOrDefault(b => b.Symbol == market.TransitPairAssetSymbol)?.Free ?? 0;
 
                 var remainingVolumeToTradeInTargetAsset =
                     hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var targetAssetPrice = _currentPricesCache.Get(market.ExchangeName,
                     market.TargetMarketInfo.Market);
                 var targetAssetSide = market.TargetMarketInfo.GetOrderSide(hedgeInstruction.TargetAssetSymbol);
-                var neededVolumeInTransitAsset = targetAssetSide == OrderSide.Buy
+                var remainingVolumeToTradeInTransit = targetAssetSide == OrderSide.Buy
                     ? remainingVolumeToTradeInTargetAsset * targetAssetPrice.Price
                     : remainingVolumeToTradeInTargetAsset / targetAssetPrice.Price;
+                var neededVolumeInTransitAsset = remainingVolumeToTradeInTransit - transitAssetBalance;
                 var transitAssetPrice = _currentPricesCache.Get(market.ExchangeName,
                     market.TransitMarketInfo.Market);
                 var transitAssetSide = market.TransitMarketInfo.GetOrderSide(transitAsset);
                 var transitTradeVolume = GetTradeVolume(neededVolumeInTransitAsset,
-                    transitAssetPrice.Price, market.TransitPairAssetBalance.Free, transitAssetSide);
+                    transitAssetPrice.Price, transitPairAssetBalance, transitAssetSide);
 
                 if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
                 {
@@ -189,7 +199,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     : transitTradeVolume.Truncate(market.TransitMarketInfo.VolumeAccuracy) *
                       transitAssetPrice.Price;
                 var availableVolumeInTransitAssetAfterTransitTrade =
-                    volumeInTransitAssetAfterTransitTrade + market.TargetPairAssetBalance.Free;
+                    volumeInTransitAssetAfterTransitTrade + transitAssetBalance;
                 var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
                     targetAssetPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
                     targetAssetSide);
@@ -212,7 +222,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeOperation.AddTrades(transitTrades);
 
                     availableVolumeInTransitAssetAfterTransitTrade =
-                        transitTrades.Sum(t => t.GetTradedVolume()) + market.TargetPairAssetBalance.Free;
+                        transitTrades.Sum(t => t.GetTradedVolume()) + transitAssetBalance;
                     targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
                         targetAssetPrice.Price, availableVolumeInTransitAssetAfterTransitTrade,
                         targetAssetSide);
@@ -231,6 +241,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id);
                     hedgeOperation.AddTrade(targetTrade);
                 }
+                
+                _logger.LogInformation("Made HedgeOnIndirectMarket {@Market}, TradedVolume={@TradedVolume}", 
+                    $"{market.TransitMarketInfo.Market} -> {market.TargetMarketInfo.Market}", hedgeOperation.TradedVolume);
             }
         }
 

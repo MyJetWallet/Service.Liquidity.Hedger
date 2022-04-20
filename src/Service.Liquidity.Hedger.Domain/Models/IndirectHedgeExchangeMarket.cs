@@ -8,7 +8,6 @@ public class IndirectHedgeExchangeMarket
     public string ExchangeName { get; set; }
     public string TransitAssetSymbol { get; set; }
     public ExchangeMarketInfo TransitMarketInfo { get; set; }
-    public ExchangeBalance TransitPairAssetBalance { get; set; }
     public ExchangeMarketInfo TargetMarketInfo { get; set; }
-    public ExchangeBalance TargetPairAssetBalance { get; set; }
+    public string TransitPairAssetSymbol { get; set; }
 }
