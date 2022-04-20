@@ -39,9 +39,9 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         });
         var markets = new List<IndirectHedgeExchangeMarket>();
 
-        _logger.LogInformation("GetExchangeMarkets {@exchangeName}: {@markets}", exchangeName,
+        _logger.LogInformation("GetExchangeMarkets {@ExchangeName}: {@Markets}", exchangeName,
             marketInfosResp?.Infos.Select(i => i.Market));
-        _logger.LogInformation("GetExchangeBalances {@exchangeName}: {@markets}", exchangeName,
+        _logger.LogInformation("GetExchangeBalances {@ExchangeName}: {@Markets}", exchangeName,
             balancesResp?.Balances);
 
         foreach (var pairAsset in pairAssets)
@@ -53,14 +53,14 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
 
             if (transitMarketInfo == null)
             {
-                _logger.LogWarning("PairAsset {@pairAsset} is skipped.  Market with {@targetAsset} not found",
+                _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TargetAsset} not found",
                     pairAsset.Symbol, targetAssetSymbol);
                 continue;
             }
 
             if (transitPairAssetBalance == null)
             {
-                _logger.LogWarning("Market {@market} with PairAsset {@pairAsset} is skipped. Balance not found",
+                _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
                     transitMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
@@ -68,7 +68,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             if (transitPairAssetBalance.Free <= 0)
             {
                 _logger.LogWarning(
-                    "Market {@market} with PairAsset {@quoteAsset} is skipped. FreeBalance on exchange is 0",
+                    "Market {@Market} with PairAsset {@QuoteAsset} is skipped. FreeBalance on exchange is 0",
                     transitMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
@@ -80,14 +80,14 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
 
             if (targetMarketInfo == null)
             {
-                _logger.LogWarning("PairAsset {@pairAsset} is skipped.  Market with {@targetAsset} not found",
+                _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TargetAsset} not found",
                     pairAsset.Symbol, targetAssetSymbol);
                 continue;
             }
 
             if (targetPairAssetBalance == null)
             {
-                _logger.LogWarning("Market {@market} with PairAsset {@pairAsset} is skipped. Balance not found",
+                _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
                     targetMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
@@ -105,8 +105,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         }
 
         _logger.LogInformation(
-            "FindPossible IndirectMarkets ended. Found markets: {@markets}. TransitAsset: {@transitAsset}, TargetAsset: {@targetAsset}",
-            string.Join(", ", markets.Select(m => m.TargetMarketInfo.Market)), transitAssetSymbol, targetAssetSymbol);
+            "FindPossible IndirectMarkets ended. Found markets: {@Markets}. TransitAsset: {@TransitAsset}, TargetAsset: {@TargetAsset}",
+            markets, transitAssetSymbol, targetAssetSymbol);
 
         return markets;
     }
