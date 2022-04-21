@@ -37,6 +37,8 @@ namespace Service.Liquidity.Hedger.Modules
                 .AutoActivate().SingleInstance();
             builder.RegisterType<HedgeInstructionsNoSqlStorage>().As<IHedgeInstructionsStorage>()
                 .AutoActivate().SingleInstance();
+            builder.RegisterType<PricesService>().As<IPricesService>()
+                .AutoActivate().SingleInstance();
         }
     }
 }

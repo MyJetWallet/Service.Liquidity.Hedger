@@ -22,7 +22,7 @@ public class HedgeServiceTests
     private ILogger<HedgeService> _logger;
     private IExternalMarket _externalMarket;
     private IHedgeOperationsStorage _hedgeOperationsStorage;
-    private ICurrentPricesCache _currentPricesCache;
+    private IPricesService _pricesService;
     private IExchangesAnalyzer _exchangesAnalyzer;
     private IHedgeSettingsStorage _hedgeSettingsStorage;
 
@@ -32,7 +32,7 @@ public class HedgeServiceTests
         _logger = Substitute.For<ILogger<HedgeService>>();
         _externalMarket = Substitute.For<IExternalMarket>();
         _hedgeOperationsStorage = Substitute.For<IHedgeOperationsStorage>();
-        _currentPricesCache = Substitute.For<ICurrentPricesCache>();
+        _pricesService = Substitute.For<IPricesService>();
         _exchangesAnalyzer = Substitute.For<IExchangesAnalyzer>();
         _hedgeSettingsStorage = Substitute.For<IHedgeSettingsStorage>();
         _hedgeSettingsStorage.GetAsync().ReturnsForAnyArgs(new HedgeSettings
@@ -45,8 +45,8 @@ public class HedgeServiceTests
         // arrange
         _exchangesAnalyzer.FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket>());
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
         var hedgeInstruction = new HedgeInstruction();
 
         // act
@@ -87,18 +87,15 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
-        {
-            Price = 0.5m,
-        });
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(0.5m);
         var exchangeTrade = new ExchangeTrade
         {
             Side = OrderSide.Buy,
             Volume = Convert.ToDouble(hedgeInstruction.TargetVolume)
         };
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(exchangeTrade);
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         var operation = await service.HedgeAsync(hedgeInstruction);
@@ -139,21 +136,18 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
-        var price = new CurrentPrice
-        {
-            Price = 0.5m,
-        };
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(price);
+        var price = 0.5m;
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(price);
 
         var exchangeTrade = new ExchangeTrade
         {
             Side = OrderSide.Sell,
             Volume = 1,
-            Price = Convert.ToDouble(price.Price)
+            Price = Convert.ToDouble(price)
         };
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(exchangeTrade);
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         var operation = await service.HedgeAsync(hedgeInstruction);
@@ -194,13 +188,10 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
-        {
-            Price = 1,
-        });
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(1);
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -243,13 +234,10 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
-        {
-            Price = 1,
-        });
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(1);
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -292,13 +280,10 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
-        {
-            Price = 1,
-        });
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(1);
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -341,13 +326,10 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindDirectMarketsAsync(default, default)
             .ReturnsForAnyArgs(new List<DirectHedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
-        {
-            Price = 1,
-        });
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(1);
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade());
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
@@ -399,10 +381,7 @@ public class HedgeServiceTests
         _exchangesAnalyzer
             .FindIndirectMarketsAsync(default, default, default, default)
             .ReturnsForAnyArgs(new List<IndirectHedgeExchangeMarket> { market });
-        _currentPricesCache.Get(default, default).ReturnsForAnyArgs(new CurrentPrice
-        {
-            Price = 1,
-        });
+        _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(1);
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade
         {
             Volume = Convert.ToDouble(hedgeInstruction.TargetVolume),
@@ -426,8 +405,8 @@ public class HedgeServiceTests
         });
         _hedgeSettingsStorage.GetAsync().ReturnsForAnyArgs(new HedgeSettings
             { IndirectMarketTransitAssets = new List<string> { "USD" }, EnabledExchanges = new List<string> {"exchange"}});
-        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage, _currentPricesCache,
-            _exchangesAnalyzer, _hedgeSettingsStorage);
+        var service = new HedgeService(_logger, _externalMarket, _hedgeOperationsStorage,
+            _exchangesAnalyzer, _hedgeSettingsStorage, _pricesService);
 
         // act
         await service.HedgeAsync(hedgeInstruction);
