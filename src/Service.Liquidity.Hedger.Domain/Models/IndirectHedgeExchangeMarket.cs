@@ -10,4 +10,9 @@ public class IndirectHedgeExchangeMarket
     public ExchangeMarketInfo TransitMarketInfo { get; set; }
     public ExchangeMarketInfo TargetMarketInfo { get; set; }
     public string TransitPairAssetSymbol { get; set; }
+
+    public string GetMarketsDesc()
+    {
+        return $"{TransitMarketInfo.Market} -> {TargetMarketInfo.Market}";
+    }
 }
