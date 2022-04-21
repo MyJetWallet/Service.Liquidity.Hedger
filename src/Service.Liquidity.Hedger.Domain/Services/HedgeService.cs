@@ -222,8 +222,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     }
                     
                     _logger.LogInformation("Made HedgeOnIndirectMarket with skipping transit trade {@Market}, TradedVolume={@TradedVolume}",
-                        $"{market.TransitMarketInfo.Market} -> {market.TargetMarketInfo.Market}",
-                        hedgeOperation.TradedVolume);
+                        market.GetMarketsDesc(), hedgeOperation.TradedVolume);
                     
                     continue;
                 }
@@ -238,10 +237,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        "Can't trade on IndirectMarket {@TransitMarket} -> {@TargetMarket}. " +
-                        "TransitTradeVolume is less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
-                        market.TransitMarketInfo.Market, market.TargetMarketInfo.Market,
-                        transitTradeVolume, market.TransitMarketInfo.MinVolume);
+                        "Can't trade on IndirectMarket {@Market}. TransitTradeVolume is less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
+                        market.GetMarketsDesc(), transitTradeVolume, market.TransitMarketInfo.MinVolume);
                     continue;
                 }
 
@@ -256,10 +253,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (Convert.ToDouble(targetTradeVolumeGuess) < market.TargetMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        "Can't trade on IndirectMarket {@TransitMarket} -> {@TargetMarket}. " +
-                        "TargetTradeVolume after TransitTrade will be less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
-                        market.TransitMarketInfo.Market, market.TargetMarketInfo.Market,
-                        targetTradeVolumeGuess, market.TargetMarketInfo.MinVolume);
+                        "Can't trade on IndirectMarket {@Market}. TargetTradeVolume after TransitTrade will be less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
+                        market.GetMarketsDesc(), targetTradeVolumeGuess, market.TargetMarketInfo.MinVolume);
                     continue;
                 }
 
@@ -273,7 +268,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     var volumeInTransitAssetAfterTransitTrade = transitTrades.Sum(t => t.GetTradedVolume(transitAsset));
                     freeVolumeInTransitAssetAfterTransitTrades += volumeInTransitAssetAfterTransitTrade;
                     var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
-                        targetAssetPrice.Price, volumeInTransitAssetAfterTransitTrade, targetAssetSide);
+                        targetAssetPrice.Price, freeVolumeInTransitAssetAfterTransitTrades, targetAssetSide);
                     var targetTrades = await MakeLimitTradesAsync(targetTradeVolume, targetAssetSide,
                         market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id, targetAssetPrice.Price,
                         limitTradeSteps);
@@ -289,7 +284,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     var volumeInTransitAssetAfterTransitTrade = transitTrade.GetTradedVolume(transitAsset);
                     freeVolumeInTransitAssetAfterTransitTrades += volumeInTransitAssetAfterTransitTrade;
                     var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
-                        targetAssetPrice.Price, volumeInTransitAssetAfterTransitTrade, targetAssetSide);
+                        targetAssetPrice.Price, freeVolumeInTransitAssetAfterTransitTrades, targetAssetSide);
                     var targetTrade = await MakeMarketTradeAsync(targetTradeVolume, targetAssetSide,
                         market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id);
                     hedgeOperation.AddTrade(targetTrade);
@@ -297,8 +292,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 }
 
                 _logger.LogInformation("Made HedgeOnIndirectMarket {@Market}, TradedVolume={@TradedVolume}",
-                    $"{market.TransitMarketInfo.Market} -> {market.TargetMarketInfo.Market}",
-                    hedgeOperation.TradedVolume);
+                    market.GetMarketsDesc(), hedgeOperation.TradedVolume);
             }
         }
 
