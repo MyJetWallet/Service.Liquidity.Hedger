@@ -171,8 +171,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         }
 
         _logger.LogInformation(
-            "FindPossible DirectMarkets ended. Found markets: {@markets} for HedgeInstruction {@hedgeInstruction}",
-            string.Join(", ", markets.Select(m => m.Info.Market)), hedgeInstruction);
+            "FindPossible DirectMarkets ended. Found markets: {@Markets}",
+            string.Join(", ", markets.Select(m => m.Info.Market)));
 
         return markets;
     }
