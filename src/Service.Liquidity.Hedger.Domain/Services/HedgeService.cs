@@ -272,7 +272,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                         targetTrades.Sum(t => t.GetTradedVolume(transitAsset));
                     
                     var truncatedTargetVolume = targetTradeVolume.Truncate(market.TargetMarketInfo.VolumeAccuracy);
-                    var actualTargetTradeVolume = transitTrades.Sum(t => t.GetTradedVolume(hedgeInstruction.TargetAssetSymbol));
+                    var actualTargetTradeVolume = targetTrades.Sum(t => t.GetTradedVolume(hedgeInstruction.TargetAssetSymbol));
                     var bigChangesOnMarket = actualTargetTradeVolume < truncatedTargetVolume;
 
                     if (bigChangesOnMarket)
