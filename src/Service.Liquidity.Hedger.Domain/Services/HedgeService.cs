@@ -264,22 +264,22 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     var volumeInTransitAssetAfterTransitTrade = transitTrades.Sum(t => t.GetTradedVolume(transitAsset));
                     freeVolumeInTransitAssetAfterTransitTrades += volumeInTransitAssetAfterTransitTrade;
                     var targetTradeVolume = GetTradeVolume(remainingVolumeToTradeInTargetAsset,
-                        targetAssetPrice, freeVolumeInTransitAssetAfterTransitTrades, targetAssetSide);
+                        targetAssetPrice, freeVolumeInTransitAssetAfterTransitTrades, targetAssetSide,
+                        market.TargetMarketInfo.VolumeAccuracy);
                     var targetTrades = await MakeLimitTradesAsync(targetTradeVolume, targetAssetSide,
                         market.TargetMarketInfo, market.ExchangeName, hedgeOperation.Id, limitTradeSteps);
                     hedgeOperation.AddTrades(targetTrades);
                     freeVolumeInTransitAssetAfterTransitTrades -=
                         targetTrades.Sum(t => t.GetTradedVolume(transitAsset));
                     
-                    var truncatedTargetVolume = targetTradeVolume.Truncate(market.TargetMarketInfo.VolumeAccuracy);
                     var actualTargetTradeVolume = targetTrades.Sum(t => t.GetTradedVolume(hedgeInstruction.TargetAssetSymbol));
-                    var bigChangesOnMarket = actualTargetTradeVolume < truncatedTargetVolume;
+                    var bigChangesOnMarket = actualTargetTradeVolume < targetTradeVolume;
 
                     if (bigChangesOnMarket)
                     {
                         _logger.LogWarning(
-                            "Break from IndirectMarket {@Market}. TargetTradeVolume isn't filled after trade: {@ActualTargetTradeVolume} < {@TruncatedTargetVolume}",
-                            market.GetMarketsDesc(), actualTargetTradeVolume, truncatedTargetVolume);
+                            "Break from IndirectMarket {@Market}. TargetTradeVolume isn't filled after trade: {@ActualTargetTradeVolume} < {@TargetTradeVolume}",
+                            market.GetMarketsDesc(), actualTargetTradeVolume, targetTradeVolume);
                         break;
                     }
                 }
@@ -310,9 +310,9 @@ namespace Service.Liquidity.Hedger.Domain.Services
         }
 
         private decimal GetTradeVolume(decimal targetAssetVolume, decimal price, decimal availablePairAssetVolume,
-            OrderSide side, decimal balancePercentToTrade = 1, int? volumeAccuracy = null)
+            OrderSide side, int? volumeAccuracy = null)
         {
-            var availableVolumeOnBalance = availablePairAssetVolume * balancePercentToTrade;
+            var availableVolumeOnBalance = availablePairAssetVolume;
             var tradeVolume = 0m;
 
             if (side == OrderSide.Buy)
