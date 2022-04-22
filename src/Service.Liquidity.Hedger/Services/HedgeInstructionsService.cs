@@ -12,21 +12,24 @@ namespace Service.Liquidity.Hedger.Services
     {
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly ILogger<HedgeInstructionsService> _logger;
+        private readonly IHedgeInstructionsCache _hedgeInstructionsCache;
 
         public HedgeInstructionsService(
             IHedgeInstructionsStorage hedgeInstructionsStorage,
-            ILogger<HedgeInstructionsService> logger
+            ILogger<HedgeInstructionsService> logger,
+            IHedgeInstructionsCache hedgeInstructionsCache
         )
         {
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
             _logger = logger;
+            _hedgeInstructionsCache = hedgeInstructionsCache;
         }
 
         public async Task<GetHedgeInstructionListResponse> GetListAsync(GetHedgeInstructionListRequest request)
         {
             try
             {
-                var items = (await _hedgeInstructionsStorage.GetAsync())?.ToArray();
+                var items = (await _hedgeInstructionsCache.GetAsync())?.ToArray();
 
                 return new GetHedgeInstructionListResponse
                 {
@@ -49,7 +52,9 @@ namespace Service.Liquidity.Hedger.Services
         {
             try
             {
-                await _hedgeInstructionsStorage.AddOrUpdateAsync(request.Item);
+                var dbModel = await _hedgeInstructionsStorage.GetAsync(request.Item.MonitoringRuleId);
+                dbModel.Status = request.Item.Status;
+                await _hedgeInstructionsStorage.AddOrUpdateAsync(dbModel);
 
                 return new AddOrUpdateHedgeInstructionResponse();
             }
