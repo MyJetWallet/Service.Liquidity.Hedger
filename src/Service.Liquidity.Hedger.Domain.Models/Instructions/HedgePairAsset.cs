@@ -7,5 +7,6 @@ namespace Service.Liquidity.Hedger.Domain.Models
     {
         [DataMember(Order = 1)] public decimal Weight { get; set; }
         [DataMember(Order = 2)] public string Symbol { get; set; }
+        [DataMember(Order = 3)] public decimal AvailableVolume { get; set; }
     }
 }

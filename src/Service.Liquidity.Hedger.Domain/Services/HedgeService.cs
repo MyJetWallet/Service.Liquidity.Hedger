@@ -22,7 +22,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private readonly IHedgeSettingsStorage _hedgeSettingsStorage;
         private readonly IPricesService _pricesService;
 
-
         public HedgeService(
             ILogger<HedgeService> logger,
             IExternalMarket externalMarket,

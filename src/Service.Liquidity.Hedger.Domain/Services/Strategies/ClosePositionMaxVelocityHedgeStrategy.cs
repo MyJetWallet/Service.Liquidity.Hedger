@@ -34,6 +34,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
                 {
                     Weight = a.DailyVelocityRiskInUsd * -1,
                     Symbol = a.Symbol,
+                    AvailableVolume = a.NetBalance
                 })
                 .ToList();
 
