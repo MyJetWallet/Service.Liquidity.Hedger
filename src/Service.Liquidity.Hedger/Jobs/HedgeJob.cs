@@ -22,6 +22,7 @@ namespace Service.Liquidity.Hedger.Jobs
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IHedgeSettingsStorage _hedgeSettingsStorage;
+        private readonly IHedgeInstructionsCache _hedgeInstructionsCache;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private readonly MyTaskTimer _timer;
 
@@ -31,7 +32,8 @@ namespace Service.Liquidity.Hedger.Jobs
             IServiceBusPublisher<HedgeOperation> publisher,
             IHedgeInstructionsStorage hedgeInstructionsStorage,
             IPortfolioAnalyzer portfolioAnalyzer,
-            IHedgeSettingsStorage hedgeSettingsStorage
+            IHedgeSettingsStorage hedgeSettingsStorage,
+            IHedgeInstructionsCache hedgeInstructionsCache
         )
         {
             _logger = logger;
@@ -40,6 +42,7 @@ namespace Service.Liquidity.Hedger.Jobs
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
             _portfolioAnalyzer = portfolioAnalyzer;
             _hedgeSettingsStorage = hedgeSettingsStorage;
+            _hedgeInstructionsCache = hedgeInstructionsCache;
             _timer = new MyTaskTimer(nameof(HedgeJob),
                 TimeSpan.FromMilliseconds(500),
                 logger,
@@ -73,7 +76,7 @@ namespace Service.Liquidity.Hedger.Jobs
                     return;
                 }
 
-                var instructions = (await _hedgeInstructionsStorage.GetAsync())?.ToList() ??
+                var instructions = (await _hedgeInstructionsCache.GetAsync())?.ToList() ??
                                    new List<HedgeInstruction>();
 
                 if (instructions.Any(i => i.Status == HedgeInstructionStatus.InProgress))
@@ -95,6 +98,7 @@ namespace Service.Liquidity.Hedger.Jobs
 
                 hedgeInstruction.Status = HedgeInstructionStatus.InProgress;
                 await _hedgeInstructionsStorage.AddOrUpdateAsync(hedgeInstruction);
+                
                 var hedgeOperation = await _hedgeService.HedgeAsync(hedgeInstruction);
                 await _hedgeInstructionsStorage.DeleteAsync(hedgeInstruction.MonitoringRuleId);
 

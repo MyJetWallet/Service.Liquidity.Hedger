@@ -18,19 +18,22 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly ISubscriber<PortfolioMonitoringMessage> _subscriber;
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
+        private readonly IHedgeInstructionsCache _hedgeInstructionsCache;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         public PortfolioMonitoringMessageSubscriber(
             ILogger<PortfolioMonitoringMessageSubscriber> logger,
             ISubscriber<PortfolioMonitoringMessage> subscriber,
             IPortfolioAnalyzer portfolioAnalyzer,
-            IHedgeInstructionsStorage hedgeInstructionsStorage
+            IHedgeInstructionsStorage hedgeInstructionsStorage,
+            IHedgeInstructionsCache hedgeInstructionsCache
         )
         {
             _logger = logger;
             _subscriber = subscriber;
             _portfolioAnalyzer = portfolioAnalyzer;
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
+            _hedgeInstructionsCache = hedgeInstructionsCache;
         }
 
         public void Start()
@@ -77,7 +80,7 @@ namespace Service.Liquidity.Hedger.Subscribers
 
                 if (await _portfolioAnalyzer.TimeToHedge(message.Portfolio))
                 {
-                    var savedInstructions = (await _hedgeInstructionsStorage.GetAsync())?
+                    var savedInstructions = (await _hedgeInstructionsCache.GetAsync())?
                         .ToList() ?? new List<HedgeInstruction>();
                     var savedRuleIds = savedInstructions
                         .Select(i => i.MonitoringRuleId)

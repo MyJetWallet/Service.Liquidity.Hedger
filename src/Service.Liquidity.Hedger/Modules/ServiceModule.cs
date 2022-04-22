@@ -39,6 +39,8 @@ namespace Service.Liquidity.Hedger.Modules
                 .AutoActivate().SingleInstance();
             builder.RegisterType<PricesService>().As<IPricesService>()
                 .AutoActivate().SingleInstance();
+            builder.RegisterType<HedgeInstructionsNoSqlCache>().As<IHedgeInstructionsCache>().As<IStartable>()
+                .AutoActivate().SingleInstance();
         }
     }
 }

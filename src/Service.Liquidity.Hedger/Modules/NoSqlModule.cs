@@ -21,6 +21,7 @@ namespace Service.Liquidity.Hedger.Modules
                 HedgeSettingsNoSql.TableName);
             builder.RegisterMyNoSqlWriter<HedgeInstructionNoSql>(() => Program.Settings.MyNoSqlWriterUrl,
                 HedgeInstructionNoSql.TableName);
+            builder.RegisterMyNoSqlReader<HedgeInstructionNoSql>(noSqlClient, HedgeInstructionNoSql.TableName);
         }
     }
 }
