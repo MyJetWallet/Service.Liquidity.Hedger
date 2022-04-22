@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MyNoSqlServer.Abstractions;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
@@ -24,10 +25,15 @@ public class HedgeSettingsNoSqlStorage : IHedgeSettingsStorage
 
     public async Task<HedgeSettings> GetAsync()
     {
-        var model = await _dataWriter.GetAsync(
+        var settingsNoSql = await _dataWriter.GetAsync(
             HedgeSettingsNoSql.GeneratePartitionKey(),
             HedgeSettingsNoSql.GenerateRowKey());
-
-        return model?.Value ?? new HedgeSettings();
+        var settings = settingsNoSql?.Value ?? new HedgeSettings();
+        settings.EnabledExchanges ??= new List<string>();
+        settings.IndirectMarketTransitAssets ??= new List<string>();
+        settings.DirectMarketLimitTradeSteps ??= new List<LimitTradeStep>();
+        settings.IndirectMarketLimitTradeSteps ??= new List<LimitTradeStep>();
+        
+        return settings;
     }
 }
