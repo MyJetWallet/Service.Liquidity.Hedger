@@ -270,6 +270,18 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeOperation.AddTrades(targetTrades);
                     freeVolumeInTransitAssetAfterTransitTrades -=
                         targetTrades.Sum(t => t.GetTradedVolume(transitAsset));
+                    
+                    var truncatedTargetVolume = targetTradeVolume.Truncate(market.TargetMarketInfo.VolumeAccuracy);
+                    var actualTargetTradeVolume = transitTrades.Sum(t => t.GetTradedVolume(hedgeInstruction.TargetAssetSymbol));
+                    var bigChangesOnMarket = actualTargetTradeVolume < truncatedTargetVolume;
+
+                    if (bigChangesOnMarket)
+                    {
+                        _logger.LogWarning(
+                            "Break from IndirectMarket {@Market}. TargetTradeVolume isn't filled after trade: {@ActualTargetTradeVolume} < {@TruncatedTargetVolume}",
+                            market.GetMarketsDesc(), actualTargetTradeVolume, truncatedTargetVolume);
+                        break;
+                    }
                 }
                 else
                 {
