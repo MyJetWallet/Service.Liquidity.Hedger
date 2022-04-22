@@ -165,8 +165,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 ExchangeName = exchangeName,
                 Weight = pairAsset.Weight,
-                Balance = exchangeBalance,
-                Info = exchangeMarketInfo
+                Info = exchangeMarketInfo,
+                AvailableVolume = Math.Min(pairAsset.AvailableVolume, exchangeBalance.Free)
             });
         }
 

@@ -130,7 +130,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
             var marketPrice = await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.Info.Market);
             var side = market.Info.GetOrderSide(hedgeInstruction.TargetAssetSymbol);
             var tradeVolume =
-                GetTradeVolume(remainingVolumeToTrade, marketPrice, market.Balance.Free, side);
+                GetTradeVolume(remainingVolumeToTrade, marketPrice, market.AvailableVolume, side);
 
             if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
             {
@@ -291,29 +291,29 @@ namespace Service.Liquidity.Hedger.Domain.Services
             }
         }
 
-        private decimal GetTradeVolume(decimal targetVolume, decimal price, decimal balance, OrderSide side,
-            decimal balancePercentToTrade = 1, int? volumeAccuracy = null)
+        private decimal GetTradeVolume(decimal targetAssetVolume, decimal price, decimal availablePairAssetVolume,
+            OrderSide side, decimal balancePercentToTrade = 1, int? volumeAccuracy = null)
         {
-            var availableVolumeOnBalance = balance * balancePercentToTrade;
+            var availableVolumeOnBalance = availablePairAssetVolume * balancePercentToTrade;
             var tradeVolume = 0m;
 
             if (side == OrderSide.Buy)
             {
                 var possibleVolumeToBuy = availableVolumeOnBalance / price;
-                tradeVolume = possibleVolumeToBuy < targetVolume
+                tradeVolume = possibleVolumeToBuy < targetAssetVolume
                     ? possibleVolumeToBuy // trade max possible volume
-                    : targetVolume;
+                    : targetAssetVolume;
             }
 
             if (side == OrderSide.Sell)
             {
-                var neededVolumeToSell = targetVolume / price;
+                var neededVolumeToSell = targetAssetVolume / price;
                 tradeVolume = availableVolumeOnBalance < neededVolumeToSell
                     ? availableVolumeOnBalance // trade max possible volume
                     : neededVolumeToSell;
             }
 
-            return volumeAccuracy == null ? tradeVolume : targetVolume.Truncate(volumeAccuracy.Value);
+            return volumeAccuracy == null ? tradeVolume : targetAssetVolume.Truncate(volumeAccuracy.Value);
         }
 
         private async Task<HedgeTrade> MakeMarketTradeAsync(decimal tradeVolume, OrderSide orderSide,

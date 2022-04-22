@@ -73,10 +73,7 @@ public class HedgeServiceTests
 
         var market = new DirectHedgeExchangeMarket
         {
-            Balance = new ExchangeBalance
-            {
-                Free = 2
-            },
+            AvailableVolume = 2,
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
@@ -122,10 +119,7 @@ public class HedgeServiceTests
 
         var market = new DirectHedgeExchangeMarket
         {
-            Balance = new ExchangeBalance
-            {
-                Free = 2
-            },
+            AvailableVolume = 2,
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
@@ -174,10 +168,7 @@ public class HedgeServiceTests
 
         var market = new DirectHedgeExchangeMarket
         {
-            Balance = new ExchangeBalance
-            {
-                Free = 2
-            },
+            AvailableVolume = 2,
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
@@ -220,10 +211,7 @@ public class HedgeServiceTests
 
         var market = new DirectHedgeExchangeMarket
         {
-            Balance = new ExchangeBalance
-            {
-                Free = 2
-            },
+            AvailableVolume = 2,
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
@@ -266,10 +254,7 @@ public class HedgeServiceTests
 
         var market = new DirectHedgeExchangeMarket
         {
-            Balance = new ExchangeBalance
-            {
-                Free = 100
-            },
+            AvailableVolume = 100,
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = sellAsset.Symbol,
@@ -292,7 +277,7 @@ public class HedgeServiceTests
         await _externalMarket.Received().MarketTrade(
             Arg.Is<MarketTradeRequest>(request =>
                 request.Side == OrderSide.Sell &&
-                Convert.ToDecimal(request.Volume) == market.Balance.Free));
+                Convert.ToDecimal(request.Volume) == market.AvailableVolume));
     }
 
     [Test]
@@ -312,10 +297,7 @@ public class HedgeServiceTests
 
         var market = new DirectHedgeExchangeMarket
         {
-            Balance = new ExchangeBalance
-            {
-                Free = 100
-            },
+            AvailableVolume = 100,
             Info = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
@@ -338,7 +320,7 @@ public class HedgeServiceTests
         await _externalMarket.Received().MarketTrade(
             Arg.Is<MarketTradeRequest>(request =>
                 request.Side == OrderSide.Buy &&
-                Convert.ToDecimal(request.Volume) == market.Balance.Free));
+                Convert.ToDecimal(request.Volume) == market.AvailableVolume));
     }
 
     [Test]
