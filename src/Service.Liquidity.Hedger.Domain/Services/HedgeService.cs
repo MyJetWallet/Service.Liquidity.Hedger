@@ -331,7 +331,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     : neededVolumeToSell;
             }
 
-            return volumeAccuracy == null ? tradeVolume : targetAssetVolume.Truncate(volumeAccuracy.Value);
+            return volumeAccuracy == null ? tradeVolume : tradeVolume.Truncate(volumeAccuracy.Value);
         }
 
         private async Task<HedgeTrade> MakeMarketTradeAsync(decimal tradeVolume, OrderSide orderSide,
