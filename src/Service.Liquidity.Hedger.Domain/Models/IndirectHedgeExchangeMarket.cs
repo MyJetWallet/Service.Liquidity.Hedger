@@ -10,6 +10,7 @@ public class IndirectHedgeExchangeMarket
     public ExchangeMarketInfo TransitMarketInfo { get; set; }
     public ExchangeMarketInfo TargetMarketInfo { get; set; }
     public string TransitPairAssetSymbol { get; set; }
+    public decimal TransitPairAssetAvailableVolume { get; set; }
 
     public string GetMarketsDesc()
     {

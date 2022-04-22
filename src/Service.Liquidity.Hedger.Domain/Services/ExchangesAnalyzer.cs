@@ -99,7 +99,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 TransitMarketInfo = transitMarketInfo,
                 TargetMarketInfo = targetMarketInfo,
                 TransitAssetSymbol = transitAssetSymbol,
-                TransitPairAssetSymbol = pairAsset.Symbol
+                TransitPairAssetSymbol = pairAsset.Symbol,
+                TransitPairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, transitPairAssetBalance.Free)
             });
         }
 

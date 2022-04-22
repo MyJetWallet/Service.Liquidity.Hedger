@@ -177,12 +177,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 _logger.LogInformation("Trying to HedgeOnIndirectMarket: {@Market}", market.GetMarketsDesc());
 
-                var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
-                {
-                    ExchangeName = exchangeName
-                });
-                var transitPairAssetBalance =
-                    balancesResp.Balances?.FirstOrDefault(b => b.Symbol == market.TransitPairAssetSymbol)?.Free ?? 0;
                 var remainingVolumeToTradeInTargetAsset =
                     hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var targetAssetPrice =
@@ -235,7 +229,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.TransitMarketInfo.Market);
                 var transitAssetSide = market.TransitMarketInfo.GetOrderSide(transitAsset);
                 var transitTradeVolume = GetTradeVolume(neededVolumeInTransitAsset,
-                    transitAssetPrice, transitPairAssetBalance, transitAssetSide);
+                    transitAssetPrice, market.TransitPairAssetAvailableVolume, transitAssetSide);
 
                 if (Convert.ToDouble(transitTradeVolume) < market.TransitMarketInfo.MinVolume)
                 {

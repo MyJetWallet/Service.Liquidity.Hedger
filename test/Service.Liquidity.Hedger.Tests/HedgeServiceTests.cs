@@ -329,12 +329,12 @@ public class HedgeServiceTests
         // arrange
         var transitAsset = new HedgePairAsset
         {
-            Symbol = "USD"
+            Symbol = "USD",
         };
-        ;
         var pairAsset = new HedgePairAsset
         {
-            Symbol = "BTC"
+            Symbol = "BTC",
+            AvailableVolume = 100
         };
         var hedgeInstruction = new HedgeInstruction
         {
@@ -358,7 +358,8 @@ public class HedgeServiceTests
                 QuoteAsset = pairAsset.Symbol,
                 MinVolume = 1,
             },
-            TransitPairAssetSymbol = pairAsset.Symbol
+            TransitPairAssetSymbol = pairAsset.Symbol,
+            TransitPairAssetAvailableVolume = pairAsset.AvailableVolume
         };
         _exchangesAnalyzer
             .FindIndirectMarketsAsync(default, default, default, default)
