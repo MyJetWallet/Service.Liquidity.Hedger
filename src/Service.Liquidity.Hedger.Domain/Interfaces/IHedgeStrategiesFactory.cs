@@ -5,7 +5,6 @@ namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface IHedgeStrategiesFactory
     {
-        IEnumerable<IHedgeStrategy> Get();
-        IHedgeStrategy Get(HedgeStrategyType type);
+        IHedgeStrategy Get(HedgeStrategyType type, Dictionary<string, string> paramValuesByName);
     }
 }

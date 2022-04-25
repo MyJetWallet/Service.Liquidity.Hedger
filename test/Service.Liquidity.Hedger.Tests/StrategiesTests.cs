@@ -103,9 +103,12 @@ public class StrategiesTests
         {
             Checks = checks
         };
-        var strategy = new ClosePositionMaxVelocityHedgeStrategy();
+        var strategy = new PositionMaxVelocityHedgeStrategy
+        {
+            HedgePercent = 30
+        };
         
-        var instruction = strategy.CalculateHedgeInstruction(portfolio, rule, 30m);
+        var instruction = strategy.CalculateHedgeInstruction(portfolio, rule);
         
         Assert.IsNotNull(instruction);
         Assert.AreEqual(instruction.TargetVolume, 30);

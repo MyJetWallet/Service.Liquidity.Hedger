@@ -5,6 +5,7 @@ using Service.IndexPrices.Client;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Domain.Services.Strategies;
+using IHedgeStrategy = Service.Liquidity.Hedger.Domain.Interfaces.IHedgeStrategy;
 
 namespace Service.Liquidity.Hedger.Domain.Services
 {
@@ -18,22 +19,18 @@ namespace Service.Liquidity.Hedger.Domain.Services
             _strategies = new Dictionary<HedgeStrategyType, IHedgeStrategy>
             {
                 {
-                    HedgeStrategyType.ClosePositionMaxVelocity,
-                    new ClosePositionMaxVelocityHedgeStrategy()
+                    HedgeStrategyType.HedgePositionMaxVelocity,
+                    new PositionMaxVelocityHedgeStrategy()
                 },
             };
         }
 
-        public IEnumerable<IHedgeStrategy> Get()
+        public IHedgeStrategy Get(HedgeStrategyType type, Dictionary<string, string> paramValuesByName)
         {
-            return _strategies.Values;
-        }
-
-        public IHedgeStrategy Get(HedgeStrategyType type)
-        {
-            if (_strategies.TryGetValue(type, out var metric))
+            if (_strategies.TryGetValue(type, out var strategy))
             {
-                return metric;
+                strategy.ParamValuesByName = paramValuesByName;
+                return strategy;
             }
 
             throw new Exception($"Strategy {type.ToString()} Not Found");

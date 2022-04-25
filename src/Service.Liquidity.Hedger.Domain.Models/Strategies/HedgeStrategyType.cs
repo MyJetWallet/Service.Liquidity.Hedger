@@ -2,6 +2,7 @@
 {
     public enum HedgeStrategyType
     {
-        ClosePositionMaxVelocity = 1,
+        HedgePositionMaxVelocity = 1,
+        HedgeFreeBalance = 2,
     }
 }

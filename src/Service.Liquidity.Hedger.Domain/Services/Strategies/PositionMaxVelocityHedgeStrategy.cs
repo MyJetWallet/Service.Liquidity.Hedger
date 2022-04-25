@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Service.IndexPrices.Client;
@@ -6,14 +8,31 @@ using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Rules;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
+using IHedgeStrategy = Service.Liquidity.Hedger.Domain.Interfaces.IHedgeStrategy;
 
 namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 {
-    public class ClosePositionMaxVelocityHedgeStrategy : IHedgeStrategy
+    public class PositionMaxVelocityHedgeStrategy : IHedgeStrategy
     {
-        public HedgeStrategyType Type { get; set; } = HedgeStrategyType.ClosePositionMaxVelocity;
+        public Dictionary<string, string> ParamValuesByName { get; set; } = new ();
+        
+        public decimal HedgePercent
+        {
+            get
+            {
+                ParamValuesByName ??= new Dictionary<string, string>();
+                var strValue = ParamValuesByName[nameof(HedgePercent)];
 
-        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule, decimal hedgePercent)
+                return decimal.Parse(strValue);
+            }
+            set
+            {
+                ParamValuesByName ??= new Dictionary<string, string>();
+                ParamValuesByName[nameof(HedgePercent)] = value.ToString(CultureInfo.InvariantCulture);
+            } 
+        }
+
+        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule)
         {
             var instruction = new HedgeInstruction();
                 
@@ -47,11 +66,11 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
             }
             
             var targetVolumeInUsd = Math.Abs(selectedPositionAssets.Sum(a => a.NetBalanceInUsd)) *
-                                    (hedgePercent / 100);
+                                    (HedgePercent / 100);
             
             if (selectedAssets.Count == 1)
             {
-                instruction.TargetVolume = Math.Abs(selectedAsset.NetBalance * (hedgePercent / 100));
+                instruction.TargetVolume = Math.Abs(selectedAsset.NetBalance * (HedgePercent / 100));
             }
             else
             {

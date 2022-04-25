@@ -45,12 +45,5 @@ namespace Service.Liquidity.Hedger.Domain.Models
             }
             set => ParamValuesByName[nameof(HedgePercent)] = value.ToString(CultureInfo.InvariantCulture);
         }
-
-        public void Map(MonitoringAction monitoringAction)
-        {
-            TypeName = monitoringAction.TypeName;
-            ParamValuesByName = monitoringAction.ParamValuesByName;
-            ParamInfos = monitoringAction.ParamInfos;
-        }
     }
 }

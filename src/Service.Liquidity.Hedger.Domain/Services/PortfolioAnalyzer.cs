@@ -16,6 +16,13 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
     private readonly IHedgeStrategiesFactory _hedgeStrategiesFactory;
     private readonly IHedgeOperationsStorage _hedgeOperationsStorage;
 
+    private static HashSet<string> _hedgeActionTypeNames = new()
+    {
+        nameof(MakeHedgeMonitoringAction),
+        nameof(HedgeFreeBalanceMonitoringAction),
+        nameof(HedgePositionMaxVelocityMonitoringAction),
+    };
+
     public PortfolioAnalyzer(
         ILogger<PortfolioAnalyzer> logger,
         IHedgeStrategiesFactory hedgeStrategiesFactory,
@@ -51,7 +58,6 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
 
         return true;
     }
-    
 
     public ICollection<MonitoringRule> SelectHedgeRules(ICollection<MonitoringRule> rules)
     {
@@ -72,52 +78,63 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         return hedgeRules;
     }
 
-    public ICollection<HedgeInstruction> CalculateHedgeInstructions(Portfolio portfolio, ICollection<MonitoringRule> rules)
+    public ICollection<HedgeInstruction> CalculateHedgeInstructions(Portfolio portfolio,
+        ICollection<MonitoringRule> rules)
     {
         var hedgeInstructions = new List<HedgeInstruction>();
 
         foreach (var rule in rules ?? Array.Empty<MonitoringRule>())
         {
-            var action = new MakeHedgeMonitoringAction();
-            action.Map(rule.ActionsByTypeName[action.TypeName]);
-            var strategy = _hedgeStrategiesFactory.Get(action.HedgeStrategyType);
-            var instruction = strategy.CalculateHedgeInstruction(portfolio, rule, action.HedgePercent);
+            var hedgeActions = rule.ActionsByTypeName.Values
+                .Where(action => _hedgeActionTypeNames.Contains(action.TypeName));
+            var hedgeAction = new MakeHedgeMonitoringAction();
+            var hedgeStrategies = hedgeActions.Select(action =>
+            {
+                action.CopyTo(hedgeAction);
+                return _hedgeStrategiesFactory.Get(hedgeAction.HedgeStrategyType, hedgeAction.ParamValuesByName);
+            });
 
-            if (instruction.Validate(out var message))
+            foreach (var strategy in hedgeStrategies)
             {
-                hedgeInstructions.Add(instruction);
-            }
-            else
-            {
-                _logger.LogWarning("HedgeInstruction is skipped: {@Instruction} {@Message}",
-                    instruction, message);
+                var instruction = strategy.CalculateHedgeInstruction(portfolio, rule);
+
+                if (instruction.Validate(out var message))
+                {
+                    hedgeInstructions.Add(instruction);
+                }
+                else
+                {
+                    _logger.LogWarning("HedgeInstruction is skipped: {@Instruction} {@Message}",
+                        instruction, message);
+                }
             }
         }
 
         return hedgeInstructions;
     }
-    
+
     public HedgeInstruction SelectPriorityInstruction(IEnumerable<HedgeInstruction> instructions)
     {
         var hedgeInstruction = instructions.MaxBy(instruction => instruction.Weight);
 
         return hedgeInstruction;
     }
-    
-    private static bool NeedsHedging(MonitoringRule rule, out string message)
+
+    private bool NeedsHedging(MonitoringRule rule, out string message)
     {
         message = "";
-        var action = new MakeHedgeMonitoringAction();
 
-        if (rule.ActionsByTypeName == null ||
-            !rule.ActionsByTypeName.TryGetValue(action.TypeName, out var baseAction))
+        if (rule.ActionsByTypeName == null)
         {
-            message += $"Doesn't has {nameof(MakeHedgeMonitoringAction)};";
+            message += "Doesn't has any action";
             return false;
         }
 
-        action.Map(baseAction);
-        message += $"Has {action.HedgeStrategyType.ToString()} strategy;";
+        if (_hedgeActionTypeNames.All(type => !rule.ActionsByTypeName.TryGetValue(type, out _)))
+        {
+            message += "Doesn't has hedge action;";
+            return false;
+        }
 
         if (!rule.CurrentState.IsActive)
         {
@@ -126,14 +143,6 @@ public class PortfolioAnalyzer : IPortfolioAnalyzer
         }
 
         message += "Is active;";
-            
-        if (action.HedgePercent < 0)
-        {
-            message += "Doesn't Has hedge percent amount;";
-            return false;
-        }
-
-        message += "Has hedge percent amount;";
 
         return true;
     }

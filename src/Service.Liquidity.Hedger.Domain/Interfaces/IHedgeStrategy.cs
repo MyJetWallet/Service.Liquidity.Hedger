@@ -1,17 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using Service.Liquidity.Hedger.Domain.Models;
-using Service.Liquidity.Monitoring.Domain.Models.Checks;
 using Service.Liquidity.Monitoring.Domain.Models.Rules;
 using Service.Liquidity.TradingPortfolio.Domain.Models;
-using HedgeStrategyType = Service.Liquidity.Hedger.Domain.Models.HedgeStrategyType;
 
 namespace Service.Liquidity.Hedger.Domain.Interfaces
 {
     public interface IHedgeStrategy
     {
-        public HedgeStrategyType Type { get; set; }
+        Dictionary<string, string> ParamValuesByName { get; set; }
 
-        public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule,
-            decimal hedgePercent);
+        HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule);
     }
 }
