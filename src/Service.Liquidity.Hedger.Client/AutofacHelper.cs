@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Service.Liquidity.Hedger.Grpc.HedgeInstructions;
 using Service.Liquidity.Hedger.Grpc.HedgeSettings;
+using Service.Liquidity.Monitoring.Grpc;
 
 // ReSharper disable UnusedMember.Global
 
@@ -12,7 +13,11 @@ namespace Service.Liquidity.Hedger.Client
         {
             var factory = new LiquidityHedgerClientFactory(grpcServiceUrl);
             builder.RegisterInstance(factory.GetHedgeSettingsService()).As<IHedgeSettingsService>().SingleInstance();
-            builder.RegisterInstance(factory.GetHedgeInstructionsService()).As<IHedgeInstructionsService>().SingleInstance();
+            builder.RegisterInstance(factory.GetHedgeInstructionsService()).As<IHedgeInstructionsService>()
+                .SingleInstance();
+            builder.RegisterInstance(factory.GetHedgeMonitoringActionTemplatesService())
+                .As<IMonitoringActionTemplatesService>()
+                .SingleInstance();
         }
     }
 }

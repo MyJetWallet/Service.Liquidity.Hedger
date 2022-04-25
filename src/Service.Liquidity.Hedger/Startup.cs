@@ -12,6 +12,7 @@ using Service.Liquidity.Hedger.Grpc.HedgeInstructions;
 using Service.Liquidity.Hedger.Grpc.HedgeSettings;
 using Service.Liquidity.Hedger.Modules;
 using Service.Liquidity.Hedger.Services;
+using Service.Liquidity.Monitoring.Grpc;
 using SimpleTrading.ServiceStatusReporterConnector;
 
 namespace Service.Liquidity.Hedger
@@ -46,6 +47,7 @@ namespace Service.Liquidity.Hedger
             {
                 endpoints.MapGrpcSchema<HedgeSettingsService, IHedgeSettingsService>();
                 endpoints.MapGrpcSchema<HedgeInstructionsService, IHedgeInstructionsService>();
+                endpoints.MapGrpcSchema<HedgeMonitoringActionTemplatesService, IMonitoringActionTemplatesService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 
