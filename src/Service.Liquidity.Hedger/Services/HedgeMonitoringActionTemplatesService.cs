@@ -119,7 +119,7 @@ namespace Service.Liquidity.Hedger.Services
 
             return Task.FromResult(new MonitoringActionTemplate
             {
-                Action = action,
+                Action = new MonitoringAction(action),
                 ParamTemplates = paramTemplates
             });
         }
@@ -170,7 +170,7 @@ namespace Service.Liquidity.Hedger.Services
 
             return Task.FromResult(new MonitoringActionTemplate
             {
-                Action = action,
+                Action = new MonitoringAction(action),
                 ParamTemplates = paramTemplates
             });
         }
@@ -210,7 +210,7 @@ namespace Service.Liquidity.Hedger.Services
 
             return Task.FromResult(new MonitoringActionTemplate
             {
-                Action = action,
+                Action = new MonitoringAction(action),
                 ParamTemplates = paramTemplates
             });
         }
@@ -220,7 +220,7 @@ namespace Service.Liquidity.Hedger.Services
         {
             return Task.FromResult(new MonitoringActionTemplate
             {
-                Action = new StopHedgeMonitoringAction(),
+                Action = new MonitoringAction(new StopHedgeMonitoringAction()),
                 ParamTemplates = new List<MonitoringActionParamTemplate>()
             });
         }
