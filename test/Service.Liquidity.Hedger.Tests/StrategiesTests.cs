@@ -103,7 +103,7 @@ public class StrategiesTests
         {
             Checks = checks
         };
-        var strategy = new PositionMaxVelocityHedgeStrategy
+        var strategy = new HedgePositionMaxVelocityStrategy
         {
             HedgePercent = 30
         };

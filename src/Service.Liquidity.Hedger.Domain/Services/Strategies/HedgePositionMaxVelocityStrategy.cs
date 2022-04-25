@@ -12,7 +12,7 @@ using IHedgeStrategy = Service.Liquidity.Hedger.Domain.Interfaces.IHedgeStrategy
 
 namespace Service.Liquidity.Hedger.Domain.Services.Strategies
 {
-    public class PositionMaxVelocityHedgeStrategy : IHedgeStrategy
+    public class HedgePositionMaxVelocityStrategy : IHedgeStrategy
     {
         public Dictionary<string, string> ParamValuesByName { get; set; } = new ();
         

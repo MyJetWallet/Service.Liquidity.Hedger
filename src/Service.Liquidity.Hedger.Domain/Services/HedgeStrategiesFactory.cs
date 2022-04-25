@@ -20,7 +20,11 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 {
                     HedgeStrategyType.HedgePositionMaxVelocity,
-                    new PositionMaxVelocityHedgeStrategy()
+                    new HedgePositionMaxVelocityStrategy()
+                },
+                {
+                    HedgeStrategyType.HedgeFreeBalance,
+                    new HedgeFreeBalanceStrategy()
                 },
             };
         }
