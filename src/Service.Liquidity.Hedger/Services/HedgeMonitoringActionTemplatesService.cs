@@ -34,7 +34,8 @@ namespace Service.Liquidity.Hedger.Services
                     Templates = new List<MonitoringActionTemplate>
                     {
                         await GetMakeHedgeActionTemplateAsync(request.Action),
-                        await GetStopHedgeActionTemplateAsync(request.Action)
+                        await GetStopHedgeActionTemplateAsync(request.Action),
+                        await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action)
                     }
                 };
             }
@@ -57,6 +58,8 @@ namespace Service.Liquidity.Hedger.Services
                 {
                     nameof(StopHedgeMonitoringAction) => await GetStopHedgeActionTemplateAsync(request.Action),
                     nameof(MakeHedgeMonitoringAction) => await GetMakeHedgeActionTemplateAsync(request.Action),
+                    nameof(HedgePositionMaxVelocityMonitoringAction) =>
+                        await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action),
                     _ => throw new NotSupportedException($"{nameof(request.Action.TypeName)}")
                 };
 
@@ -74,6 +77,46 @@ namespace Service.Liquidity.Hedger.Services
                     ErrorMessage = ex.Message
                 };
             }
+        }
+
+        private Task<MonitoringActionTemplate> GetHedgePositionMaxVelocityActionTemplateAsync(
+            IMonitoringAction monitoringAction = null)
+        {
+            var action = new HedgePositionMaxVelocityMonitoringAction();
+            var paramTemplates = new List<MonitoringActionParamTemplate>();
+
+            foreach (var paramInfo in action.ParamInfos)
+            {
+                var template = new MonitoringActionParamTemplate
+                {
+                    Name = paramInfo.Name,
+                    Type = paramInfo.Type,
+                    Value = "",
+                    DisplayValue = "",
+                    DisplayName = paramInfo.Name.Humanize(),
+                    PossibleValues = new List<(string Value, string DisplayValue)>()
+                };
+
+                if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgeStrategyType))
+                {
+                    template = GetHedgeStrategyTypeParamTemplate(paramInfo);
+                }
+
+                if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
+                {
+                    template = GetHedgePercentParamTemplate(paramInfo);
+                }
+
+                TryInitParamTemplateValue(monitoringAction, paramInfo, template);
+
+                paramTemplates.Add(template);
+            }
+
+            return Task.FromResult(new MonitoringActionTemplate
+            {
+                Action = action,
+                ParamTemplates = paramTemplates
+            });
         }
 
         private Task<MonitoringActionTemplate> GetMakeHedgeActionTemplateAsync(
@@ -96,29 +139,15 @@ namespace Service.Liquidity.Hedger.Services
 
                 if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgeStrategyType))
                 {
-                    template.PossibleValues = Enum.GetValues<HedgeStrategyType>()
-                        .Select(t =>
-                        (
-                            Value: ((int) t).ToString(),
-                            DisplayValueValue: t.Humanize()
-                        )).ToList();
+                    template = GetHedgeStrategyTypeParamTemplate(paramInfo);
                 }
 
                 if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
                 {
-                    template.Validators = new List<IActionParamValidator>
-                    {
-                        new RangeValueActionParamValidator(1, 100),
-                    };
+                    template = GetHedgePercentParamTemplate(paramInfo);
                 }
 
-                if (monitoringAction?.ParamValuesByName != null &&
-                    monitoringAction.ParamValuesByName.TryGetValue(paramInfo.Name, out var value))
-                {
-                    template.Value = value;
-                    template.DisplayValue = template.PossibleValues?
-                        .FirstOrDefault(v => v.Value == value).DisplayValue ?? value;
-                }
+                TryInitParamTemplateValue(monitoringAction, paramInfo, template);
 
                 paramTemplates.Add(template);
             }
@@ -138,6 +167,67 @@ namespace Service.Liquidity.Hedger.Services
                 Action = new StopHedgeMonitoringAction(),
                 ParamTemplates = new List<MonitoringActionParamTemplate>()
             });
+        }
+
+        private MonitoringActionParamTemplate GetHedgeStrategyTypeParamTemplate(MonitoringActionParamInfo paramInfo)
+        {
+            var template = new MonitoringActionParamTemplate
+            {
+                Name = paramInfo.Name,
+                Type = paramInfo.Type,
+                Value = "",
+                DisplayValue = "",
+                DisplayName = paramInfo.Name.Humanize(),
+                PossibleValues = new List<(string Value, string DisplayValue)>()
+            };
+
+            if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgeStrategyType))
+            {
+                template.PossibleValues = Enum.GetValues<HedgeStrategyType>()
+                    .Select(t =>
+                    (
+                        Value: ((int) t).ToString(),
+                        DisplayValueValue: t.Humanize()
+                    )).ToList();
+            }
+
+            return template;
+        }
+
+        private MonitoringActionParamTemplate GetHedgePercentParamTemplate(MonitoringActionParamInfo paramInfo)
+        {
+            var template = new MonitoringActionParamTemplate
+            {
+                Name = paramInfo.Name,
+                Type = paramInfo.Type,
+                Value = "",
+                DisplayValue = "",
+                DisplayName = paramInfo.Name.Humanize(),
+                PossibleValues = new List<(string Value, string DisplayValue)>()
+            };
+
+            if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
+            {
+                template.Validators = new List<IActionParamValidator>
+                {
+                    new RangeValueActionParamValidator(1, 100),
+                };
+            }
+
+            return template;
+        }
+
+        private void TryInitParamTemplateValue(IMonitoringAction monitoringAction,
+            MonitoringActionParamInfo paramInfo,
+            MonitoringActionParamTemplate template)
+        {
+            if (monitoringAction?.ParamValuesByName != null &&
+                monitoringAction.ParamValuesByName.TryGetValue(paramInfo.Name, out var value))
+            {
+                template.Value = value;
+                template.DisplayValue = template.PossibleValues?
+                    .FirstOrDefault(v => v.Value == value).DisplayValue ?? value;
+            }
         }
     }
 }
