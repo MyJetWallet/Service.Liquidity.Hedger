@@ -13,7 +13,9 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
     public Dictionary<string, string> ParamValuesByName { get; set; } = new()
     {
         {nameof(HedgeStrategyType), nameof(HedgeStrategyType.HedgeFreeBalance)},
-        {nameof(HedgePercent), "100"}
+        {nameof(HedgePercent), "100"},
+        {nameof(ReservedVolume), "0"},
+        {nameof(PairAssetSymbol), "USD"},
     };
 
     [DataMember(Order = 3)]
@@ -22,6 +24,8 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
         {
             new(nameof(HedgeStrategyType), MonitoringActionParamType.Int),
             new(nameof(HedgePercent), MonitoringActionParamType.Decimal),
+            new(nameof(ReservedVolume), MonitoringActionParamType.Decimal),
+            new(nameof(PairAssetSymbol), MonitoringActionParamType.String),
         };
 
     [DataMember(Order = 4)]
@@ -53,5 +57,25 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
             return decimal.Parse(strValue);
         }
         set => ParamValuesByName[nameof(HedgePercent)] = value.ToString(CultureInfo.InvariantCulture);
+    }
+
+    [DataMember(Order = 6)]
+    public decimal ReservedVolume
+    {
+        get
+        {
+            var strValue = ParamValuesByName[nameof(ReservedVolume)];
+
+            return decimal.Parse(strValue);
+        }
+        set => ParamValuesByName[nameof(ReservedVolume)] = value.ToString(CultureInfo.InvariantCulture);
+    }
+
+
+    [DataMember(Order = 7)]
+    public string PairAssetSymbol
+    {
+        get => ParamValuesByName[nameof(PairAssetSymbol)];
+        set => ParamValuesByName[nameof(PairAssetSymbol)] = value;
     }
 }

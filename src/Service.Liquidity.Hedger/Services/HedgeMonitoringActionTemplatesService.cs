@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Humanizer;
 using Microsoft.Extensions.Logging;
+using MyNoSqlServer.Abstractions;
+using Service.AssetsDictionary.MyNoSql;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Actions;
 using Service.Liquidity.Monitoring.Domain.Models.Actions.Templates;
@@ -16,12 +18,15 @@ namespace Service.Liquidity.Hedger.Services
     public class HedgeMonitoringActionTemplatesService : IMonitoringActionTemplatesService
     {
         private readonly ILogger<HedgeMonitoringActionTemplatesService> _logger;
+        private readonly IMyNoSqlServerDataReader<AssetNoSqlEntity> _assetsNoSqlReader;
 
         public HedgeMonitoringActionTemplatesService(
-            ILogger<HedgeMonitoringActionTemplatesService> logger
+            ILogger<HedgeMonitoringActionTemplatesService> logger,
+            IMyNoSqlServerDataReader<AssetNoSqlEntity> assetsNoSqlReader
         )
         {
             _logger = logger;
+            _assetsNoSqlReader = assetsNoSqlReader;
         }
 
         public async Task<GetMonitoringActionTemplateListResponse> GetListAsync(
@@ -105,6 +110,57 @@ namespace Service.Liquidity.Hedger.Services
                 if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
                 {
                     template = GetHedgePercentParamTemplate(paramInfo);
+                }
+
+                TryInitParamTemplateValue(monitoringAction, paramInfo, template);
+
+                paramTemplates.Add(template);
+            }
+
+            return Task.FromResult(new MonitoringActionTemplate
+            {
+                Action = action,
+                ParamTemplates = paramTemplates
+            });
+        }
+
+        private Task<MonitoringActionTemplate> GetHedgeFreeBalanceActionTemplateAsync(
+            IMonitoringAction monitoringAction = null)
+        {
+            var action = new HedgeFreeBalanceMonitoringAction();
+            var paramTemplates = new List<MonitoringActionParamTemplate>();
+
+            foreach (var paramInfo in action.ParamInfos)
+            {
+                var template = new MonitoringActionParamTemplate
+                {
+                    Name = paramInfo.Name,
+                    Type = paramInfo.Type,
+                    Value = "",
+                    DisplayValue = "",
+                    DisplayName = paramInfo.Name.Humanize(),
+                    PossibleValues = new List<(string Value, string DisplayValue)>()
+                };
+
+                if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgeStrategyType))
+                {
+                    template = GetHedgeStrategyTypeParamTemplate(paramInfo);
+                }
+
+                if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
+                {
+                    template = GetHedgePercentParamTemplate(paramInfo);
+                }
+
+                if (paramInfo.Name == nameof(HedgeFreeBalanceMonitoringAction.PairAssetSymbol))
+                {
+                    var assets = _assetsNoSqlReader.Get();
+                    template.PossibleValues = assets
+                        .Select(a =>
+                        (
+                            Value: a.Symbol,
+                            DisplayValueValue: a.Symbol
+                        )).ToList();
                 }
 
                 TryInitParamTemplateValue(monitoringAction, paramInfo, template);
