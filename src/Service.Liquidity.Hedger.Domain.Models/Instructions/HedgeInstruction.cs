@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using MyJetWallet.Domain.Orders;
 
 namespace Service.Liquidity.Hedger.Domain.Models
 {
@@ -15,6 +16,7 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 5)] public HedgeInstructionStatus Status { get; set; }
         [DataMember(Order = 6)] public DateTime Date { get; set; } = DateTime.UtcNow;
         [DataMember(Order = 7)] public decimal Weight { get; set; }
+        [DataMember(Order = 8)] public OrderSide OrderSide { get; set; }
 
         public bool Validate(out ICollection<string> errors)
         {
