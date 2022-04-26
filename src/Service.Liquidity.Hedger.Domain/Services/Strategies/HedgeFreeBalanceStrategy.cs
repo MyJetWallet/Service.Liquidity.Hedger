@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using MyJetWallet.Domain.Orders;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models.Rules;
@@ -105,6 +106,7 @@ public class HedgeFreeBalanceStrategy : IHedgeStrategy
         instruction.Date = DateTime.UtcNow;
         instruction.MonitoringRuleId = rule.Id;
         instruction.Weight = targetVolumeInUsd;
+        instruction.TargetSide = OrderSide.Sell;
 
         return instruction;
     }

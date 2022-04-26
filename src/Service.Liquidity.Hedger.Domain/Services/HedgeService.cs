@@ -48,7 +48,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 HedgeTrades = new List<HedgeTrade>(),
                 CreatedDate = DateTime.UtcNow,
                 TargetAsset = hedgeInstruction.TargetAssetSymbol,
-                TradedVolume = 0
+                TradedVolume = 0,
+                TargetSide = hedgeInstruction.TargetSide
             };
 
             try
@@ -129,10 +130,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
             }
 
             var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
-            var marketPrice = await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.Info.Market);
-            var side = market.Info.GetOrderSide(hedgeInstruction.TargetAssetSymbol);
+            var price = await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.Info.Market);
+            var side = market.Info.GetOrderSideToBuyAsset(hedgeInstruction.TargetAssetSymbol);
             var tradeVolume =
-                GetTradeVolume(remainingVolumeToTrade, marketPrice, market.AvailableVolume, side);
+                GetTradeVolume(remainingVolumeToTrade, price, market.AvailablePairAssetVolume, side);
 
             if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
             {
@@ -181,7 +182,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
                 var targetAssetPrice =
                     await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.TargetMarketInfo.Market);
-                var targetAssetSide = market.TargetMarketInfo.GetOrderSide(hedgeInstruction.TargetAssetSymbol);
+                var targetAssetSide = market.TargetMarketInfo.GetOrderSideToBuyAsset(hedgeInstruction.TargetAssetSymbol);
                 var remainingVolumeToTradeInTransitAsset = targetAssetSide == OrderSide.Buy
                     ? remainingVolumeToTradeInTargetAsset * targetAssetPrice
                     : remainingVolumeToTradeInTargetAsset / targetAssetPrice;
@@ -227,7 +228,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     remainingVolumeToTradeInTransitAsset - freeVolumeInTransitAssetAfterTransitTrades;
                 var transitAssetPrice =
                     await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.TransitMarketInfo.Market);
-                var transitAssetSide = market.TransitMarketInfo.GetOrderSide(transitAsset);
+                var transitAssetSide = market.TransitMarketInfo.GetOrderSideToBuyAsset(transitAsset);
                 var transitTradeVolume = GetTradeVolume(neededVolumeInTransitAsset,
                     transitAssetPrice, market.TransitPairAssetAvailableVolume, transitAssetSide);
 

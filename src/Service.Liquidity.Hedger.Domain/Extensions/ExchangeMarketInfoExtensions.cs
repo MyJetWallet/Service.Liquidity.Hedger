@@ -5,7 +5,7 @@ namespace Service.Liquidity.Hedger.Domain.Extensions;
 
 public static class ExchangeMarketInfoExtensions
 {
-    public static OrderSide GetOrderSide(this ExchangeMarketInfo market, string buyAsset)
+    public static OrderSide GetOrderSideToBuyAsset(this ExchangeMarketInfo market, string buyAsset)
     {
         if (market.BaseAsset == buyAsset)
         {

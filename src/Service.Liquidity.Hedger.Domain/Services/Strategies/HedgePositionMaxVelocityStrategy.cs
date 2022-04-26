@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Domain.Orders;
 using Service.IndexPrices.Client;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
@@ -83,6 +84,7 @@ namespace Service.Liquidity.Hedger.Domain.Services.Strategies
             instruction.Date = DateTime.UtcNow;
             instruction.MonitoringRuleId = rule.Id;
             instruction.Weight = targetVolumeInUsd;
+            instruction.TargetSide = OrderSide.Buy;
 
             return instruction;
         }
