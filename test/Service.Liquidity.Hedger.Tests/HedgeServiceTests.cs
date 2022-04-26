@@ -352,23 +352,23 @@ public class HedgeServiceTests
         var market = new IndirectHedgeExchangeMarket
         {
             TransitAssetSymbol = transitAsset.Symbol,
-            TransitMarketInfo = new ExchangeMarketInfo
+            FirstTradeMarketInfo = new ExchangeMarketInfo
             {
                 BaseAsset = transitAsset.Symbol,
                 QuoteAsset = pairAsset.Symbol,
                 MinVolume = 1,
             },
-            TargetMarketInfo = new ExchangeMarketInfo
+            SecondTradeMarketInfo = new ExchangeMarketInfo
             {
                 BaseAsset = hedgeInstruction.TargetAssetSymbol,
                 QuoteAsset = pairAsset.Symbol,
                 MinVolume = 1,
             },
-            TransitPairAssetSymbol = pairAsset.Symbol,
-            TransitPairAssetAvailableVolume = pairAsset.AvailableVolume
+            FirstTradePairAssetSymbol = pairAsset.Symbol,
+            FirstTradePairAssetAvailableVolume = pairAsset.AvailableVolume
         };
         _exchangesAnalyzer
-            .FindIndirectMarketsAsync(default, default, default, default)
+            .FindIndirectMarketsToBuyAssetAsync(default, default, default, default)
             .ReturnsForAnyArgs(new List<IndirectHedgeExchangeMarket> { market });
         _pricesService.GetConvertPriceAsync(default, default).ReturnsForAnyArgs(1);
         _externalMarket.MarketTrade(default).ReturnsForAnyArgs(new ExchangeTrade

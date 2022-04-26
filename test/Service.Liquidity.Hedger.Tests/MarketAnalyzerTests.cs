@@ -267,15 +267,15 @@ public class MarketAnalyzerTests
         var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
         
         // act
-        var markets = await analyzer.FindIndirectMarketsAsync(default, transitAsset, 
+        var markets = await analyzer.FindIndirectMarketsToBuyAssetAsync(default, transitAsset, 
             hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
         
         // assert
         markets.Should().NotBeEmpty();
         markets.First().TransitAssetSymbol.Should().Be(transitAsset);
-        markets.First().TransitMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
-        markets.First().TransitMarketInfo.QuoteAsset.Should().Be(transitAsset);
-        markets.First().TargetMarketInfo.BaseAsset.Should().Be(transitAsset);
-        markets.First().TargetMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
+        markets.First().FirstTradeMarketInfo.BaseAsset.Should().Be(btcSellAsset.Symbol);
+        markets.First().FirstTradeMarketInfo.QuoteAsset.Should().Be(transitAsset);
+        markets.First().SecondTradeMarketInfo.BaseAsset.Should().Be(transitAsset);
+        markets.First().SecondTradeMarketInfo.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
 }

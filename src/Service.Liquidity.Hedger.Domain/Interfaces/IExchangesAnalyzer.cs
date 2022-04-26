@@ -9,6 +9,6 @@ public interface IExchangesAnalyzer
     Task<ICollection<DirectHedgeExchangeMarket>> FindDirectMarketsAsync(string exchangeName,
         HedgeInstruction hedgeInstruction);
 
-    Task<ICollection<IndirectHedgeExchangeMarket>> FindIndirectMarketsAsync(string exchangeName,
+    Task<ICollection<IndirectHedgeExchangeMarket>> FindIndirectMarketsToBuyAssetAsync(string exchangeName,
         string transitAssetSymbol, string targetAssetSymbol, IEnumerable<HedgePairAsset> pairAssets);
 }

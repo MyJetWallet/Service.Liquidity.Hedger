@@ -24,7 +24,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
         _externalMarket = externalMarket;
     }
 
-    public async Task<ICollection<IndirectHedgeExchangeMarket>> FindIndirectMarketsAsync(string exchangeName,
+    public async Task<ICollection<IndirectHedgeExchangeMarket>> FindIndirectMarketsToBuyAssetAsync(string exchangeName,
         string transitAssetSymbol, string targetAssetSymbol, IEnumerable<HedgePairAsset> pairAssets)
     {
         _logger.LogInformation("FindIndirectMarkets markets started");
@@ -46,12 +46,12 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
 
         foreach (var pairAsset in pairAssets.OrderByDescending(a => a.Weight))
         {
-            var transitMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
+            var firstTradeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
                 m.QuoteAsset == transitAssetSymbol && m.BaseAsset == pairAsset.Symbol);
             var transitPairAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
 
-            if (transitMarketInfo == null)
+            if (firstTradeMarketInfo == null)
             {
                 _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TransitAssetSymbol} not found",
                     pairAsset.Symbol, transitAssetSymbol);
@@ -61,7 +61,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             if (transitPairAssetBalance == null)
             {
                 _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
-                    transitMarketInfo.Market, pairAsset.Symbol);
+                    firstTradeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
@@ -69,16 +69,16 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 _logger.LogWarning(
                     "Market {@Market} with PairAsset {@PairAsset} is skipped. FreeBalance on exchange is 0",
-                    transitMarketInfo.Market, pairAsset.Symbol);
+                    firstTradeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
-            var targetMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
+            var secondTradeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == targetAssetSymbol ||
                 m.QuoteAsset == transitAssetSymbol && m.BaseAsset == targetAssetSymbol);
             var targetPairAssetBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == transitAssetSymbol);
 
-            if (targetMarketInfo == null)
+            if (secondTradeMarketInfo == null)
             {
                 _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TargetAsset} not found",
                     pairAsset.Symbol, targetAssetSymbol);
@@ -88,7 +88,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             if (targetPairAssetBalance == null)
             {
                 _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
-                    targetMarketInfo.Market, pairAsset.Symbol);
+                    secondTradeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
@@ -96,11 +96,11 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             {
                 ExchangeName = exchangeName,
                 Weight = pairAsset.Weight,
-                TransitMarketInfo = transitMarketInfo,
-                TargetMarketInfo = targetMarketInfo,
+                FirstTradeMarketInfo = firstTradeMarketInfo,
+                SecondTradeMarketInfo = secondTradeMarketInfo,
                 TransitAssetSymbol = transitAssetSymbol,
-                TransitPairAssetSymbol = pairAsset.Symbol,
-                TransitPairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, transitPairAssetBalance.Free)
+                FirstTradePairAssetSymbol = pairAsset.Symbol,
+                FirstTradePairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, transitPairAssetBalance.Free)
             });
         }
 
