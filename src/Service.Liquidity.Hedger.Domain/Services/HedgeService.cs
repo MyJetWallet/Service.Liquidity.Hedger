@@ -256,7 +256,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.FirstTradeMarketInfo.Market);
                 var transitAssetSide = market.FirstTradeMarketInfo.GetOrderSideToBuyAsset(transitAsset);
                 var transitTradeVolume = GetTradeVolume(neededVolumeInTransitAsset,
-                    transitAssetPrice, market.FirstTradePairAssetAvailableVolume, transitAssetSide);
+                    transitAssetPrice, market.PairAssetAvailableVolume, transitAssetSide);
 
                 if (Convert.ToDouble(transitTradeVolume) < market.FirstTradeMarketInfo.MinVolume)
                 {

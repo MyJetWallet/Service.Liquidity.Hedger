@@ -92,8 +92,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 FirstTradeMarketInfo = firstTradeMarketInfo,
                 SecondTradeMarketInfo = secondTradeMarketInfo,
                 TransitAssetSymbol = transitAssetSymbol,
-                FirstTradePairAssetSymbol = pairAsset.Symbol,
-                FirstTradePairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, pairAssetBalance.Free)
+                PairAssetSymbol = pairAsset.Symbol,
+                PairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, pairAssetBalance.Free)
             });
         }
 

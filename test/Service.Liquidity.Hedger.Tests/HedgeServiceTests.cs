@@ -365,8 +365,8 @@ public class HedgeServiceTests
                 QuoteAsset = pairAsset.Symbol,
                 MinVolume = 1,
             },
-            FirstTradePairAssetSymbol = pairAsset.Symbol,
-            FirstTradePairAssetAvailableVolume = pairAsset.AvailableVolume
+            PairAssetSymbol = pairAsset.Symbol,
+            PairAssetAvailableVolume = pairAsset.AvailableVolume
         };
         _exchangesAnalyzer
             .FindIndirectMarketsToBuyAssetAsync(default, default, default, default)
