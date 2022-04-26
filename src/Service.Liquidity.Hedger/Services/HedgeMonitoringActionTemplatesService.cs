@@ -40,8 +40,8 @@ namespace Service.Liquidity.Hedger.Services
                     {
                         await GetMakeHedgeActionTemplateAsync(request.Action),
                         await GetStopHedgeActionTemplateAsync(request.Action),
-                        await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action),
-                        await GetHedgeFreeBalanceActionTemplateAsync(request.Action)
+                        //await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action),
+                        //await GetHedgeFreeBalanceActionTemplateAsync(request.Action)
                     }
                 };
             }
