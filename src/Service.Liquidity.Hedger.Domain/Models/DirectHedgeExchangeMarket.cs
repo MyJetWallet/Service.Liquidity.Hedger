@@ -10,5 +10,6 @@ namespace Service.Liquidity.Hedger.Domain.Models
         public string ExchangeName { get; set; }
         public ExchangeMarketInfo Info { get; set; }
         public decimal AvailablePairAssetVolume { get; set; }
+        public decimal AvailableTargetAssetVolume { get; set; }
     }
 }

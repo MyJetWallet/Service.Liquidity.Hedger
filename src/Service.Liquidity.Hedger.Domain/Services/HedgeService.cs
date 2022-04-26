@@ -131,9 +131,29 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
             var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
             var price = await _pricesService.GetConvertPriceAsync(market.ExchangeName, market.Info.Market);
-            var side = market.Info.GetOrderSideToBuyAsset(hedgeInstruction.TargetAssetSymbol);
-            var tradeVolume =
-                GetTradeVolume(remainingVolumeToTrade, price, market.AvailablePairAssetVolume, side);
+            var tradeVolume = 0m;
+            var side = OrderSide.UnknownOrderSide;
+            
+            if (hedgeInstruction.TargetSide == OrderSide.Buy)
+            {
+                side =  market.Info.GetOrderSideToBuyAsset(hedgeInstruction.TargetAssetSymbol);
+                tradeVolume = GetTradeVolume(remainingVolumeToTrade, price, market.AvailablePairAssetVolume, side);
+            }
+            else if (hedgeInstruction.TargetSide == OrderSide.Sell)
+            {
+                var tradeVolumeInTargetAsset = Math.Min(remainingVolumeToTrade, market.AvailableTargetAssetVolume);
+
+                if (hedgeInstruction.TargetAssetSymbol == market.Info.BaseAsset)
+                {
+                    tradeVolume = tradeVolumeInTargetAsset;
+                    side = OrderSide.Sell;
+                }
+                else
+                {
+                    tradeVolume = tradeVolumeInTargetAsset / price;
+                    side = OrderSide.Buy;
+                }
+            }
 
             if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
             {
@@ -311,6 +331,31 @@ namespace Service.Liquidity.Hedger.Domain.Services
         }
 
         private decimal GetTradeVolume(decimal targetAssetVolume, decimal price, decimal availablePairAssetVolume,
+            OrderSide side, int? volumeAccuracy = null)
+        {
+            var availableVolumeOnBalance = availablePairAssetVolume;
+            var tradeVolume = 0m;
+
+            if (side == OrderSide.Buy)
+            {
+                var possibleVolumeToBuy = availableVolumeOnBalance / price;
+                tradeVolume = possibleVolumeToBuy < targetAssetVolume
+                    ? possibleVolumeToBuy // trade max possible volume
+                    : targetAssetVolume;
+            }
+
+            if (side == OrderSide.Sell)
+            {
+                var neededVolumeToSell = targetAssetVolume / price;
+                tradeVolume = availableVolumeOnBalance < neededVolumeToSell
+                    ? availableVolumeOnBalance // trade max possible volume
+                    : neededVolumeToSell;
+            }
+
+            return volumeAccuracy == null ? tradeVolume : tradeVolume.Truncate(volumeAccuracy.Value);
+        }
+        
+        private decimal GetTradeVolume2(decimal targetAssetVolume, decimal price, decimal availablePairAssetVolume,
             OrderSide side, int? volumeAccuracy = null)
         {
             var availableVolumeOnBalance = availablePairAssetVolume;

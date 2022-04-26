@@ -19,4 +19,19 @@ public static class ExchangeMarketInfoExtensions
 
         return OrderSide.UnknownOrderSide;
     }
+    
+    public static OrderSide GetOrderSideToSellAsset(this ExchangeMarketInfo market, string sellAsset)
+    {
+        if (market.BaseAsset == sellAsset)
+        {
+            return OrderSide.Sell;
+        }
+
+        if (market.QuoteAsset == sellAsset)
+        {
+            return OrderSide.Buy;
+        }
+
+        return OrderSide.UnknownOrderSide;
+    }
 }

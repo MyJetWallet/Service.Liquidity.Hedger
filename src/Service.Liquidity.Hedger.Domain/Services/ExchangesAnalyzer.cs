@@ -138,7 +138,6 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             var exchangeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == hedgeInstruction.TargetAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
                 m.QuoteAsset == hedgeInstruction.TargetAssetSymbol && m.BaseAsset == pairAsset.Symbol);
-            var exchangeBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
 
             if (exchangeMarketInfo == null)
             {
@@ -147,16 +146,23 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 continue;
             }
 
-            if (exchangeBalance == null)
+            var pairAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
+
+            if (pairAssetBalance == null)
             {
-                _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
+                _logger.LogWarning(
+                    "Market {@Market} with PairAsset {@PairAsset} is skipped. Pair asset balance not found",
                     exchangeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
-            if (exchangeBalance.Free <= 0)
+            var targetAssetBalance =
+                balancesResp.Balances.FirstOrDefault(b => b.Symbol == hedgeInstruction.TargetAssetSymbol);
+
+            if (targetAssetBalance == null)
             {
-                _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. FreeBalance is 0",
+                _logger.LogWarning(
+                    "Market {@Market} with PairAsset {@PairAsset} is skipped. Target asset balance not found",
                     exchangeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
@@ -166,7 +172,8 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 ExchangeName = exchangeName,
                 Weight = pairAsset.Weight,
                 Info = exchangeMarketInfo,
-                AvailablePairAssetVolume = Math.Min(pairAsset.AvailableVolume, exchangeBalance.Free)
+                AvailablePairAssetVolume = Math.Min(pairAsset.AvailableVolume, pairAssetBalance.Free),
+                AvailableTargetAssetVolume = Math.Min(hedgeInstruction.TargetVolume, targetAssetBalance.Free)
             });
         }
 
