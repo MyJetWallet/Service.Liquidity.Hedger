@@ -105,6 +105,100 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
 
         return markets;
     }
+    
+        public async Task<ICollection<IndirectHedgeExchangeMarket>> FindIndirectMarketsToSellAssetAsync(string exchangeName,
+        string transitAssetSymbol, HedgeInstruction hedgeInstruction)
+    {
+        _logger.LogInformation("FindIndirectMarkets markets started");
+
+        var balancesResp = await _externalMarket.GetBalancesAsync(new GetBalancesRequest
+        {
+            ExchangeName = exchangeName
+        });
+        var marketInfosResp = await _externalMarket.GetMarketInfoListAsync(new GetMarketInfoListRequest
+        {
+            ExchangeName = exchangeName
+        });
+        var markets = new List<IndirectHedgeExchangeMarket>();
+
+        _logger.LogInformation("GetExchangeMarkets {@ExchangeName}: {@Markets}", exchangeName,
+            marketInfosResp?.Infos.Select(i => i.Market));
+        _logger.LogInformation("GetExchangeBalances {@ExchangeName}: {@Markets}", exchangeName,
+            balancesResp?.Balances);
+        
+                    
+        var targetAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == hedgeInstruction.TargetAssetSymbol);
+            
+        if (targetAssetBalance == null)
+        {
+            _logger.LogWarning("Indirect markets not found for {@TargetAsset}. Balance not found",
+                hedgeInstruction.TargetAssetSymbol);
+            
+            return markets;
+        }
+            
+        if (targetAssetBalance.Free <= 0)
+        {
+            _logger.LogWarning("Indirect markets not found for {@TargetAsset}. Free Balance less or equals 0",
+                hedgeInstruction.TargetAssetSymbol);
+            
+            return markets;
+        }
+
+        foreach (var pairAsset in hedgeInstruction.PairAssets.OrderByDescending(a => a.Weight))
+        {
+            var firstTradeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
+                m.BaseAsset == transitAssetSymbol && m.QuoteAsset == hedgeInstruction.TargetAssetSymbol ||
+                m.QuoteAsset == transitAssetSymbol && m.BaseAsset == hedgeInstruction.TargetAssetSymbol);
+
+            if (firstTradeMarketInfo == null)
+            {
+                _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TransitAssetSymbol} not found",
+                    pairAsset.Symbol, transitAssetSymbol);
+                continue;
+            }
+
+            var pairAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
+
+            if (pairAssetBalance == null)
+            {
+                _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
+                    firstTradeMarketInfo.Market, pairAsset.Symbol);
+                continue;
+            }
+
+            var secondTradeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
+                m.BaseAsset == transitAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
+                m.QuoteAsset == transitAssetSymbol && m.BaseAsset == pairAsset.Symbol);
+
+            if (secondTradeMarketInfo == null)
+            {
+                _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TargetAsset} not found",
+                    pairAsset.Symbol, hedgeInstruction.TargetAssetSymbol);
+                continue;
+            }
+
+            markets.Add(new IndirectHedgeExchangeMarket
+            {
+                ExchangeName = exchangeName,
+                Weight = pairAsset.Weight,
+                FirstTradeMarketInfo = firstTradeMarketInfo,
+                SecondTradeMarketInfo = secondTradeMarketInfo,
+                TransitAssetSymbol = transitAssetSymbol,
+                PairAssetSymbol = pairAsset.Symbol,
+                PairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, pairAssetBalance.Free),
+                TargetAssetAvailableVolume = Math.Min(hedgeInstruction.TargetVolume, targetAssetBalance.Free),
+            });
+        }
+
+        var marketNames = string.Join(", ", markets.Select(m => m.GetMarketsDesc()));
+
+        _logger.LogInformation(
+            "Found IndirectMarketsToSellAsset: {@Markets}, TransitAsset: {@TransitAsset}, TargetAsset: {@TargetAsset}",
+            marketNames, transitAssetSymbol, hedgeInstruction.TargetAssetSymbol);
+
+        return markets;
+    }
 
     public async Task<ICollection<DirectHedgeExchangeMarket>> FindDirectMarketsAsync(string exchangeName,
         HedgeInstruction hedgeInstruction)

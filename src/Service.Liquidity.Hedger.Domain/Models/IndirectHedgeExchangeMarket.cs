@@ -11,6 +11,7 @@ public class IndirectHedgeExchangeMarket
     public ExchangeMarketInfo SecondTradeMarketInfo { get; set; }
     public string PairAssetSymbol { get; set; }
     public decimal PairAssetAvailableVolume { get; set; }
+    public decimal TargetAssetAvailableVolume { get; set; }
 
     public string GetMarketsDesc()
     {
