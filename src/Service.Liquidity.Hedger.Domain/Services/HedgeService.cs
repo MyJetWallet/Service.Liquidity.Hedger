@@ -58,27 +58,22 @@ namespace Service.Liquidity.Hedger.Domain.Services
 
                 foreach (var exchange in settings.EnabledExchanges)
                 {
-                    await HedgeOnDirectMarketsAsync(hedgeInstruction, operation, exchange,
-                        settings.DirectMarketLimitTradeSteps);
-
-                    foreach (var transitAsset in settings.IndirectMarketTransitAssets)
+                    await HedgeOnDirectMarketsAsync(hedgeInstruction, operation, exchange);
+                    
+                    if (operation.IsFullyHedged())
                     {
-                        if (operation.IsFullyHedged())
-                        {
-                            break;
-                        }
-
-                        await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, operation, exchange,
-                            settings.IndirectMarketLimitTradeSteps);
+                        break;
                     }
-
-                    _logger.LogInformation("Hedge ended. {@Operation}", operation);
+                    
+                    await HedgeOnIndirectMarketsAsync(hedgeInstruction, operation, exchange);
 
                     if (operation.IsFullyHedged())
                     {
                         break;
                     }
                 }
+                
+                _logger.LogInformation("Hedge ended. {@Operation}", operation);
 
                 if (operation.HedgeTrades.Any())
                 {
@@ -101,7 +96,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
         }
 
         private async Task HedgeOnDirectMarketsAsync(HedgeInstruction hedgeInstruction, HedgeOperation hedgeOperation,
-            string exchange, ICollection<LimitTradeStep> limitTradeSteps)
+            string exchange)
         {
             var directMarkets = await _exchangesAnalyzer
                 .FindDirectMarketsAsync(exchange, hedgeInstruction);
@@ -113,7 +108,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     break;
                 }
 
-                await HedgeOnDirectMarketAsync(hedgeInstruction, hedgeOperation, market, limitTradeSteps);
+                await HedgeOnDirectMarketAsync(hedgeInstruction, hedgeOperation, market);
             }
 
             _logger.LogInformation(
@@ -122,7 +117,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
         }
 
         private async Task HedgeOnDirectMarketAsync(HedgeInstruction hedgeInstruction, HedgeOperation hedgeOperation,
-            DirectHedgeExchangeMarket market, ICollection<LimitTradeStep> limitTradeSteps)
+            DirectHedgeExchangeMarket market)
         {
             if (hedgeOperation.IsFullyHedged())
             {
@@ -164,10 +159,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 return;
             }
 
-            if (limitTradeSteps.Any())
+            var settings = await _hedgeSettingsStorage.GetAsync();
+
+            if (settings.DirectMarketLimitTradeSteps.Any())
             {
                 var trades = await MakeLimitTradesAsync(tradeVolume, side, market.Info,
-                    market.ExchangeName, hedgeOperation.Id, limitTradeSteps);
+                    market.ExchangeName, hedgeOperation.Id, settings.DirectMarketLimitTradeSteps);
                 hedgeOperation.AddTrades(trades);
             }
             else
@@ -178,23 +175,28 @@ namespace Service.Liquidity.Hedger.Domain.Services
             }
         }
 
-        private async Task HedgeOnIndirectMarketsAsync(HedgeInstruction hedgeInstruction, string transitAsset,
-            HedgeOperation hedgeOperation, string exchangeName, ICollection<LimitTradeStep> limitTradeSteps)
+        private async Task HedgeOnIndirectMarketsAsync(HedgeInstruction hedgeInstruction,
+            HedgeOperation hedgeOperation, string exchangeName)
         {
-            if (hedgeOperation.IsFullyHedged())
-            {
-                return;
-            }
+            var settings = await _hedgeSettingsStorage.GetAsync();
 
-            if (hedgeInstruction.TargetSide == OrderSide.Sell)
+            foreach (var transitAsset in settings.IndirectMarketTransitAssets)
             {
-                await SellOnIndirectMarketsAsync(hedgeInstruction, transitAsset, hedgeOperation, exchangeName,
-                    limitTradeSteps);
-            }
-            else if (hedgeInstruction.TargetSide == OrderSide.Buy)
-            {
-                await BuyOnIndirectMarketsAsync(hedgeInstruction, transitAsset, hedgeOperation, exchangeName,
-                    limitTradeSteps);
+                if (hedgeOperation.IsFullyHedged())
+                {
+                    return;
+                }
+
+                if (hedgeInstruction.TargetSide == OrderSide.Sell)
+                {
+                    await SellOnIndirectMarketsAsync(hedgeInstruction, transitAsset, hedgeOperation, exchangeName,
+                        settings.IndirectMarketLimitTradeSteps);
+                }
+                else if (hedgeInstruction.TargetSide == OrderSide.Buy)
+                {
+                    await BuyOnIndirectMarketsAsync(hedgeInstruction, transitAsset, hedgeOperation, exchangeName,
+                        settings.IndirectMarketLimitTradeSteps);
+                }
             }
 
             _logger.LogInformation(
@@ -365,7 +367,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 {
                     break;
                 }
-                
+
                 _logger.LogInformation("Trying to HedgeOnIndirectMarket: {@Market}", market.GetMarketsDesc());
 
                 var remainingVolumeToTrade = hedgeInstruction.TargetVolume - hedgeOperation.TradedVolume;
