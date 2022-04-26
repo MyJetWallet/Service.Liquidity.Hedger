@@ -11,7 +11,11 @@ namespace Service.Liquidity.Hedger.Domain.Models
         [DataMember(Order = 1)] public string TypeName { get; set; } = nameof(MakeHedgeMonitoringAction);
 
         [DataMember(Order = 2)]
-        public Dictionary<string, string> ParamValuesByName { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> ParamValuesByName { get; set; } = new()
+        {
+            {nameof(HedgeStrategyType), ((int)HedgeStrategyType.HedgePositionMaxVelocity).ToString()},
+            {nameof(HedgePercent), "100"}
+        };
 
         [DataMember(Order = 3)]
         public ICollection<MonitoringActionParamInfo> ParamInfos { get; set; } =
