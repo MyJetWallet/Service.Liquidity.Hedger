@@ -215,12 +215,6 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 {
                     break;
                 }
-                
-                if (hedgeInstruction.TargetSide != OrderSide.Sell)
-                {
-                    _logger.LogWarning("Can't BuyOnIndirectMarkets. Only instructions with Buy side are possible");
-                    return;
-                }
 
                 _logger.LogInformation("Trying to HedgeOnIndirectMarket: {@Market}", market.GetMarketsDesc());
 
