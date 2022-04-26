@@ -66,6 +66,8 @@ namespace Service.Liquidity.Hedger.Services
                     nameof(MakeHedgeMonitoringAction) => await GetMakeHedgeActionTemplateAsync(request.Action),
                     nameof(HedgePositionMaxVelocityMonitoringAction) =>
                         await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action),
+                    nameof(HedgeFreeBalanceMonitoringAction) =>
+                        await GetHedgeFreeBalanceActionTemplateAsync(request.Action),
                     _ => null
                 };
 
