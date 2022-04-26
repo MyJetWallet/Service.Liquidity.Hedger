@@ -34,12 +34,12 @@ public class HedgeFreeBalanceStrategy : IHedgeStrategy
         get
         {
             ParamValuesByName ??= new Dictionary<string, string>();
-            return ParamValuesByName[nameof(HedgePercent)];
+            return ParamValuesByName[nameof(PairAssetSymbol)];
         }
         set
         {
             ParamValuesByName ??= new Dictionary<string, string>();
-            ParamValuesByName[nameof(HedgePercent)] = value;
+            ParamValuesByName[nameof(PairAssetSymbol)] = value;
         }
     }
 
