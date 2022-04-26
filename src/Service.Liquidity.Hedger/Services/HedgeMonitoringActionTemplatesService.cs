@@ -40,7 +40,8 @@ namespace Service.Liquidity.Hedger.Services
                     {
                         await GetMakeHedgeActionTemplateAsync(request.Action),
                         await GetStopHedgeActionTemplateAsync(request.Action),
-                        await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action)
+                        await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action),
+                        await GetHedgeFreeBalanceActionTemplateAsync(request.Action)
                     }
                 };
             }
@@ -65,8 +66,17 @@ namespace Service.Liquidity.Hedger.Services
                     nameof(MakeHedgeMonitoringAction) => await GetMakeHedgeActionTemplateAsync(request.Action),
                     nameof(HedgePositionMaxVelocityMonitoringAction) =>
                         await GetHedgePositionMaxVelocityActionTemplateAsync(request.Action),
-                    _ => throw new NotSupportedException($"{nameof(request.Action.TypeName)}")
+                    _ => null
                 };
+
+                if (actionTemplate == null)
+                {
+                    return new GetMonitoringActionTemplateResponse
+                    {
+                        IsError = true,
+                        ErrorMessage = $"Template for {request.Action.TypeName} not found"
+                    };
+                }
 
                 return new GetMonitoringActionTemplateResponse
                 {
@@ -145,6 +155,7 @@ namespace Service.Liquidity.Hedger.Services
                 if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgeStrategyType))
                 {
                     template = GetHedgeStrategyTypeParamTemplate(paramInfo);
+                    template.Readonly = true;
                 }
 
                 if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
@@ -163,7 +174,7 @@ namespace Service.Liquidity.Hedger.Services
                         )).ToList();
                 }
 
-                TryInitParamTemplateValue(monitoringAction, paramInfo, template);
+                TryInitParamTemplateValue(monitoringAction ?? action, paramInfo, template);
 
                 paramTemplates.Add(template);
             }
@@ -203,7 +214,7 @@ namespace Service.Liquidity.Hedger.Services
                     template = GetHedgePercentParamTemplate(paramInfo);
                 }
 
-                TryInitParamTemplateValue(monitoringAction, paramInfo, template);
+                TryInitParamTemplateValue(monitoringAction ?? action, paramInfo, template);
 
                 paramTemplates.Add(template);
             }

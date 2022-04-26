@@ -8,12 +8,12 @@ namespace Service.Liquidity.Hedger.Domain.Models;
 [DataContract]
 public class HedgePositionMaxVelocityMonitoringAction : IMonitoringAction
 {
-    [DataMember(Order = 1)] public string TypeName { get; set; }
+    [DataMember(Order = 1)] public string TypeName { get; set; } = nameof(HedgePositionMaxVelocityMonitoringAction);
 
     [DataMember(Order = 2)]
     public Dictionary<string, string> ParamValuesByName { get; set; } = new()
     {
-        {nameof(HedgeStrategyType), nameof(HedgeStrategyType.HedgePositionMaxVelocity)},
+        {nameof(HedgeStrategyType), ((int)HedgeStrategyType.HedgePositionMaxVelocity).ToString()},
         {nameof(HedgePercent), "100"}
     };
 
@@ -26,23 +26,8 @@ public class HedgePositionMaxVelocityMonitoringAction : IMonitoringAction
         };
 
     [DataMember(Order = 4)]
-    public HedgeStrategyType HedgeStrategyType
-    {
-        get
-        {
-            var strValue = ParamValuesByName[nameof(HedgeStrategyType)];
-            var intValue = int.Parse(strValue);
-            var enumValue = (HedgeStrategyType) intValue;
+    public HedgeStrategyType HedgeStrategyType => HedgeStrategyType.HedgePositionMaxVelocity;
 
-            if (enumValue != HedgeStrategyType.HedgePositionMaxVelocity)
-            {
-                throw new(
-                    $"Invalid strategy type for {nameof(HedgePositionMaxVelocityMonitoringAction)}. Value must be {nameof(HedgeStrategyType.HedgePositionMaxVelocity)}");
-            }
-
-            return enumValue;
-        }
-    }
 
     [DataMember(Order = 5)]
     public decimal HedgePercent
