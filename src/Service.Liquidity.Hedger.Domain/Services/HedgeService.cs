@@ -61,18 +61,15 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     await HedgeOnDirectMarketsAsync(hedgeInstruction, operation, exchange,
                         settings.DirectMarketLimitTradeSteps);
 
-                    if (hedgeInstruction.TargetSide == OrderSide.Buy)
+                    foreach (var transitAsset in settings.IndirectMarketTransitAssets)
                     {
-                        foreach (var transitAsset in settings.IndirectMarketTransitAssets)
+                        if (operation.IsFullyHedged())
                         {
-                            if (operation.IsFullyHedged())
-                            {
-                                break;
-                            }
-
-                            await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, operation, exchange,
-                                settings.IndirectMarketLimitTradeSteps);
+                            break;
                         }
+
+                        await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, operation, exchange,
+                            settings.IndirectMarketLimitTradeSteps);
                     }
 
                     _logger.LogInformation("Hedge ended. {@Operation}", operation);
@@ -185,6 +182,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
         {
             if (hedgeOperation.IsFullyHedged())
             {
+                return;
+            }
+
+            if (hedgeInstruction.TargetSide != OrderSide.Buy)
+            {
+                _logger.LogWarning("Can't HedgeOnIndirectMarkets. Sell instructions don't supported");
                 return;
             }
 
