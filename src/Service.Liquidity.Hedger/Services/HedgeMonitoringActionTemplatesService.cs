@@ -264,9 +264,10 @@ namespace Service.Liquidity.Hedger.Services
 
             if (paramInfo.Name == nameof(MakeHedgeMonitoringAction.HedgePercent))
             {
-                template.Validators = new List<IActionParamValidator>
+                var rangeValidator = new RangeValueActionParamValidator(1, 100);
+                template.Validators = new List<ActionParamValidator>
                 {
-                    new RangeValueActionParamValidator(1, 100),
+                    new ActionParamValidator {ParamValuesByName = rangeValidator.ParamValuesByName, Type = rangeValidator.Type},
                 };
             }
 
