@@ -141,7 +141,8 @@ namespace Service.Liquidity.Hedger.Domain.Services
             }
             else if (hedgeInstruction.TargetSide == OrderSide.Sell)
             {
-                var tradeVolumeInTargetAsset = Math.Min(remainingVolumeToTrade, market.AvailableTargetAssetVolume);
+                var tradeVolumeInTargetAsset = Math.Min(remainingVolumeToTrade,
+                    market.AvailableTargetAssetVolume - hedgeOperation.TradedVolume);
 
                 if (hedgeInstruction.TargetAssetSymbol == market.Info.BaseAsset)
                 {
