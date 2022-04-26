@@ -52,6 +52,11 @@ public class MarketAnalyzerTests
                     Symbol = btcSellAsset.Symbol,
                     Free = 10
                 },
+                new ()
+                {
+                    Symbol = hedgeInstruction.TargetAssetSymbol,
+                    Free = hedgeInstruction.TargetVolume
+                }
             }
         });
         _externalMarket.GetMarketInfoListAsync(default).ReturnsForAnyArgs(new GetMarketInfoListResponse
@@ -112,6 +117,11 @@ public class MarketAnalyzerTests
                     Symbol = "fsd",
                     Free = 10
                 },
+                new ()
+                {
+                    Symbol = hedgeInstruction.TargetAssetSymbol,
+                    Free = hedgeInstruction.TargetVolume
+                }
             }
         });
         _externalMarket.GetMarketInfoListAsync(default).ReturnsForAnyArgs(new GetMarketInfoListResponse
@@ -168,6 +178,11 @@ public class MarketAnalyzerTests
                     Symbol = btcSellAsset.Symbol,
                     Free = 10
                 },
+                new ()
+                {
+                    Symbol = hedgeInstruction.TargetAssetSymbol,
+                    Free = hedgeInstruction.TargetVolume
+                }
             }
         });
         _externalMarket.GetMarketInfoListAsync(default).ReturnsForAnyArgs(new GetMarketInfoListResponse
@@ -195,58 +210,7 @@ public class MarketAnalyzerTests
         markets.First().Info.BaseAsset.Should().Be(btcSellAsset.Symbol);
         markets.First().Info.QuoteAsset.Should().Be(hedgeInstruction.TargetAssetSymbol);
     }
-    
-    [Test]
-    public async Task FindPossibleMarkets_HasMarketWithZeroBalance_FiltersMarketWithZeroBalance()
-    {
-        // arrange
-        var btcSellAsset = new HedgePairAsset
-        {
-            Symbol = "BTC",
-            Weight = -2
-        };
-        var hedgeInstruction = new HedgeInstruction
-        {
-            TargetVolume = 4,
-            TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset>
-            {
-                btcSellAsset
-            }
-        };
-        _externalMarket.GetBalancesAsync(default).ReturnsForAnyArgs(new GetBalancesResponse
-        {
-            Balances = new List<ExchangeBalance>
-            {
-                new ()
-                {
-                    Symbol = btcSellAsset.Symbol,
-                    Free = 0
-                },
-            }
-        });
-        _externalMarket.GetMarketInfoListAsync(default).ReturnsForAnyArgs(new GetMarketInfoListResponse
-        {
-            Infos = new List<ExchangeMarketInfo>
-            {
 
-                new ()
-                {
-                    MinVolume = 1,
-                    BaseAsset = btcSellAsset.Symbol,
-                    QuoteAsset = hedgeInstruction.TargetAssetSymbol,
-                }
-            }
-        });
-        var analyzer = new ExchangesAnalyzer(_logger, _externalMarket);
-        
-        // act
-        var markets = await analyzer.FindDirectMarketsAsync(default, hedgeInstruction);
-        
-        // assert
-        markets.Should().BeEmpty();
-    }
-    
     [Test]
     public async Task FindPossibleMarkets_NoDirectMarkets_FindsIndirectMarket()
     {

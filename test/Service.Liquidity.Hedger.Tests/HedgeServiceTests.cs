@@ -68,7 +68,8 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new DirectHedgeExchangeMarket
@@ -114,7 +115,8 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new DirectHedgeExchangeMarket
@@ -163,7 +165,8 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new DirectHedgeExchangeMarket
@@ -206,7 +209,8 @@ public class HedgeServiceTests
         {
             TargetVolume = 1,
             TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new DirectHedgeExchangeMarket
@@ -249,7 +253,8 @@ public class HedgeServiceTests
         {
             TargetVolume = 110,
             TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new DirectHedgeExchangeMarket
@@ -292,7 +297,8 @@ public class HedgeServiceTests
         {
             TargetVolume = 110,
             TargetAssetSymbol = "XRP",
-            PairAssets = new List<HedgePairAsset> { sellAsset }
+            PairAssets = new List<HedgePairAsset> { sellAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new DirectHedgeExchangeMarket
