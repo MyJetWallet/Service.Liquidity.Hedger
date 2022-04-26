@@ -61,15 +61,18 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     await HedgeOnDirectMarketsAsync(hedgeInstruction, operation, exchange,
                         settings.DirectMarketLimitTradeSteps);
 
-                    foreach (var transitAsset in settings.IndirectMarketTransitAssets)
+                    if (hedgeInstruction.TargetSide == OrderSide.Buy)
                     {
-                        if (operation.IsFullyHedged())
+                        foreach (var transitAsset in settings.IndirectMarketTransitAssets)
                         {
-                            break;
-                        }
+                            if (operation.IsFullyHedged())
+                            {
+                                break;
+                            }
 
-                        await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, operation, exchange,
-                            settings.IndirectMarketLimitTradeSteps);
+                            await HedgeOnIndirectMarketsAsync(hedgeInstruction, transitAsset, operation, exchange,
+                                settings.IndirectMarketLimitTradeSteps);
+                        }
                     }
 
                     _logger.LogInformation("Hedge ended. {@Operation}", operation);
