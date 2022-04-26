@@ -347,6 +347,7 @@ public class HedgeServiceTests
             TargetVolume = 110,
             TargetAssetSymbol = "XRP",
             PairAssets = new List<HedgePairAsset> { pairAsset },
+            TargetSide = OrderSide.Buy
         };
 
         var market = new IndirectHedgeExchangeMarket
