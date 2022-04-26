@@ -49,7 +49,6 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             var firstTradeMarketInfo = marketInfosResp?.Infos.FirstOrDefault(m =>
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == pairAsset.Symbol ||
                 m.QuoteAsset == transitAssetSymbol && m.BaseAsset == pairAsset.Symbol);
-            var transitPairAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
 
             if (firstTradeMarketInfo == null)
             {
@@ -58,14 +57,16 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 continue;
             }
 
-            if (transitPairAssetBalance == null)
+            var pairAssetBalance = balancesResp?.Balances.FirstOrDefault(b => b.Symbol == pairAsset.Symbol);
+
+            if (pairAssetBalance == null)
             {
                 _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
                     firstTradeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
-            if (transitPairAssetBalance.Free <= 0)
+            if (pairAssetBalance.Free <= 0)
             {
                 _logger.LogWarning(
                     "Market {@Market} with PairAsset {@PairAsset} is skipped. FreeBalance on exchange is 0",
@@ -76,19 +77,11 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
             var secondTradeMarketInfo = marketInfosResp.Infos.FirstOrDefault(m =>
                 m.BaseAsset == transitAssetSymbol && m.QuoteAsset == targetAssetSymbol ||
                 m.QuoteAsset == transitAssetSymbol && m.BaseAsset == targetAssetSymbol);
-            var targetPairAssetBalance = balancesResp.Balances.FirstOrDefault(b => b.Symbol == transitAssetSymbol);
 
             if (secondTradeMarketInfo == null)
             {
                 _logger.LogWarning("PairAsset {@PairAsset} is skipped.  Market with {@TargetAsset} not found",
                     pairAsset.Symbol, targetAssetSymbol);
-                continue;
-            }
-
-            if (targetPairAssetBalance == null)
-            {
-                _logger.LogWarning("Market {@Market} with PairAsset {@PairAsset} is skipped. Balance not found",
-                    secondTradeMarketInfo.Market, pairAsset.Symbol);
                 continue;
             }
 
@@ -100,7 +93,7 @@ public class ExchangesAnalyzer : IExchangesAnalyzer
                 SecondTradeMarketInfo = secondTradeMarketInfo,
                 TransitAssetSymbol = transitAssetSymbol,
                 FirstTradePairAssetSymbol = pairAsset.Symbol,
-                FirstTradePairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, transitPairAssetBalance.Free)
+                FirstTradePairAssetAvailableVolume = Math.Min(pairAsset.AvailableVolume, pairAssetBalance.Free)
             });
         }
 
