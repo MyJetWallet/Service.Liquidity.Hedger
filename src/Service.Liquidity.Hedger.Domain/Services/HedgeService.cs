@@ -200,6 +200,12 @@ namespace Service.Liquidity.Hedger.Domain.Services
         private async Task BuyOnIndirectMarketsAsync(HedgeInstruction hedgeInstruction, string transitAsset,
             HedgeOperation hedgeOperation, string exchangeName, ICollection<LimitTradeStep> limitTradeSteps)
         {
+            if (hedgeInstruction.TargetSide != OrderSide.Buy)
+            {
+                _logger.LogWarning("Can't BuyOnIndirectMarkets. Only instructions with Buy side are possible");
+                return;
+            }
+            
             var indirectMarkets = await _exchangesAnalyzer.FindIndirectMarketsToBuyAssetAsync(exchangeName,
                 transitAsset, hedgeInstruction.TargetAssetSymbol, hedgeInstruction.PairAssets);
             var freeVolumeInTransitAssetAfterTransitTrades = 0m;
