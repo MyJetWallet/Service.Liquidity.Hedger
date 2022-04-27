@@ -423,7 +423,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (limitTradeSteps?.Any() ?? false)
                 {
                     var secondTrades = await MakeLimitTradesAsync(secondTradeVolumeInBaseAsset, secondTradeSide,
-                        market.FirstTradeMarketInfo, market.ExchangeName, hedgeOperation.Id, limitTradeSteps);
+                        market.SecondTradeMarketInfo, market.ExchangeName, hedgeOperation.Id, limitTradeSteps);
                     hedgeOperation.AddTrades(secondTrades);
                 }
                 else
