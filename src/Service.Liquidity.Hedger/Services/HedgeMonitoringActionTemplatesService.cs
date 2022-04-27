@@ -166,7 +166,7 @@ namespace Service.Liquidity.Hedger.Services
 
                 if (paramInfo.Name == nameof(HedgeFreeBalanceMonitoringAction.PairAssetSymbol))
                 {
-                    var assets = _assetsNoSqlReader.Get();
+                    var assets = _assetsNoSqlReader.Get() ?? new List<AssetNoSqlEntity>();
                     template.PossibleValues = assets
                         .Select(a =>
                         (
