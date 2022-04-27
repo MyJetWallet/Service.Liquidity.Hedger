@@ -138,17 +138,10 @@ namespace Service.Liquidity.Hedger.Domain.Services
             {
                 var tradeVolumeInTargetAsset = Math.Min(remainingVolumeToTrade,
                     market.AvailableTargetAssetVolume - hedgeOperation.TradedVolume);
-
-                if (hedgeInstruction.TargetAssetSymbol == market.Info.BaseAsset)
-                {
-                    tradeVolume = tradeVolumeInTargetAsset;
-                    side = OrderSide.Sell;
-                }
-                else
-                {
-                    tradeVolume = tradeVolumeInTargetAsset / price;
-                    side = OrderSide.Buy;
-                }
+                side = market.Info.GetOrderSideToSellAsset(hedgeInstruction.TargetAssetSymbol);
+                tradeVolume = hedgeInstruction.TargetAssetSymbol == market.Info.BaseAsset
+                    ? tradeVolumeInTargetAsset
+                    : tradeVolumeInTargetAsset / price;
             }
 
             if (Convert.ToDouble(tradeVolume) < market.Info.MinVolume)
