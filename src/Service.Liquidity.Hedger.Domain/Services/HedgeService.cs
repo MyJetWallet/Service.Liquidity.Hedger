@@ -388,6 +388,23 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     continue;
                 }
 
+                var volumeInTransitAssetAfterTransitTradeGuess = market.FirstTradeMarketInfo.BaseAsset == market.TransitAssetSymbol
+                    ? firstTradeVolumeInBaseAsset.Truncate(market.FirstTradeMarketInfo.VolumeAccuracy)
+                    : tradeVolumeInTargetAsset.Truncate(market.FirstTradeMarketInfo.VolumeAccuracy);
+                var secondTradePrice =
+                    await _pricesService.GetConvertPriceAsync(exchangeName, market.SecondTradeMarketInfo.Market);
+                var secondTradeVolumeInaBaseAssetGuess = market.SecondTradeMarketInfo.BaseAsset == market.TransitAssetSymbol
+                    ? volumeInTransitAssetAfterTransitTradeGuess
+                    : volumeInTransitAssetAfterTransitTradeGuess / secondTradePrice;
+
+                if (Convert.ToDouble(secondTradeVolumeInaBaseAssetGuess) < market.SecondTradeMarketInfo.MinVolume)
+                {
+                    _logger.LogWarning(
+                        "Can't trade on IndirectMarket {@Market}. SecondTradeVolume after FirstTrade will be less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
+                        market.GetMarketsDesc(), secondTradeVolumeInaBaseAssetGuess, market.SecondTradeMarketInfo.MinVolume);
+                    continue;
+                }
+
                 decimal volumeInTransitAssetAfterFirstTrade;
 
                 if (limitTradeSteps?.Any() ?? false)
@@ -404,9 +421,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                     hedgeOperation.AddTrade(firstTrade);
                     volumeInTransitAssetAfterFirstTrade = firstTrade.GetTradedVolume(transitAsset);
                 }
-
-                var secondTradePrice =
-                    await _pricesService.GetConvertPriceAsync(exchangeName, market.FirstTradeMarketInfo.Market);
+                
                 var secondTradeSide = market.SecondTradeMarketInfo.GetOrderSideToBuyAsset(market.PairAssetSymbol);
                 var secondTradeVolumeInBaseAsset = transitAsset == market.SecondTradeMarketInfo.BaseAsset
                     ? volumeInTransitAssetAfterFirstTrade
@@ -415,7 +430,7 @@ namespace Service.Liquidity.Hedger.Domain.Services
                 if (Convert.ToDouble(secondTradeVolumeInBaseAsset) < market.SecondTradeMarketInfo.MinVolume)
                 {
                     _logger.LogWarning(
-                        "Can't make second trade on IndirectMarket {@Market}. TradeVolume  MarketMinVolume: {@TradeVolume} < {@MinVolume}",
+                        "Can't make second trade on IndirectMarket {@Market}. SecondTradeVolume is less than MarketMinVolume: {@TradeVolume} < {@MinVolume}",
                         market.GetMarketsDesc(), secondTradeVolumeInBaseAsset, market.SecondTradeMarketInfo.MinVolume);
                     continue;
                 }
