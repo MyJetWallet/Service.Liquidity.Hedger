@@ -174,6 +174,15 @@ namespace Service.Liquidity.Hedger.Services
                             DisplayValueValue: a.Symbol
                         )).ToList();
                 }
+                
+                if (paramInfo.Name == nameof(HedgeFreeBalanceMonitoringAction.ReservedVolumeAsset))
+                {
+                    template.PossibleValues = new List<(string Value, string DisplayValue)>
+                    {
+                        ("USD", "USD"),
+                        ("Target asset", "TargetAsset"),
+                    };
+                }
 
                 TryInitParamTemplateValue(monitoringAction ?? action, paramInfo, template);
 

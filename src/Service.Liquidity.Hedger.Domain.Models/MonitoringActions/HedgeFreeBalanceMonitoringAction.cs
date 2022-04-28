@@ -16,6 +16,7 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
         {nameof(HedgePercent), "100"},
         {nameof(ReservedVolume), "0"},
         {nameof(PairAssetSymbol), "USD"},
+        {nameof(ReservedVolumeAsset), "USD"},
     };
 
     [DataMember(Order = 3)]
@@ -26,6 +27,7 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
             new(nameof(HedgePercent), MonitoringActionParamType.Decimal),
             new(nameof(ReservedVolume), MonitoringActionParamType.Decimal),
             new(nameof(PairAssetSymbol), MonitoringActionParamType.String),
+            new(nameof(ReservedVolumeAsset), MonitoringActionParamType.String),
         };
 
     [DataMember(Order = 4)]
@@ -61,5 +63,22 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
     {
         get => ParamValuesByName[nameof(PairAssetSymbol)];
         set => ParamValuesByName[nameof(PairAssetSymbol)] = value;
+    }
+    
+    [DataMember(Order = 8)]
+    public bool ReservedVolumeAsset
+    {
+        get
+        {
+            ParamValuesByName ??= new Dictionary<string, string>();
+            var strValue = ParamValuesByName[nameof(ReservedVolumeAsset)];
+
+            return bool.Parse(strValue);
+        }
+        set
+        {
+            ParamValuesByName ??= new Dictionary<string, string>();
+            ParamValuesByName[nameof(ReservedVolumeAsset)] = value.ToString(CultureInfo.InvariantCulture);
+        }
     }
 }

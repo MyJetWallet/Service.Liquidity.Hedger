@@ -60,6 +60,22 @@ public class HedgeFreeBalanceStrategy : IHedgeStrategy
         }
     }
 
+    public string ReservedVolumeAsset
+    {
+        get
+        {
+            ParamValuesByName ??= new Dictionary<string, string>();
+            var strValue = ParamValuesByName[nameof(ReservedVolumeAsset)];
+
+            return strValue;
+        }
+        set
+        {
+            ParamValuesByName ??= new Dictionary<string, string>();
+            ParamValuesByName[nameof(ReservedVolumeAsset)] = value;
+        }
+    }
+
     public HedgeInstruction CalculateHedgeInstruction(Portfolio portfolio, MonitoringRule rule)
     {
         var instruction = new HedgeInstruction();
@@ -88,11 +104,24 @@ public class HedgeFreeBalanceStrategy : IHedgeStrategy
         {
             return instruction;
         }
-
+        
         var price = selectedAsset.NetBalanceInUsd / selectedAsset.NetBalance;
-        var targetVolumeInUsd = Math.Abs(selectedCollateralAssets.Sum(a => a.NetBalanceInUsd)) *
-            (HedgePercent / 100) - ReservedVolume * price;
-        instruction.TargetVolume = Math.Abs(targetVolumeInUsd / price) - ReservedVolume;
+        var targetVolumeInUsd = 0m;
+
+        if (ReservedVolumeAsset == "USD")
+        {
+            targetVolumeInUsd = selectedCollateralAssets.Sum(a => a.NetBalanceInUsd) *
+                (HedgePercent / 100) - ReservedVolume;
+            instruction.TargetVolume = targetVolumeInUsd / price;
+
+        }
+        else if (ReservedVolumeAsset == "TargetAsset")
+        {
+            targetVolumeInUsd = Math.Abs(selectedCollateralAssets.Sum(a => a.NetBalanceInUsd)) *
+                (HedgePercent / 100) - ReservedVolume * price;
+            instruction.TargetVolume = Math.Abs(targetVolumeInUsd / price) - ReservedVolume;
+        }
+
         instruction.TargetAssetSymbol = selectedAsset.Symbol;
         instruction.PairAssets = new List<HedgePairAsset>
         {
