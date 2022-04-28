@@ -180,7 +180,7 @@ namespace Service.Liquidity.Hedger.Services
                     template.PossibleValues = new List<(string Value, string DisplayValue)>
                     {
                         ("USD", "USD"),
-                        ("Target asset", "TargetAsset"),
+                        ("TargetAsset", "Target asset"),
                     };
                 }
 
