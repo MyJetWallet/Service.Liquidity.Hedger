@@ -15,8 +15,8 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
         {nameof(HedgeStrategyType), ((int) HedgeStrategyType.HedgeFreeBalance).ToString()},
         {nameof(HedgePercent), "100"},
         {nameof(ReservedVolume), "0"},
-        {nameof(PairAssetSymbol), "USD"},
         {nameof(ReservedVolumeAsset), "USD"},
+        {nameof(PairAssetSymbol), "USD"},
     };
 
     [DataMember(Order = 3)]
@@ -26,8 +26,8 @@ public class HedgeFreeBalanceMonitoringAction : IMonitoringAction
             new(nameof(HedgeStrategyType), MonitoringActionParamType.Int),
             new(nameof(HedgePercent), MonitoringActionParamType.Decimal),
             new(nameof(ReservedVolume), MonitoringActionParamType.Decimal),
-            new(nameof(PairAssetSymbol), MonitoringActionParamType.String),
             new(nameof(ReservedVolumeAsset), MonitoringActionParamType.String),
+            new(nameof(PairAssetSymbol), MonitoringActionParamType.String),
         };
 
     [DataMember(Order = 4)]
