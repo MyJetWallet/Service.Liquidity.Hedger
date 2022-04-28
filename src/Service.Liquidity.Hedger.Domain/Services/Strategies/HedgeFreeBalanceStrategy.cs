@@ -117,9 +117,9 @@ public class HedgeFreeBalanceStrategy : IHedgeStrategy
         }
         else if (ReservedVolumeAsset == "TargetAsset")
         {
-            targetVolumeInUsd = Math.Abs(selectedCollateralAssets.Sum(a => a.NetBalanceInUsd)) *
+            targetVolumeInUsd = selectedCollateralAssets.Sum(a => a.NetBalanceInUsd) *
                 (HedgePercent / 100) - ReservedVolume * price;
-            instruction.TargetVolume = Math.Abs(targetVolumeInUsd / price) - ReservedVolume;
+            instruction.TargetVolume = targetVolumeInUsd / price;
         }
 
         instruction.TargetAssetSymbol = selectedAsset.Symbol;
