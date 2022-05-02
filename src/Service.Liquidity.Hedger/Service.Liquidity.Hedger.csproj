@@ -17,7 +17,7 @@
         <PackageReference Include="MyJetWallet.Sdk.GrpcSchema" Version="1.0.6" />
         <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.1.7" />
         <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.2.2" />
-        <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="2.8.1" />
+        <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="2.8.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
         <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.152" />
