@@ -22,6 +22,11 @@ public class LimitTradeStep
         {
             case OrderSide.Buy:
             {
+                if (currentPrice < initialPrice) // prevent buying by bigger price
+                {
+                    return currentPrice + currentPrice * PriceChangePercentLimit / 100;
+                }
+                
                 var priceThreshold = initialPrice + priceChange;
                 priceChangedOnLimit = priceThreshold < currentPrice; // increased more than on limit
                 priceLimit = priceChangedOnLimit
@@ -31,6 +36,11 @@ public class LimitTradeStep
             }
             case OrderSide.Sell:
             {
+                if (currentPrice > initialPrice) // prevent selling by smaller price
+                {
+                    return currentPrice - currentPrice * PriceChangePercentLimit / 100;
+                }
+                
                 var priceThreshold = initialPrice - priceChange;
                 priceChangedOnLimit = priceThreshold > currentPrice; // decreased more than on limit
                 priceLimit = priceChangedOnLimit
