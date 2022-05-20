@@ -15,13 +15,13 @@ namespace Service.Liquidity.Hedger.Services
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly ILogger<HedgeInstructionsService> _logger;
         private readonly IHedgeInstructionsCache _hedgeInstructionsCache;
-        private readonly IServiceBusPublisher<ConfirmedHedgeInstruction> _publisher;
+        private readonly IServiceBusPublisher<ConfirmedHedgeInstructionMessage> _publisher;
 
         public HedgeInstructionsService(
             IHedgeInstructionsStorage hedgeInstructionsStorage,
             ILogger<HedgeInstructionsService> logger,
             IHedgeInstructionsCache hedgeInstructionsCache,
-            IServiceBusPublisher<ConfirmedHedgeInstruction> publisher
+            IServiceBusPublisher<ConfirmedHedgeInstructionMessage> publisher
         )
         {
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
@@ -61,7 +61,7 @@ namespace Service.Liquidity.Hedger.Services
 
                 if (request.Item.Status == HedgeInstructionStatus.Confirmed)
                 {
-                    await _publisher.PublishAsync(new ConfirmedHedgeInstruction
+                    await _publisher.PublishAsync(new ConfirmedHedgeInstructionMessage
                     {
                         HedgeInstruction = request.Item
                     });

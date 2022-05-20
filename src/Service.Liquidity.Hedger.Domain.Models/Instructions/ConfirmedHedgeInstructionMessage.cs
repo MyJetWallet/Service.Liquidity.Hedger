@@ -3,7 +3,7 @@
 namespace Service.Liquidity.Hedger.Domain.Models;
 
 [DataContract]
-public class ConfirmedHedgeInstruction
+public class ConfirmedHedgeInstructionMessage
 {
     public const string TopicName = "jetwallet-liquidity-confirmed-hedge-instruction";
 
