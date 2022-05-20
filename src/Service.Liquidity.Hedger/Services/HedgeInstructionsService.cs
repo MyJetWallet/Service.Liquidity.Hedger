@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.ServiceBus;
 using Service.Liquidity.Hedger.Domain.Interfaces;
+using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Hedger.Grpc.HedgeInstructions;
 using Service.Liquidity.Hedger.Grpc.HedgeInstructions.Models;
 
@@ -13,16 +15,19 @@ namespace Service.Liquidity.Hedger.Services
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly ILogger<HedgeInstructionsService> _logger;
         private readonly IHedgeInstructionsCache _hedgeInstructionsCache;
+        private readonly IServiceBusPublisher<ConfirmedHedgeInstruction> _publisher;
 
         public HedgeInstructionsService(
             IHedgeInstructionsStorage hedgeInstructionsStorage,
             ILogger<HedgeInstructionsService> logger,
-            IHedgeInstructionsCache hedgeInstructionsCache
+            IHedgeInstructionsCache hedgeInstructionsCache,
+            IServiceBusPublisher<ConfirmedHedgeInstruction> publisher
         )
         {
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
             _logger = logger;
             _hedgeInstructionsCache = hedgeInstructionsCache;
+            _publisher = publisher;
         }
 
         public async Task<GetHedgeInstructionListResponse> GetListAsync(GetHedgeInstructionListRequest request)
@@ -52,9 +57,15 @@ namespace Service.Liquidity.Hedger.Services
         {
             try
             {
-                var dbModel = await _hedgeInstructionsStorage.GetAsync(request.Item.MonitoringRuleId);
-                dbModel.Status = request.Item.Status;
-                await _hedgeInstructionsStorage.AddOrUpdateAsync(dbModel);
+                await _hedgeInstructionsStorage.AddOrUpdateAsync(request.Item);
+
+                if (request.Item.Status == HedgeInstructionStatus.Confirmed)
+                {
+                    await _publisher.PublishAsync(new ConfirmedHedgeInstruction
+                    {
+                        HedgeInstruction = request.Item
+                    });
+                }
 
                 return new AddOrUpdateHedgeInstructionResponse();
             }

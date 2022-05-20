@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Autofac;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.ServiceBus;
 using Service.Liquidity.Hedger.Domain.Interfaces;
 using Service.Liquidity.Hedger.Domain.Models;
 using Service.Liquidity.Monitoring.Domain.Models;
@@ -19,6 +20,8 @@ namespace Service.Liquidity.Hedger.Subscribers
         private readonly IPortfolioAnalyzer _portfolioAnalyzer;
         private readonly IHedgeInstructionsStorage _hedgeInstructionsStorage;
         private readonly IHedgeInstructionsCache _hedgeInstructionsCache;
+        private readonly IServiceBusPublisher<PendingHedgeInstructionMessage> _publisher;
+        private readonly IHedgeSettingsStorage _hedgeSettingsStorage;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         public PortfolioMonitoringMessageSubscriber(
@@ -26,7 +29,9 @@ namespace Service.Liquidity.Hedger.Subscribers
             ISubscriber<PortfolioMonitoringMessage> subscriber,
             IPortfolioAnalyzer portfolioAnalyzer,
             IHedgeInstructionsStorage hedgeInstructionsStorage,
-            IHedgeInstructionsCache hedgeInstructionsCache
+            IHedgeInstructionsCache hedgeInstructionsCache,
+            IServiceBusPublisher<PendingHedgeInstructionMessage> publisher,
+            IHedgeSettingsStorage hedgeSettingsStorage
         )
         {
             _logger = logger;
@@ -34,6 +39,8 @@ namespace Service.Liquidity.Hedger.Subscribers
             _portfolioAnalyzer = portfolioAnalyzer;
             _hedgeInstructionsStorage = hedgeInstructionsStorage;
             _hedgeInstructionsCache = hedgeInstructionsCache;
+            _publisher = publisher;
+            _hedgeSettingsStorage = hedgeSettingsStorage;
         }
 
         public void Start()
@@ -85,23 +92,36 @@ namespace Service.Liquidity.Hedger.Subscribers
                     var savedRuleIds = savedInstructions
                         .Select(i => i.MonitoringRuleId)
                         .ToHashSet();;
-                    var pendingRuleIds = savedInstructions
+                    var alreadyPendingIds = savedInstructions
                         .Where(i => i.Status == HedgeInstructionStatus.Pending)
                         .Select(i => i.MonitoringRuleId)
                         .ToHashSet();
                     var needCalculationRules = _portfolioAnalyzer
                         .SelectHedgeRules(message.Rules)
-                        .Where(r => pendingRuleIds.Contains(r.Id) || !savedRuleIds.Contains(r.Id))
+                        .Where(r => alreadyPendingIds.Contains(r.Id) || !savedRuleIds.Contains(r.Id))
                         .ToList();
                     var recalculatedInstructions = _portfolioAnalyzer.CalculateHedgeInstructions(
                         message.Portfolio, needCalculationRules);
                     
-                    foreach (var pendingRuleId in pendingRuleIds)
+                    foreach (var pendingRuleId in alreadyPendingIds)
                     {
                         await _hedgeInstructionsStorage.DeleteAsync(pendingRuleId);
                     }
                     
                     await _hedgeInstructionsStorage.AddOrUpdateAsync(recalculatedInstructions);
+
+                    var settings = await _hedgeSettingsStorage.GetAsync();
+                    var newInstructions = recalculatedInstructions
+                        .Where(i => !alreadyPendingIds.Contains(i.MonitoringRuleId));
+                    
+                    foreach (var instruction in newInstructions)
+                    {
+                        await _publisher.PublishAsync(new PendingHedgeInstructionMessage
+                        {
+                            HedgeInstruction = instruction,
+                            ConfirmRequired = settings.ConfirmRequired
+                        });
+                    }
                 }
             }
             catch (Exception ex)
